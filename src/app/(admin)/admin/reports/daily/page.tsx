@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Printer, RefreshCw, Calendar, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 export default function DailyReportPage() {
   const currentDate = new Date();
@@ -109,7 +110,7 @@ export default function DailyReportPage() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" onClick={fetchDailyReport} disabled={loading} className="h-9">
+          <Button variant="outline" size="sm" onClick={() => fetchDailyReport()} disabled={loading} className="h-9">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
 

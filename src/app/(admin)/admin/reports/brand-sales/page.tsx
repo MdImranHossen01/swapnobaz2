@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Printer, RefreshCw, ArrowLeft, Tag } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export default function BrandSalesReportPage() {
   const currentDate = new Date();
@@ -106,7 +107,7 @@ export default function BrandSalesReportPage() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" onClick={fetchBrandSales} disabled={loading} className="h-9">
+          <Button variant="outline" size="sm" onClick={() => fetchBrandSales()} disabled={loading} className="h-9">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
 
