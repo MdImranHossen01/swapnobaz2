@@ -59,7 +59,7 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
   const isInWishlist = wishlist.includes(initialProduct._id);
   const router = useRouter();
   const isAdmin = (session?.user as any)?.role === 'admin';
-  
+
   const firstVariant = initialProduct.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null;
   const product = firstVariant ? {
     ...initialProduct,
@@ -202,7 +202,7 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
       className="group relative flex flex-col overflow-hidden rounded-none border bg-background transition-all hover:shadow-xl"
       data-aos="fade-up"
     >
-      <Link href={`/product/${product.slug}`} className="relative aspect-square overflow-hidden bg-muted rounded-none">
+      <Link prefetch={true} href={`/product/${product.slug}`} className="relative aspect-square overflow-hidden bg-muted rounded-none">
         {product.images?.length > 0 ? (
           <div className="relative h-full w-full">
             {/* Primary Image */}
@@ -317,17 +317,17 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
       <div className="flex flex-1 flex-col px-2 md:px-4 py-2 md:py-4 ">
 
         {(product.numReviews || 0) > 0 && (
-          <div 
+          <div
             className="flex items-center gap-2 mb-1"
             aria-label={`${product.ratings || 0} out of 5 stars, ${product.numReviews || 0} reviews`}
           >
-              <RatingStars rating={product.ratings || 0} starClassName="h-3 w-3" />
+            <RatingStars rating={product.ratings || 0} starClassName="h-3 w-3" />
             <span className="text-[10px] text-muted-foreground font-bold">({product.numReviews})</span>
           </div>
         )}
 
         <div className="mb-2 h-12 md:h-10">
-          <Link
+          <Link prefetch={true}
             href={`/product/${product.slug}`}
             className="md:text-lg text-xs  font-semibold text-foreground hover:text-primary transition-colors line-clamp-3 md:line-clamp-2"
           >

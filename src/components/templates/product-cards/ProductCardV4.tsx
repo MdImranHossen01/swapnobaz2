@@ -72,8 +72,8 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
 
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
 
-  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price) 
-    ? Math.round(((product.price - product.salePrice) / product.price) * 100) 
+  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price)
+    ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -114,11 +114,11 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: product._id }),
       });
-      
+
       if (!res.ok) {
         throw new Error('Server error updating wishlist');
       }
-      
+
       toast.success(willBeInWishlist ? 'Saved to collection' : 'Removed from collection');
     } catch (err) {
       console.error('Wishlist error:', err);
@@ -160,13 +160,13 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
   };
 
   return (
-    <div 
+    <div
       className="group relative flex flex-col bg-background rounded-none p-4 transition-all duration-700 hover:shadow-2xl hover:shadow-primary/5"
       data-aos="fade-up"
     >
       {/* Boutique Image Container */}
       <div className="relative aspect-[3/4] rounded-none overflow-hidden transition-all duration-700 group-hover:shadow-[0_40px_80px_-20px_rgba(var(--primary-rgb),0.25)] group-hover:-translate-y-4">
-        <Link href={`/product/${product.slug}`} className="relative block h-full w-full">
+        <Link prefetch={true} href={`/product/${product.slug}`} className="relative block h-full w-full">
           {product.images?.length > 1 ? (
             <>
               <Image
@@ -208,7 +208,7 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
 
         {/* Bottom Actions Overlay */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 hidden md:flex items-center gap-3 translate-y-12 opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100 z-10">
-           <TooltipProvider>
+          <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -240,7 +240,7 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
                 <p>Quick View</p>
               </TooltipContent>
             </Tooltip>
-           </TooltipProvider>
+          </TooltipProvider>
         </div>
 
         {/* Admin Float */}
@@ -264,38 +264,38 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
       {/* Boutique Content Section */}
       <div className="pt-6 pb-2 px-2 flex flex-col items-center text-center">
         {(product.numReviews || 0) > 0 && (
-          <div 
+          <div
             className="flex items-center gap-1.5 mb-2"
             aria-label={`${product.ratings || 0} out of 5 stars, ${product.numReviews || 0} reviews`}
           >
-              <RatingStars rating={product.ratings || 0} starClassName="h-3 w-3" />
-              <span className="text-[10px] text-muted-foreground font-black tracking-widest">
-                ({product.numReviews})
-              </span>
+            <RatingStars rating={product.ratings || 0} starClassName="h-3 w-3" />
+            <span className="text-[10px] text-muted-foreground font-black tracking-widest">
+              ({product.numReviews})
+            </span>
           </div>
         )}
-        
-        <Link href={`/product/${product.slug}`} className="block mb-2">
+
+        <Link prefetch={true} href={`/product/${product.slug}`} className="block mb-2">
           <h3 className="text-xl font-serif italic tracking-tight line-clamp-1 hover:text-primary transition-colors">
             {product.name}
           </h3>
         </Link>
 
         <div className="flex flex-col items-center gap-1 mb-4">
-           <div className="flex items-center gap-2">
-              <span className="text-2xl font-black text-primary">
-                ৳{Math.round(product.salePrice ?? product.price)}
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-black text-primary">
+              ৳{Math.round(product.salePrice ?? product.price)}
+            </span>
+            {product.salePrice && (
+              <span className="text-sm text-muted-foreground line-through opacity-50">
+                ৳{Math.round(product.price)}
               </span>
-              {product.salePrice && (
-                <span className="text-sm text-muted-foreground line-through opacity-50">
-                  ৳{Math.round(product.price)}
-                </span>
-              )}
-           </div>
-           {product.isNewArrival && <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-[0.3em]">New Collection</span>}
+            )}
+          </div>
+          {product.isNewArrival && <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-[0.3em]">New Collection</span>}
         </div>
 
-        <Button 
+        <Button
           variant="outline"
           className="w-full h-12 rounded-2xl border-neutral-200 dark:border-neutral-800 hover:bg-primary hover:text-white hover:border-primary transition-all duration-500 font-bold uppercase tracking-[0.2em] text-[10px]"
           onClick={handleAddToCartClick}

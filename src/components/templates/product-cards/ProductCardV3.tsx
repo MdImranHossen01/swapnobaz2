@@ -72,8 +72,8 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
 
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
 
-  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price) 
-    ? Math.round(((product.price - product.salePrice) / product.price) * 100) 
+  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price)
+    ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -114,11 +114,11 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: product._id }),
       });
-      
+
       if (!res.ok) {
         throw new Error('Server error updating wishlist');
       }
-      
+
       toast.success(willBeInWishlist ? 'Saved to wishlist' : 'Removed from wishlist');
     } catch (err) {
       console.error('Wishlist error:', err);
@@ -160,13 +160,13 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
   };
 
   return (
-    <div 
+    <div
       className="group relative flex flex-col bg-background border border-neutral-200 dark:border-neutral-800 transition-all duration-300 hover:border-primary"
       data-aos="fade-up"
     >
       {/* Industrial Visual Container */}
       <div className="relative aspect-square overflow-hidden bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800">
-        <Link href={`/product/${product.slug}`} className="relative block h-full w-full">
+        <Link prefetch={true} href={`/product/${product.slug}`} className="relative block h-full w-full">
           <Image
             src={product.images?.[0] || '/placeholder.png'}
             alt={product.name}
@@ -191,10 +191,10 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
 
         {/* Action Sidebar */}
         <div className="absolute top-0 right-0 h-full hidden md:flex flex-col border-l border-neutral-100 dark:border-neutral-800 translate-x-full group-hover:translate-x-0 transition-transform duration-300 bg-background/80 backdrop-blur-md">
-           <TooltipProvider>
+          <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
+                <button
                   onClick={handleFavorite}
                   className="flex-1 px-3 hover:text-primary transition-colors border-b border-neutral-100 dark:border-neutral-800"
                 >
@@ -208,7 +208,7 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
+                <button
                   onClick={handleQuickView}
                   className="flex-1 px-3 hover:text-primary transition-colors border-b border-neutral-100 dark:border-neutral-800"
                 >
@@ -222,7 +222,7 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
+                <button
                   className="flex-1 px-3 hover:text-primary transition-colors"
                   onClick={(e) => {
                     e.preventDefault();
@@ -236,7 +236,7 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
                 <p>Compare</p>
               </TooltipContent>
             </Tooltip>
-           </TooltipProvider>
+          </TooltipProvider>
         </div>
 
         {/* Admin Overlay */}
@@ -268,13 +268,13 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
             {product.isNewArrival && <span className="text-emerald-500">[ NEW_ARRV ]</span>}
             {product.isFeatured && <span className="text-primary">[ FT_ITEM ]</span>}
           </div>
-          <Link href={`/product/${product.slug}`} className="block">
+          <Link prefetch={true} href={`/product/${product.slug}`} className="block">
             <h3 className="text-base font-bold uppercase tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
               {product.name}
             </h3>
           </Link>
           {(product.numReviews || 0) > 0 && (
-            <div 
+            <div
               className="flex items-center gap-1.5 mt-1"
               aria-label={`${product.ratings || 0} out of 5 stars, ${product.numReviews || 0} reviews`}
             >
@@ -286,22 +286,22 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
 
         <div className="flex items-end justify-between">
           <div className="flex flex-col">
-             <span className="text-xs font-mono text-muted-foreground uppercase mb-1">Price_</span>
-             <div className="flex items-center gap-2">
-                <span className="text-xl font-black font-mono text-primary">
-                  ৳{Math.round(product.salePrice ?? product.price)}
+            <span className="text-xs font-mono text-muted-foreground uppercase mb-1">Price_</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-black font-mono text-primary">
+                ৳{Math.round(product.salePrice ?? product.price)}
+              </span>
+              {product.salePrice != null && product.salePrice < product.price && (
+                <span className="text-xs font-mono text-muted-foreground line-through opacity-50">
+                  ৳{Math.round(product.price)}
                 </span>
-                {product.salePrice != null && product.salePrice < product.price && (
-                  <span className="text-xs font-mono text-muted-foreground line-through opacity-50">
-                    ৳{Math.round(product.price)}
-                  </span>
-                )}
-             </div>
+              )}
+            </div>
           </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
+                <Button
                   size="icon"
                   className="rounded-none h-10 w-10 bg-primary hover:bg-primary-foreground hover:text-primary border border-primary transition-all"
                   onClick={handleAddToCartClick}

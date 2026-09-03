@@ -73,8 +73,8 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price) 
-    ? Math.round(((product.price - product.salePrice) / product.price) * 100) 
+  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price)
+    ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -115,11 +115,11 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: product._id }),
       });
-      
+
       if (!res.ok) {
         throw new Error('Server synchronization failed');
       }
-      
+
       toast.success(willBeInWishlist ? 'Added to favorites' : 'Removed from favorites');
     } catch (err) {
       console.error('Wishlist error:', err);
@@ -161,7 +161,7 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
   };
 
   return (
-    <div 
+    <div
       className="group relative flex flex-col bg-transparent"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -169,7 +169,7 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
     >
       {/* Ethereal Floating Image Container */}
       <div className="relative aspect-[3/4] rounded-none overflow-hidden transition-all duration-700 group-hover:shadow-[0_40px_80px_-20px_rgba(var(--primary-rgb),0.25)] group-hover:-translate-y-4">
-        <Link href={`/product/${product.slug}`} className="relative block h-full w-full">
+        <Link prefetch={true} href={`/product/${product.slug}`} className="relative block h-full w-full">
           <Image
             src={product.images?.[0] || '/placeholder.png'}
             alt={product.name}
@@ -189,7 +189,7 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
 
         {/* Action Float Menu */}
         <div className={`absolute bottom-8 right-8 hidden md:flex flex-col gap-3 transition-all duration-500 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-           <TooltipProvider>
+          <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -237,7 +237,7 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
                 <p>Quick View</p>
               </TooltipContent>
             </Tooltip>
-           </TooltipProvider>
+          </TooltipProvider>
         </div>
 
         {/* Admin Quick Access */}
@@ -262,23 +262,23 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
       <div className="pt-8 px-4 space-y-4">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-             <div className="flex items-center gap-2">
-                {product.isNewArrival && <span className="h-1 w-1 rounded-full bg-emerald-500" />}
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground">
-                  {product.isNewArrival ? 'New Season' : 'Essential'}
-                </span>
-             </div>
-             <Link href={`/product/${product.slug}`} className="text-muted-foreground hover:text-primary transition-colors">
-                <ArrowUpRight className="h-4 w-4" />
-             </Link>
+            <div className="flex items-center gap-2">
+              {product.isNewArrival && <span className="h-1 w-1 rounded-full bg-emerald-500" />}
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+                {product.isNewArrival ? 'New Season' : 'Essential'}
+              </span>
+            </div>
+            <Link prefetch={true} href={`/product/${product.slug}`} className="text-muted-foreground hover:text-primary transition-colors">
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
           </div>
-          <Link href={`/product/${product.slug}`} className="block">
+          <Link prefetch={true} href={`/product/${product.slug}`} className="block">
             <h3 className="text-2xl font-bold tracking-tighter leading-tight hover:text-primary transition-colors line-clamp-1">
               {product.name}
             </h3>
           </Link>
           {(product.numReviews || 0) > 0 && (
-            <div 
+            <div
               className="flex items-center gap-2"
               aria-label={`${product.ratings || 0} out of 5 stars, ${product.numReviews || 0} reviews`}
             >
@@ -291,14 +291,14 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
         </div>
 
         <div className="flex items-center gap-4">
-           <span className="text-2xl font-black text-primary">
-             ৳{Math.round(product.salePrice ?? product.price)}
-           </span>
-            {product.salePrice != null && product.salePrice < product.price && (
-              <span className="text-sm text-muted-foreground line-through opacity-40 font-bold">
-                ৳{Math.round(product.price)}
-              </span>
-            )}
+          <span className="text-2xl font-black text-primary">
+            ৳{Math.round(product.salePrice ?? product.price)}
+          </span>
+          {product.salePrice != null && product.salePrice < product.price && (
+            <span className="text-sm text-muted-foreground line-through opacity-40 font-bold">
+              ৳{Math.round(product.price)}
+            </span>
+          )}
         </div>
       </div>
 

@@ -74,8 +74,8 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
   const [isHovered, setIsHovered] = useState(false);
   const quickAddRef = useRef<HTMLButtonElement>(null);
 
-  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price) 
-    ? Math.round(((product.price - product.salePrice) / product.price) * 100) 
+  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price)
+    ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -116,11 +116,11 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: product._id }),
       });
-      
+
       if (!res.ok) {
         throw new Error('Server synchronization failed');
       }
-      
+
       toast.success(willBeInWishlist ? 'Added to wishlist' : 'Removed from wishlist');
     } catch (err) {
       console.error('Wishlist error:', err);
@@ -159,7 +159,7 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
   };
 
   return (
-    <div 
+    <div
       className="group relative flex flex-col bg-background rounded-none border border-border/50 overflow-hidden transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_20px_50px_rgba(255,255,255,0.05)]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -167,7 +167,7 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
     >
       {/* Image Section */}
       <div className="relative aspect-[4/5] overflow-hidden bg-muted/20">
-        <Link href={`/product/${product.slug}`} className="relative block h-full w-full">
+        <Link prefetch={true} href={`/product/${product.slug}`} className="relative block h-full w-full">
           <Image
             src={product.images?.[0] || '/placeholder.png'}
             alt={product.name}
@@ -254,7 +254,7 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
 
         {/* Quick Add Tab */}
         <div className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-500 transform ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
-          <Button 
+          <Button
             ref={quickAddRef}
             className="w-full h-12 rounded-2xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-[1.02] active:scale-95 transition-all"
             onClick={handleAddToCartClick}
@@ -272,14 +272,14 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
             {product.isNewArrival && <span className="text-emerald-500">New Arrival</span>}
             {product.isFeatured && <span className="text-primary">Best Choice</span>}
           </div>
-          <Link href={`/product/${product.slug}`} className="block group/title">
+          <Link prefetch={true} href={`/product/${product.slug}`} className="block group/title">
             <h3 className="text-lg font-bold tracking-tight line-clamp-1 group-hover/title:text-primary transition-colors">
               {product.name}
             </h3>
           </Link>
-          
+
           {(product.numReviews || 0) > 0 && (
-            <div 
+            <div
               className="flex items-center justify-center gap-1.5 mt-1"
               aria-label={`${product.ratings || 0} out of 5 stars, ${product.numReviews || 0} reviews`}
             >
