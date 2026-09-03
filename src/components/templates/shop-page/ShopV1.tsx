@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+﻿import { Suspense } from 'react';
 import ShopClient from './ShopClient';
 import { ShopHeaderSkeleton, ProductCardSkeleton } from '@/components/storefront/Skeletons';
 
@@ -41,4 +41,5 @@ export default function ShopV1({ products, categories, searchParams, style, prod
     </Suspense>
   );
 }
+
 
