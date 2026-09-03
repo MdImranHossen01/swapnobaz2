@@ -2,10 +2,15 @@ import mongoose, { Document, Model, Schema } from 'mongoose';
 
 export interface ILedgerAccount extends Document {
   name: string;
-  code: 'CASH' | 'BANK' | 'AR' | 'AP';
+  code: string;
+  accountNumber?: string;
+  bankName?: string;
+  branchName?: string;
   openingBalance: number;
   currentBalance: number;
   type: 'asset' | 'liability';
+  category: 'Cash' | 'Bank' | 'MFS' | 'Other';
+  description?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -13,10 +18,15 @@ export interface ILedgerAccount extends Document {
 const LedgerAccountSchema: Schema<ILedgerAccount> = new Schema(
   {
     name: { type: String, required: true },
-    code: { type: String, required: true, unique: true, enum: ['CASH', 'BANK', 'AR', 'AP'] },
+    code: { type: String, required: true, unique: true },
+    accountNumber: { type: String },
+    bankName: { type: String },
+    branchName: { type: String },
     openingBalance: { type: Number, default: 0 },
     currentBalance: { type: Number, default: 0 },
     type: { type: String, default: 'asset', enum: ['asset', 'liability'] },
+    category: { type: String, default: 'Bank', enum: ['Cash', 'Bank', 'MFS', 'Other'] },
+    description: { type: String },
   },
   { timestamps: true }
 );

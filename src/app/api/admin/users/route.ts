@@ -17,10 +17,14 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.max(1, parseInt(searchParams.get('limit') || '20'));
     const search = searchParams.get('search') || '';
+    const roleParam = searchParams.get('role');
 
     await connectToDatabase();
 
     const matchQuery: any = { role: { $ne: 'super_admin' as const } };
+    if (roleParam && roleParam !== 'all' && roleParam !== 'super_admin') {
+      matchQuery.role = { $eq: roleParam, $ne: 'super_admin' as const };
+    }
     if (search) {
       matchQuery.$or = [
         { name: { $regex: search, $options: 'i' } },

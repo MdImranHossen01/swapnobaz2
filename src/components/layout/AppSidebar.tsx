@@ -15,7 +15,10 @@ import {
   Megaphone,
   Store,
   Mail,
-  CreditCard
+  CreditCard,
+  BarChart3,
+  Truck,
+  Landmark
 } from "lucide-react"
 import { Logo } from "@/components/ui/logo"
 
@@ -107,6 +110,13 @@ const data = {
           title: "Client Bills",
           url: "/admin/bills",
         },
+      ],
+    },
+    {
+      title: "Suppliers & Purchases",
+      url: "#",
+      icon: Truck,
+      items: [
         {
           title: "Suppliers / Vendors",
           url: "/admin/suppliers",
@@ -115,13 +125,110 @@ const data = {
           title: "Supplier Bills",
           url: "/admin/supplier-bills",
         },
+      ],
+    },
+    {
+      title: "Ledger & Accounting",
+      url: "#",
+      icon: CreditCard,
+      items: [
+        {
+          title: "All Accounts",
+          url: "/admin/accounts",
+        },
+        {
+          title: "Add Account",
+          url: "/admin/accounts/new",
+        },
         {
           title: "Expenses & Incomes",
           url: "/admin/expenses-incomes",
         },
         {
+          title: "Add New Entry",
+          url: "/admin/expenses-incomes?action=new",
+        },
+        {
+          title: "Category",
+          url: "/admin/expenses-incomes/categories",
+        },
+        {
           title: "Accounts Ledger",
           url: "/admin/ledger",
+        },
+        {
+          title: "Account Payable",
+          url: "/admin/ledger/payable",
+        },
+      ],
+    },
+    {
+      title: "Loan",
+      url: "#",
+      icon: Landmark,
+      items: [
+        {
+          title: "Add Loan Provider",
+          url: "/admin/loans/providers/new",
+        },
+        {
+          title: "All Loan Providers",
+          url: "/admin/loans/providers",
+        },
+        {
+          title: "All Loans",
+          url: "/admin/loans",
+        },
+        {
+          title: "Upcoming Payable",
+          url: "/admin/loans/upcoming",
+        },
+      ],
+    },
+    {
+      title: "Reports & Analytics",
+      url: "#",
+      icon: BarChart3,
+      items: [
+        {
+          title: "Daily Report",
+          url: "/admin/reports/daily",
+        },
+        {
+          title: "Monthly Report",
+          url: "/admin/reports/monthly",
+        },
+        {
+          title: "Order Profit Report",
+          url: "/admin/reports/order-profit",
+        },
+        {
+          title: "Item Profit Report",
+          url: "/admin/reports/item-profit",
+        },
+        {
+          title: "Top & Low Sales",
+          url: "/admin/reports/product-sales",
+        },
+        {
+          title: "Reseller Sales",
+          url: "/admin/reports/reseller-sales",
+        },
+        {
+          title: "Reseller Commission",
+          url: "/admin/reports/reseller-commission",
+        },
+        {
+          title: "Brand Wise Sales",
+          url: "/admin/reports/brand-sales",
+        },
+        {
+          title: "Purchase Report",
+          url: "/admin/reports/purchase",
+        },
+        {
+          title: "Expense Report",
+          url: "/admin/reports/expense",
         },
       ],
     },
@@ -133,6 +240,30 @@ const data = {
         {
           title: "All Users",
           url: "/admin/users",
+        },
+        {
+          title: "Customers",
+          url: "/admin/users?role=user",
+        },
+        {
+          title: "Resellers",
+          url: "/admin/users?role=reseller",
+        },
+        {
+          title: "Suppliers",
+          url: "/admin/users?role=supplier",
+        },
+        {
+          title: "Admins",
+          url: "/admin/users?role=admin",
+        },
+        {
+          title: "Managers",
+          url: "/admin/users?role=manager",
+        },
+        {
+          title: "Moderators",
+          url: "/admin/users?role=moderator",
         },
       ],
     },

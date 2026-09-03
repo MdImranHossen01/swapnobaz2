@@ -69,6 +69,7 @@ interface UserData {
 function UsersContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const roleParam = searchParams.get('role') || 'all';
   const [currentPage, setCurrentPage] = useState(Math.max(1, parseInt(searchParams.get('page') || '1')));
 
   const [users, setUsers] = useState<UserData[]>([]);
@@ -95,7 +96,7 @@ function UsersContent() {
       params.delete('page');
       router.push(`/admin/users?${params.toString()}`);
     }
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, roleParam]);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isAssignAdminOpen, setIsAssignAdminOpen] = useState(false);
   const [adminEmail, setAdminEmail] = useState('');
@@ -107,7 +108,9 @@ function UsersContent() {
   const fetchUsers = async (page = currentPage) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/users?page=${page}&limit=20&search=${debouncedSearchTerm}`);
+      const searchEncoded = encodeURIComponent(debouncedSearchTerm || '');
+      const roleEncoded = encodeURIComponent(roleParam || '');
+      const response = await fetch(`/api/admin/users?page=${page}&limit=20&search=${searchEncoded}&role=${roleEncoded}`);
       if (!response.ok) throw new Error('Failed to fetch users');
       const data = await response.json();
       setUsers(data.users || []);
@@ -123,7 +126,7 @@ function UsersContent() {
 
   useEffect(() => {
     fetchUsers(currentPage);
-  }, [currentPage, debouncedSearchTerm]);
+  }, [currentPage, debouncedSearchTerm, roleParam]);
 
   useEffect(() => {
     const pageFromParams = Math.max(1, parseInt(searchParams.get('page') || '1'));
@@ -243,8 +246,14 @@ function UsersContent() {
     <div className="flex flex-col gap-6 px-0 py-4 md:p-8 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-slate-900">Users Management</h1>
-          <p className="text-muted-foreground text-sm font-medium">Manage and view all registered customers and staff.</p>
+          <h1 className="text-3xl font-black tracking-tighter text-slate-900 capitalize">
+            {roleParam === 'all' ? 'All Users' : roleParam === 'user' ? 'Customers' : `${roleParam}s`} Management
+          </h1>
+          <p className="text-muted-foreground text-sm font-medium">
+            {roleParam === 'all' 
+              ? 'Manage and view all registered customers and staff.' 
+              : `Directory of all registered ${roleParam === 'user' ? 'customers' : roleParam + 's'}.`}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {(isSuperAdmin || (session?.user as any)?.role === 'admin') && (
@@ -257,7 +266,9 @@ function UsersContent() {
             </Button>
           )}
           <div className="bg-primary/10 px-5 py-2.5 rounded-full border border-primary/20">
-            <span className="text-primary font-bold text-sm">{totalCount} Total Users</span>
+            <span className="text-primary font-bold text-sm">
+              {totalCount} {roleParam === 'all' ? 'Total Users' : roleParam === 'user' ? 'Customers' : `${roleParam}s`}
+            </span>
           </div>
         </div>
       </div>
