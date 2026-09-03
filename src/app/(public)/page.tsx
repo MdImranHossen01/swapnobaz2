@@ -108,9 +108,6 @@ const FeaturesSection = dynamic(() => import('@/components/storefront/FeaturesSe
   loading: () => <FeaturesSectionSkeleton />
 });
 
-const LoyaltyBanner = dynamic(() => import('@/components/storefront/LoyaltyBanner').then(mod => mod.LoyaltyBanner), {
-  loading: () => <BannerSkeleton />
-});
 
 const ComboOfferBanner = dynamic(() => import('@/components/storefront/ComboOfferBanner').then(mod => mod.ComboOfferBanner), {
   loading: () => <BannerSkeleton />
@@ -253,8 +250,6 @@ export default async function Home() {
               />
             )}
 
-            {/* 8. Loyalty Promotion */}
-            <LoyaltyBanner settings={data.settings} layout={ui.layout} />
 
             {/* 3. Flash Sale (Timed) */}
             {data.flashSale.length > 0 && (
@@ -335,8 +330,6 @@ export default async function Home() {
             />
           )}
 
-          {/* 8. Loyalty Promotion */}
-          <LoyaltyBanner settings={data.settings} layout={ui.layout} />
 
           {/* 3. Flash Sale (Timed) */}
           {data.flashSale.length > 0 && (
