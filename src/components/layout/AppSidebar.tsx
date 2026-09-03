@@ -69,8 +69,20 @@ const data = {
           url: "/admin/products/new",
         },
         {
+          title: "Upcoming Expire",
+          url: "/admin/upcoming-expiry",
+        },
+        {
+          title: "Low Stock",
+          url: "/admin/low-stock",
+        },
+        {
           title: "Categories",
           url: "/admin/categories",
+        },
+        {
+          title: "Brands",
+          url: "/admin/brands",
         },
       ],
     },

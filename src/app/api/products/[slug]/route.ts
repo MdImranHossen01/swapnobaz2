@@ -34,7 +34,7 @@ export async function GET(
       ? { _id: slug }
       : { slug: slug };
 
-    const product = await Product.findOne(query).populate('categories');
+    const product = await Product.findOne(query).populate('categories').populate('brand');
 
     if (!product) {
       return NextResponse.json({ message: 'Product not found' }, { status: 404 });
@@ -65,7 +65,7 @@ export async function PUT(
     // Whitelist allowed fields to prevent mass-assignment
     const allowedFields = [
       'name', 'slug', 'description', 'price', 'salePrice', 'purchasePrice', 'resellerPrice', 'discountRate',
-      'sku', 'stock', 'categories', 'tags', 'images',
+      'sku', 'stock', 'categories', 'brand', 'tags', 'images', 'batches',
       'attributes', 'variants', 'isFeatured', 'isNewArrival', 'isPublished', 'isShared', 'deliveryCharge'
     ];
     const safeUpdate: any = {};
@@ -99,6 +99,20 @@ export async function PUT(
             salePrice: Number.isFinite(parseFloat(v.salePrice)) ? parseFloat(v.salePrice) : undefined,
             stock: Number.isFinite(parseInt(v.stock, 10)) ? parseInt(v.stock, 10) : 0,
             discountRate: Number.isFinite(parseFloat(v.discountRate)) ? parseFloat(v.discountRate) : undefined,
+            batches: Array.isArray(v.batches) ? v.batches.map((b: any) => ({
+              batchNumber: b.batchNumber,
+              expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
+              stock: Number.isFinite(parseInt(b.stock, 10)) ? parseInt(b.stock, 10) : 0,
+            })) : [],
+          }));
+        }
+
+        // Deep coercion for batches
+        if (key === 'batches' && Array.isArray(value)) {
+          value = value.map((b: any) => ({
+            batchNumber: b.batchNumber,
+            expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
+            stock: Number.isFinite(parseInt(b.stock, 10)) ? parseInt(b.stock, 10) : 0,
           }));
         }
 

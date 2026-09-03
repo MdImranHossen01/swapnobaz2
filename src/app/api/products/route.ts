@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
     const [products, total] = await Promise.all([
       Product.find(query)
         .populate('categories')
+        .populate('brand')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -103,7 +104,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Invalid JSON request body' }, { status: 400 });
     }
 
-    const { name, slug, description, sku, categories, tags, images, attributes, variants, isFeatured, isNewArrival, isPublished, isShared, discountRate } = body;
+    const { name, slug, description, sku, categories, brand, tags, images, attributes, variants, batches, isFeatured, isNewArrival, isPublished, isShared, discountRate } = body;
     let { price, salePrice, purchasePrice, resellerPrice, stock } = body;
 
     // Numeric validation and coercion
@@ -157,7 +158,18 @@ export async function POST(req: NextRequest) {
       resellerPrice: Number.isFinite(parseFloat(v.resellerPrice)) ? parseFloat(v.resellerPrice) : undefined,
       stock: Number.isFinite(parseInt(v.stock, 10)) ? parseInt(v.stock, 10) : 0,
       discountRate: Number.isFinite(parseFloat(v.discountRate)) ? parseFloat(v.discountRate) : undefined,
+      batches: Array.isArray(v.batches) ? v.batches.map((b: any) => ({
+        batchNumber: b.batchNumber,
+        expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
+        stock: Number.isFinite(parseInt(b.stock, 10)) ? parseInt(b.stock, 10) : 0,
+      })) : [],
     }));
+
+    const sanitizedBatches = Array.isArray(batches) ? batches.map((b: any) => ({
+      batchNumber: b.batchNumber,
+      expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
+      stock: Number.isFinite(parseInt(b.stock, 10)) ? parseInt(b.stock, 10) : 0,
+    })) : [];
 
     await connectToDatabase();
 
@@ -183,8 +195,10 @@ export async function POST(req: NextRequest) {
           sku,
           stock: parsedStock,
           categories: categories || [],
+          brand: brand || undefined,
           tags: tags || [],
           images: images || [],
+          batches: sanitizedBatches,
           attributes: attributes || [],
           variants: coercedVariants,
           isFeatured: isFeatured !== undefined ? isFeatured : false,

@@ -99,10 +99,8 @@ export default function HeroV1({ banners, layout }: HeroSliderProps) {
 
   const activeSlides = slides || defaultSlides;
 
-  const isAarongLayout = layout === 'aarong';
-
   return (
-    <div className={`relative w-full ${isAarongLayout ? 'aspect-[21/9] lg:max-h-[calc(100vh-6.5rem)]' : 'h-[65vh] sm:h-[80vh] md:h-[90vh] lg:h-[95vh]'} overflow-hidden bg-muted group`}>
+    <div className="relative w-full aspect-[21/9] max-h-[calc(100vh-80px)] overflow-hidden bg-muted group">
 
       {/* Embla Viewport */}
       <div className="w-full h-full overflow-hidden" ref={emblaRef}>

@@ -51,6 +51,8 @@ const resellerNav = [
       { title: "My Store Products", url: "/reseller/products" },
       { title: "Add Personal Product", url: "/reseller/products/new" },
       { title: "Source B2B Products", url: "/reseller/products/source" },
+      { title: "Upcoming Expire", url: "/reseller/upcoming-expiry" },
+      { title: "Low Stock", url: "/reseller/low-stock" },
     ],
   },
   {

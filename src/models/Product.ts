@@ -13,8 +13,14 @@ export interface IProduct extends Document {
   sku: string;
   stock: number;
   categories: mongoose.Types.ObjectId[];
+  brand?: mongoose.Types.ObjectId;
   tags: string[];
   images: string[];
+  batches?: {
+    batchNumber: string;
+    expiryDate?: Date;
+    stock: number;
+  }[];
   attributes: {
     key: string;
     value: string;
@@ -32,6 +38,11 @@ export interface IProduct extends Document {
     sku?: string;
     image?: string;
     images?: string[];
+    batches?: {
+      batchNumber: string;
+      expiryDate?: Date;
+      stock: number;
+    }[];
   }[];
   isFeatured: boolean;
   isNewArrival: boolean;
@@ -77,8 +88,16 @@ const ProductSchema: Schema<IProduct> = new Schema(
     },
     stock: { type: Number, required: true, default: 0, min: [0, 'Stock cannot be negative'] },
     categories: [{ type: Schema.Types.ObjectId, ref: 'Category' }],
+    brand: { type: Schema.Types.ObjectId, ref: 'Brand' },
     tags: [{ type: String }],
     images: [{ type: String }],
+    batches: [
+      {
+        batchNumber: { type: String, required: true },
+        expiryDate: { type: Date },
+        stock: { type: Number, default: 0 },
+      },
+    ],
     attributes: [
       {
         key: { type: String },
@@ -98,6 +117,13 @@ const ProductSchema: Schema<IProduct> = new Schema(
         sku: { type: String },
         image: { type: String },
         images: [{ type: String }],
+        batches: [
+          {
+            batchNumber: { type: String },
+            expiryDate: { type: Date },
+            stock: { type: Number, default: 0 },
+          },
+        ],
       },
     ],
     isFeatured: { type: Boolean, default: false },

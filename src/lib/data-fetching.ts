@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { unstable_cache } from 'next/cache';
 import connectToDatabase from './db';
 import Product from '@/models/Product';
@@ -9,6 +10,8 @@ import GlobalSettings from '@/models/GlobalSettings';
 import Coupon from '@/models/Coupon';
 import Order from '@/models/Order';
 
+import Brand from '@/models/Brand';
+
 // Helper to serialize MongoDB data
 const serialize = (data: any) => JSON.parse(JSON.stringify(data));
 
@@ -18,6 +21,7 @@ const serialize = (data: any) => JSON.parse(JSON.stringify(data));
 export const CACHE_TAGS = {
   products: 'products',
   categories: 'categories',
+  brands: 'brands',
   banners: 'banners',
   blogs: 'blogs',
   faqs: 'faqs',
@@ -153,6 +157,22 @@ export const getCachedCategories = () => {
     },
     ['categories-list'],
     { revalidate: 31536000, tags: [CACHE_TAGS.categories] }
+  )();
+};
+
+// --- BRANDS ---
+
+export const getCachedBrands = () => {
+  return unstable_cache(
+    async () => {
+      await connectToDatabase();
+      const brands = await Brand.find({ isActive: true })
+        .sort({ name: 1 })
+        .lean();
+      return serialize(brands);
+    },
+    ['brands-list'],
+    { revalidate: 31536000, tags: [CACHE_TAGS.brands] }
   )();
 };
 

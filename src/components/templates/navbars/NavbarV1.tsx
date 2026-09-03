@@ -54,7 +54,7 @@ const navItems = [
   { href: '/contact', label: 'Contact' },
 ];
 
-export default function NavbarV1() {
+export default function NavbarV1({ initialCategories = [], initialBrands = [] }: { initialCategories?: any[]; initialBrands?: any[] }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,7 +76,8 @@ export default function NavbarV1() {
   const wishlistCount = wishlistItems.length;
   const settings = useSettings();
 
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>(initialCategories);
+  const [brands, setBrands] = useState<any[]>(initialBrands);
   const [profile, setProfile] = useState<any>(null);
 
   // Monitor scroll for sticky style transitions with rock-solid hysteresis
@@ -100,25 +101,38 @@ export default function NavbarV1() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch categories
+  // Sync / Re-fetch categories & brands in background if needed
   useEffect(() => {
+    if (initialCategories.length > 0) {
+      setCategories(initialCategories);
+    }
+    if (initialBrands.length > 0) {
+      setBrands(initialBrands);
+    }
     const controller = new AbortController();
-    async function fetchCats() {
+    async function fetchData() {
       try {
-        const res = await fetch('/api/categories', { signal: controller.signal });
-        if (res.ok) {
-          const data = await res.json();
+        const [catsRes, brandsRes] = await Promise.all([
+          fetch('/api/categories', { signal: controller.signal }),
+          fetch('/api/brands?all=true', { signal: controller.signal })
+        ]);
+        if (catsRes.ok) {
+          const data = await catsRes.json();
           setCategories(data.filter((c: any) => c.isActive));
+        }
+        if (brandsRes.ok) {
+          const brandData = await brandsRes.json();
+          setBrands(brandData.filter((b: any) => b.isActive));
         }
       } catch (e: any) {
         if (e.name !== 'AbortError') {
-          console.error('Failed to fetch categories', e);
+          console.error('Failed to fetch categories/brands', e);
         }
       }
     }
-    fetchCats();
+    fetchData();
     return () => controller.abort();
-  }, []);
+  }, [initialCategories, initialBrands]);
 
   // Fetch profile
   useEffect(() => {
@@ -185,6 +199,8 @@ export default function NavbarV1() {
 
   // Reverse the main categories so they appear in chronological order (Women, Men, Kids', Home Décor...)
   const mainCategories = categories.filter(c => !getParentId(c)).reverse();
+  const visibleMainCategories = mainCategories.slice(0, 8);
+  const moreMainCategories = mainCategories.slice(8);
 
   const getSubcategories = (catId: string) => {
     return categories.filter(c => getParentId(c) === catId);
@@ -338,11 +354,11 @@ export default function NavbarV1() {
     <>
       {/* ── Navbar Wrapper ── */}
       <header className={`sticky top-0 z-50 w-full transition-all duration-300 border-b border-muted/30 lg:border-b-0 ${isScrolled
-        ? 'bg-background/95 backdrop-blur-md shadow-md lg:border-b lg:border-border/30 lg:py-2'
-        : 'bg-background lg:py-3'
+        ? 'bg-background/95 backdrop-blur-md shadow-md lg:border-b lg:border-border/30 lg:py-1'
+        : 'bg-background lg:py-1.5'
         }`}>
         <div className="w-full px-2 lg:px-6 relative">
-          
+
           {/* ── Mobile Layout (Single Row) — V1 Style ── */}
           <div className="relative flex h-14 items-center justify-between px-1 lg:hidden">
 
@@ -354,72 +370,8 @@ export default function NavbarV1() {
                   <span className="sr-only">Toggle mobile menu</span>
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] sm:w-[350px] p-6 overflow-y-auto bg-background text-foreground border-r border-border">
-                  <div className="mb-2">
+                  <div className="mb-4">
                     <Logo onClick={() => setMobileOpen(false)} />
-                  </div>
-
-                  {/* Mobile Search Control inside Sheet */}
-                  <div className="my-3">
-                    <form
-                      onSubmit={(e) => {
-                        handleSearchSubmit(e);
-                        setMobileOpen(false);
-                      }}
-                      className="relative flex items-center"
-                    >
-                      <input
-                        type="text"
-                        placeholder={isListening ? "Listening..." : "Search products..."}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full h-9 pl-9 pr-8 text-xs bg-muted/50 border border-border/70 focus:border-primary focus:bg-background outline-none rounded-full transition-all"
-                      />
-                      <Search className="absolute left-3 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-
-                      <button
-                        type="button"
-                        onClick={handleVoiceSearch}
-                        aria-label="Voice Search"
-                        className={`absolute right-2.5 p-1 rounded-full text-muted-foreground hover:text-primary transition-colors ${isListening ? 'text-primary animate-pulse bg-primary/10' : ''}`}
-                      >
-                        {isListening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
-                      </button>
-                    </form>
-
-                    {/* Live search results in mobile sheet */}
-                    {showDropdown && liveResults.length > 0 && (
-                      <div className="mt-2 bg-background border border-border shadow-lg rounded-none overflow-hidden divide-y divide-border/60 max-h-48 overflow-y-auto">
-                        {liveResults.slice(0, 4).map((prod) => (
-                          <Link
-                            key={prod._id}
-                            href={`/product/${prod.slug}`}
-                            onClick={() => {
-                              handleResultClick();
-                              setMobileOpen(false);
-                            }}
-                            className="flex items-center gap-2.5 p-2 hover:bg-muted/40 transition-colors"
-                          >
-                            <div className="relative h-8 w-8 flex-shrink-0 bg-muted">
-                              <Image
-                                src={prod.images?.[0] || '/placeholder.png'}
-                                alt={prod.name}
-                                fill
-                                sizes="32px"
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h5 className="text-[11px] font-bold text-foreground truncate uppercase tracking-wide">
-                                {prod.name}
-                              </h5>
-                              <p className="text-[10px] font-black text-primary">
-                                ৳ {(prod.salePrice ?? prod.price).toLocaleString()}
-                              </p>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
                   <nav className="flex flex-col gap-6">
@@ -488,6 +440,31 @@ export default function NavbarV1() {
                                         </Accordion>
                                       );
                                     })}
+                                  </AccordionContent>
+                                </AccordionItem>
+                              </Accordion>
+                            )}
+
+                            {/* Insert Brands Accordion after Categories (index 0) */}
+                            {index === 0 && (
+                              <Accordion type="single" collapsible>
+                                <AccordionItem value="brands" className="border-none">
+                                  <AccordionTrigger className="py-2 hover:no-underline uppercase text-[12px] font-bold tracking-[0.2em] text-left">Brands</AccordionTrigger>
+                                  <AccordionContent className="pt-2 pl-4 flex flex-col gap-3">
+                                    {brands.length > 0 ? (
+                                      brands.map((b) => (
+                                        <Link
+                                          key={b._id}
+                                          href={`/shop?brand=${b.slug || b.name}`}
+                                          onClick={() => setMobileOpen(false)}
+                                          className="hover:text-primary text-[11px] font-bold uppercase tracking-[0.1em]"
+                                        >
+                                          {b.name}
+                                        </Link>
+                                      ))
+                                    ) : (
+                                      <span className="text-[11px] text-muted-foreground italic">No brands available</span>
+                                    )}
                                   </AccordionContent>
                                 </AccordionItem>
                               </Accordion>
@@ -658,8 +635,9 @@ export default function NavbarV1() {
 
               {/* Center: Category Navigation Menu Tabs */}
               <div className="flex-1 flex justify-center min-w-0">
-                <nav className="flex items-center gap-5 xl:gap-7 flex-nowrap overflow-x-auto">
-                  {mainCategories.map((cat) => {
+                <nav className="flex items-center gap-3.5 xl:gap-4 flex-nowrap">
+                  {/* 1. Main Categories (First 8) */}
+                  {visibleMainCategories.map((cat) => {
                     const subs = getSubcategories(cat._id);
                     return (
                       <div
@@ -671,7 +649,7 @@ export default function NavbarV1() {
                         <Link
                           href={`/shop?category=${cat.slug}`}
                           onClick={handleCloseMegaMenu}
-                          className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center whitespace-nowrap"
+                          className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.1em] text-foreground/85 hover:text-primary transition-colors flex items-center whitespace-nowrap"
                         >
                           {cat.name}
                         </Link>
@@ -734,6 +712,97 @@ export default function NavbarV1() {
                       </div>
                     );
                   })}
+
+                  {/* 2. More Categories Dropdown (Visible only when categories > 8) */}
+                  {moreMainCategories.length > 0 && (
+                    <div
+                      className="py-1 relative group/more"
+                      onMouseEnter={() => handleMegaMenuEnter('more_categories')}
+                      onMouseLeave={handleMegaMenuLeave}
+                    >
+                      <button
+                        type="button"
+                        className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                      >
+                        More <ChevronDown className="h-3 w-3 transition-transform group-hover/more:rotate-180" />
+                      </button>
+
+                      {megaMenuHovered === 'more_categories' && (
+                        <div
+                          onMouseEnter={() => handleMegaMenuEnter('more_categories')}
+                          onMouseLeave={handleMegaMenuLeave}
+                          className="absolute top-full right-0 mt-1 w-64 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                        >
+                          {moreMainCategories.map((mCat) => (
+                            <Link
+                              key={mCat._id}
+                              href={`/shop?category=${mCat.slug}`}
+                              onClick={handleCloseMegaMenu}
+                              className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-muted/60 hover:text-primary rounded-lg transition-colors flex items-center justify-between"
+                            >
+                              <span>{mCat.name}</span>
+                              <span className="text-[10px] text-muted-foreground font-normal">Explore →</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 3. Brands Tab with Dropdown */}
+                  <div
+                    className="py-1 relative group/brand"
+                    onMouseEnter={() => handleMegaMenuEnter('brands_menu')}
+                    onMouseLeave={handleMegaMenuLeave}
+                  >
+                    <Link
+                      href="/shop"
+                      onClick={handleCloseMegaMenu}
+                      className="text-[12px] xl:text-[13px] font-semibold uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap"
+                    >
+                      Brand <ChevronDown className="h-3 w-3 transition-transform group-hover/brand:rotate-180" />
+                    </Link>
+
+                    {megaMenuHovered === 'brands_menu' && (
+                      <div
+                        onMouseEnter={() => handleMegaMenuEnter('brands_menu')}
+                        onMouseLeave={handleMegaMenuLeave}
+                        className="absolute top-full left-0 mt-1 w-60 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150 max-h-72 overflow-y-auto"
+                      >
+                        <div className="text-[10px] font-bold text-muted-foreground uppercase px-2 py-1 border-b border-border/50 mb-1">
+                          Popular Brands
+                        </div>
+                        {brands.length > 0 ? (
+                          brands.map((b) => (
+                            <Link
+                              key={b._id}
+                              href={`/shop?brand=${b.slug || b.name}`}
+                              onClick={handleCloseMegaMenu}
+                              className="px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/60 hover:text-primary rounded-lg transition-colors flex items-center justify-between"
+                            >
+                              <span>{b.name}</span>
+                              <span className="text-[10px] text-muted-foreground font-normal">Explore →</span>
+                            </Link>
+                          ))
+                        ) : (
+                          <div className="px-3 py-2 text-xs text-muted-foreground italic">
+                            No brands added yet
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. Shop Tab */}
+                  <div className="py-1">
+                    <Link
+                      href="/shop"
+                      onClick={handleCloseMegaMenu}
+                      className={`text-[12px] xl:text-[13px] font-semibold uppercase tracking-[0.14em] transition-colors flex items-center whitespace-nowrap ${pathname === '/shop' ? 'text-primary' : 'text-foreground/85 hover:text-primary'}`}
+                    >
+                      Shop
+                    </Link>
+                  </div>
                 </nav>
               </div>
 
@@ -913,16 +982,16 @@ export default function NavbarV1() {
             </div>
           ) : (
             /* 2-Row Default Desktop Layout */
-            <div className="hidden lg:flex gap-3 items-stretch">
-              
-              {/* Logo Image Column (Spanning both rows) */}
-              <div className="flex items-center justify-center border-r border-border/10 pr-3 shrink-0 py-1">
-                <Link href="/" className="relative block w-[85px] h-[85px] transition-transform hover:scale-105">
+            <div className="hidden lg:flex gap-3 items-center">
+
+              {/* Logo Image Column */}
+              <div className="flex items-center justify-center border-r border-border/10 pr-3 shrink-0">
+                <Link href="/" className="relative block w-[64px] h-[64px] transition-transform hover:scale-105">
                   <Image
                     src={settings.logoUrl || "/logo.webp"}
                     alt={`${settings.brandName || "Swapnobaz"} Logo`}
                     fill
-                    sizes="85px"
+                    sizes="64px"
                     className="object-contain"
                     priority
                   />
@@ -930,17 +999,17 @@ export default function NavbarV1() {
               </div>
 
               {/* Content Column (Row 1 and Row 2) */}
-              <div className="flex-1 flex flex-col justify-between py-1">
-                
+              <div className="flex-1 flex flex-col justify-center gap-1">
+
                 {/* Row 1: Logo Brand Name, Sub-Brands, Utilities */}
-                <div className="flex items-center justify-between w-full border-b border-border/10 pb-2 gap-4">
+                <div className="flex items-center justify-between w-full border-b border-border/10 pb-1 gap-4">
                   {/* Logo Brand Name Text Only */}
-                  <Link href="/" className="text-xl xl:text-2xl uppercase text-foreground transition-colors hover:text-primary font-black tracking-tighter font-logo shrink-0">
+                  <Link href="/" className="text-lg xl:text-xl uppercase text-foreground transition-colors hover:text-primary font-black tracking-tighter font-logo shrink-0">
                     {settings.brandName || "SWAPNOBAZ"}
                   </Link>
 
                   {/* Right-side Utilities */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 xl:gap-3">
                     {/* Search Bar Container */}
                     <div ref={searchContainerRef} className="relative">
                       <form onSubmit={handleSearchSubmit} className="relative flex items-center">
@@ -949,17 +1018,17 @@ export default function NavbarV1() {
                           placeholder={isListening ? "Listening..." : "Search products..."}
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-48 xl:w-60 h-9 pl-9 pr-8 text-xs bg-muted/40 border border-border/70 focus:border-primary focus:bg-background outline-none rounded-full transition-all"
+                          className="w-44 xl:w-56 h-8 pl-8 pr-7 text-xs bg-muted/40 border border-border/70 focus:border-primary focus:bg-background outline-none rounded-full transition-all"
                         />
-                        <Search className="absolute left-3 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                        <Search className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
 
                         <button
                           type="button"
                           onClick={handleVoiceSearch}
                           aria-label="Voice Search"
-                          className={`absolute right-2.5 p-1 rounded-full text-muted-foreground hover:text-primary transition-colors ${isListening ? 'text-primary animate-pulse bg-primary/10' : ''}`}
+                          className={`absolute right-2 p-0.5 rounded-full text-muted-foreground hover:text-primary transition-colors ${isListening ? 'text-primary animate-pulse bg-primary/10' : ''}`}
                         >
-                          {isListening ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                          {isListening ? <MicOff className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
                         </button>
                       </form>
 
@@ -1009,10 +1078,10 @@ export default function NavbarV1() {
                     </div>
 
                     {/* Wishlist Link */}
-                    <Link href="/dashboard/wishlist" className="relative p-2 text-foreground hover:text-primary transition-colors">
-                      <Heart className="h-5 w-5" />
+                    <Link href="/dashboard/wishlist" className="relative p-1.5 text-foreground hover:text-primary transition-colors">
+                      <Heart className="h-4 w-4" />
                       {wishlistCount > 0 && (
-                        <span className="absolute top-0 right-0 h-4 min-w-[16px] px-1 bg-primary text-primary-foreground text-[9px] font-black rounded-full flex items-center justify-center animate-bounce shadow-md">
+                        <span className="absolute top-0 right-0 h-3.5 min-w-[14px] px-0.5 bg-primary text-primary-foreground text-[8px] font-black rounded-full flex items-center justify-center animate-bounce shadow-md">
                           {wishlistCount}
                         </span>
                       )}
@@ -1020,10 +1089,10 @@ export default function NavbarV1() {
 
                     {/* Cart Drawer */}
                     <CartDrawer>
-                      <button className="relative p-2 text-foreground hover:text-primary transition-colors">
-                        <ShoppingCart className="h-5 w-5" />
+                      <button className="relative p-1.5 text-foreground hover:text-primary transition-colors">
+                        <ShoppingCart className="h-4 w-4" />
                         {cartCount > 0 && (
-                          <span className="absolute top-0 right-0 h-4 min-w-[16px] px-1 bg-primary text-primary-foreground text-[9px] font-black rounded-full flex items-center justify-center shadow-md">
+                          <span className="absolute top-0 right-0 h-3.5 min-w-[14px] px-0.5 bg-primary text-primary-foreground text-[8px] font-black rounded-full flex items-center justify-center shadow-md">
                             {cartCount}
                           </span>
                         )}
@@ -1040,15 +1109,15 @@ export default function NavbarV1() {
                           <div className="relative group/avatar">
                             <DropdownMenuTrigger asChild>
                               <button
-                                className="flex items-center px-2 py-1.5 rounded-xl transition-all cursor-pointer outline-none hover:scale-110"
+                                className="flex items-center p-1 rounded-xl transition-all cursor-pointer outline-none hover:scale-105"
                                 aria-label="Account menu"
                               >
-                                <div className="h-8 w-8 rounded-full border-2 border-primary/20 overflow-hidden group-hover/avatar:border-primary transition-all">
+                                <div className="h-7 w-7 rounded-full border-2 border-primary/20 overflow-hidden group-hover/avatar:border-primary transition-all">
                                   <Image
                                     src={session.user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || 'U')}`}
                                     alt={session.user?.name || 'User'}
-                                    width={32}
-                                    height={32}
+                                    width={28}
+                                    height={28}
                                     className="h-full w-full object-cover"
                                   />
                                 </div>
@@ -1127,10 +1196,10 @@ export default function NavbarV1() {
                       ) : (
                         <Link
                           href="/login"
-                          className="h-10 w-10 flex items-center justify-center rounded-xl transition-all cursor-pointer hover:text-primary"
+                          className="h-8 w-8 flex items-center justify-center rounded-xl transition-all cursor-pointer hover:text-primary"
                           aria-label="Log in"
                         >
-                          <User className="h-5 w-5" />
+                          <User className="h-4 w-4" />
                         </Link>
                       )}
                     </div>
@@ -1138,9 +1207,10 @@ export default function NavbarV1() {
                 </div>
 
                 {/* Row 2: Category Navigation Menu */}
-                <div className="flex pt-1.5 pb-1">
-                  <nav className="flex items-center gap-6 xl:gap-8">
-                    {mainCategories.map((cat) => {
+                <div className="flex pt-0.5 pb-0.5">
+                  <nav className="flex items-center gap-3.5 xl:gap-4 flex-nowrap">
+                    {/* 1. Main Categories (First 8) */}
+                    {visibleMainCategories.map((cat) => {
                       const subs = getSubcategories(cat._id);
                       return (
                         <div
@@ -1152,7 +1222,7 @@ export default function NavbarV1() {
                           <Link
                             href={`/shop?category=${cat.slug}`}
                             onClick={handleCloseMegaMenu}
-                            className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center whitespace-nowrap"
+                            className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.1em] text-foreground/85 hover:text-primary transition-colors flex items-center whitespace-nowrap"
                           >
                             {cat.name}
                           </Link>
@@ -1215,6 +1285,97 @@ export default function NavbarV1() {
                         </div>
                       );
                     })}
+
+                    {/* 2. More Categories Dropdown (Visible only when categories > 8) */}
+                    {moreMainCategories.length > 0 && (
+                      <div
+                        className="py-1 relative group/more"
+                        onMouseEnter={() => handleMegaMenuEnter('more_categories')}
+                        onMouseLeave={handleMegaMenuLeave}
+                      >
+                        <button
+                          type="button"
+                          className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                        >
+                          More <ChevronDown className="h-3 w-3 transition-transform group-hover/more:rotate-180" />
+                        </button>
+
+                        {megaMenuHovered === 'more_categories' && (
+                          <div
+                            onMouseEnter={() => handleMegaMenuEnter('more_categories')}
+                            onMouseLeave={handleMegaMenuLeave}
+                            className="absolute top-full right-0 mt-1 w-64 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+                          >
+                            {moreMainCategories.map((mCat) => (
+                              <Link
+                                key={mCat._id}
+                                href={`/shop?category=${mCat.slug}`}
+                                onClick={handleCloseMegaMenu}
+                                className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-muted/60 hover:text-primary rounded-lg transition-colors flex items-center justify-between"
+                              >
+                                <span>{mCat.name}</span>
+                                <span className="text-[10px] text-muted-foreground font-normal">Explore →</span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 3. Brands Tab with Dropdown */}
+                    <div
+                      className="py-1 relative group/brand"
+                      onMouseEnter={() => handleMegaMenuEnter('brands_menu')}
+                      onMouseLeave={handleMegaMenuLeave}
+                    >
+                      <Link
+                        href="/shop"
+                        onClick={handleCloseMegaMenu}
+                        className="text-[12px] xl:text-[13px] font-semibold uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap"
+                      >
+                        Brand <ChevronDown className="h-3 w-3 transition-transform group-hover/brand:rotate-180" />
+                      </Link>
+
+                      {megaMenuHovered === 'brands_menu' && (
+                        <div
+                          onMouseEnter={() => handleMegaMenuEnter('brands_menu')}
+                          onMouseLeave={handleMegaMenuLeave}
+                          className="absolute top-full left-0 mt-1 w-60 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150 max-h-72 overflow-y-auto"
+                        >
+                          <div className="text-[10px] font-bold text-muted-foreground uppercase px-2 py-1 border-b border-border/50 mb-1">
+                            Popular Brands
+                          </div>
+                          {brands.length > 0 ? (
+                            brands.map((b) => (
+                              <Link
+                                key={b._id}
+                                href={`/shop?brand=${b.slug || b.name}`}
+                                onClick={handleCloseMegaMenu}
+                                className="px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted/60 hover:text-primary rounded-lg transition-colors flex items-center justify-between"
+                              >
+                                <span>{b.name}</span>
+                                <span className="text-[10px] text-muted-foreground font-normal">Explore →</span>
+                              </Link>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-xs text-muted-foreground italic">
+                              No brands added yet
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 4. Shop Tab */}
+                    <div className="py-1">
+                      <Link
+                        href="/shop"
+                        onClick={handleCloseMegaMenu}
+                        className={`text-[12px] xl:text-[13px] font-semibold uppercase tracking-[0.14em] transition-colors flex items-center whitespace-nowrap ${pathname === '/shop' ? 'text-primary' : 'text-foreground/85 hover:text-primary'}`}
+                      >
+                        Shop
+                      </Link>
+                    </div>
                   </nav>
                 </div>
 

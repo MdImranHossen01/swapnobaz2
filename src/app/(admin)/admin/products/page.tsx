@@ -31,6 +31,8 @@ interface AdminProduct {
   isPublished: boolean;
   images?: string[];
   slug: string;
+  brand?: any;
+  batches?: any[];
   views?: number;
   totalSales?: number;
   description?: string;
@@ -409,14 +411,21 @@ function ProductsContent() {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium max-w-[250px] truncate">
-                    <Link 
-                      href={`/product/${product.slug}`} 
-                      target="_blank"
-                      className="hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4"
-                    >
-                      {product.name}
-                    </Link>
+                  <TableCell className="font-medium max-w-[250px]">
+                    <div className="flex flex-col gap-0.5">
+                      <Link 
+                        href={`/product/${product.slug}`} 
+                        target="_blank"
+                        className="hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate font-bold text-sm"
+                      >
+                        {product.name}
+                      </Link>
+                      {product.brand && (
+                        <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
+                          Brand: <span className="text-foreground">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>{product.sku}</TableCell>
                   <TableCell>

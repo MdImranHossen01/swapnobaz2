@@ -1,7 +1,7 @@
-﻿import Navbar from '@/components/layout/Navbar';
+import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Marquee } from '@/components/layout/Marquee';
-import { getCachedSettings } from '@/lib/data-fetching';
+import { getCachedSettings, getCachedCategories, getCachedBrands } from '@/lib/data-fetching';
 import { headers } from 'next/headers';
 import { ScrollToTop } from '@/components/layout/ScrollToTop';
 import { MobileBottomNavbar } from '@/components/layout/MobileBottomNavbar';
@@ -13,10 +13,19 @@ export default async function PublicLayout({ children }: { children: React.React
   const isSuperAdmin = (session?.user as any)?.role === 'super_admin';
 
   let settings = null;
+  let initialCategories: any[] = [];
+  let initialBrands: any[] = [];
   try {
-    settings = await getCachedSettings();
+    const [fetchedSettings, fetchedCats, fetchedBrands] = await Promise.all([
+      getCachedSettings(),
+      getCachedCategories(),
+      getCachedBrands(),
+    ]);
+    settings = fetchedSettings;
+    initialCategories = fetchedCats || [];
+    initialBrands = fetchedBrands || [];
   } catch (error) {
-    console.error('Failed to fetch settings:', error);
+    console.error('Failed to fetch settings/categories/brands:', error);
   }
 
   // Subscription Enforcement Logic
@@ -37,8 +46,7 @@ export default async function PublicLayout({ children }: { children: React.React
   return (
     <>
       {showBlocker && <SubscriptionBlocker brandName={settings?.brandName || 'Swapnobaz'} />}
-      {ui.layout !== 'v2' && <Marquee marqueeText={marqueeText} />}
-      <Navbar style={ui.navbar} />
+      <Navbar style={ui.navbar} initialCategories={initialCategories} initialBrands={initialBrands} />
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
       <Footer style={ui.footer} />
       <ScrollToTop />

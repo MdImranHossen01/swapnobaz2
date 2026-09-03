@@ -38,6 +38,13 @@ import {
   RadioGroup, 
   RadioGroupItem 
 } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { slugify, sanitizeSlugInput } from '@/lib/slugify';
 
 const NovelEditor = dynamic(() => import('@/components/editor/NovelEditor'), {
@@ -50,14 +57,16 @@ const productSchema = z.object({
   slug: z.string().min(3, 'Slug is required'),
   description: z.string().min(10, 'Description is required'),
   tags: z.array(z.string()).default([]),
-  // Price is optional at the top level — required only when no variants exist (validated via superRefine)
+  brand: z.string().optional(),
+  batchNumber: z.string().optional(),
+  expiryDate: z.string().optional(),
   price: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
   purchasePrice: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
   resellerPrice: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
   discountRate: z.union([z.coerce.number().min(0).max(100), z.literal('')]).optional(),
   salePrice: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
   sku: z.string().optional(),
-  stock: z.union([z.coerce.number().int().min(0, 'Stock must be at least 0'), z.literal('')]),
+  stock: z.union([z.coerce.number().int().min(0, 'Stock must be at least 0'), z.literal('')]).optional(),
   categories: z.array(z.string()).min(1, 'Select at least one category'),
   images: z.array(z.string()).default([]),
   isFeatured: z.boolean(),
@@ -74,7 +83,6 @@ const productSchema = z.object({
     images: z.array(z.string()).default([]),
     sizes: z.array(z.object({
       size: z.string().optional(),
-      // Price is optional in schema; required-when-variants logic handled by superRefine
       price: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
       purchasePrice: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
       resellerPrice: z.union([z.coerce.number().min(0), z.literal('')]).optional(),
@@ -85,7 +93,7 @@ const productSchema = z.object({
     })).default([]),
   })).default([]),
 }).superRefine((data, ctx) => {
-  const hasVariants = data.variants && data.variants.length > 0;
+  const hasVariants = data.variants && data.variants.some((v: any) => (v.sizes && v.sizes.length > 0) || (v.images && v.images.length > 0));
 
   // Validation Check: ensure at least one image is uploaded, either in gallery or in a variant
   const hasMainImages = data.images && data.images.length > 0;
@@ -109,21 +117,21 @@ const productSchema = z.object({
       });
     }
     // No variants: main SKU is mandatory
-    if (!data.sku || data.sku.trim().length < 3) {
+    if (!data.sku || data.sku.trim().length < 2) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'SKU is required and must be at least 3 characters',
+        message: 'SKU is required (min 2 chars)',
         path: ['sku'],
       });
     }
   } else {
     // Has variants: each size inside each variant must have a price > 0 and SKU
     data.variants.forEach((variant, vIdx) => {
-      // Each color variant must have at least one image
-      if (!variant.images || variant.images.length === 0) {
+      // Each color variant must have at least one image if variant images are used
+      if (variant.sizes && variant.sizes.length > 0 && (!variant.images || variant.images.length === 0) && !hasMainImages) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Upload at least one image for this color variant',
+          message: 'Upload at least one image for this color variant or in Gallery Images',
           path: ['variants', vIdx, 'images'],
         });
       }
@@ -136,10 +144,10 @@ const productSchema = z.object({
             path: ['variants', vIdx, 'sizes', sIdx, 'price'],
           });
         }
-        if (!size.sku || size.sku.trim().length < 3) {
+        if (!size.sku || size.sku.trim().length < 2) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: 'SKU is required (min 3 chars)',
+            message: 'SKU is required (min 2 chars)',
             path: ['variants', vIdx, 'sizes', sIdx, 'sku'],
           });
         }
@@ -157,6 +165,7 @@ interface ProductFormProps {
 export function ProductForm({ initialData, isReseller = false }: ProductFormProps) {
   const router = useRouter();
   const [categories, setCategories] = useState<any[]>([]);
+  const [brands, setBrands] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const calculateDiscount = (price: number, salePrice?: number) => {
@@ -169,6 +178,16 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     slug: initialData?.slug || '',
     description: initialData?.description || '',
     tags: initialData?.tags || [],
+    brand: initialData?.brand?._id || initialData?.brand || '',
+    batchNumber: initialData?.batches?.[0]?.batchNumber || '',
+    expiryDate: (() => {
+      if (!initialData?.batches?.[0]?.expiryDate) return '';
+      try {
+        return new Date(initialData.batches[0].expiryDate).toISOString().split('T')[0];
+      } catch (e) {
+        return '';
+      }
+    })(),
     price: initialData?.price ?? '',
     purchasePrice: initialData?.purchasePrice ?? '',
     resellerPrice: initialData?.resellerPrice ?? '',
@@ -258,22 +277,26 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     name: "variants"
   });
 
-  // Generation tool removed as variants are now managed directly
-
   useEffect(() => {
-    async function fetchCategories() {
+    async function fetchData() {
       try {
-        const res = await fetch('/api/categories');
-        if (!res.ok) throw new Error('Failed to fetch categories');
-        const data = await res.json();
-        setCategories(Array.isArray(data) ? data : []);
+        const [catsRes, brandsRes] = await Promise.all([
+          fetch('/api/categories'),
+          fetch('/api/brands?all=true')
+        ]);
+        if (catsRes.ok) {
+          const data = await catsRes.json();
+          setCategories(Array.isArray(data) ? data : []);
+        }
+        if (brandsRes.ok) {
+          const brandData = await brandsRes.json();
+          setBrands(Array.isArray(brandData) ? brandData : []);
+        }
       } catch (error) {
-        console.error('Error fetching categories:', error);
-        setCategories([]);
-        toast.error('Failed to load categories');
+        console.error('Error fetching categories/brands:', error);
       }
     }
-    fetchCategories();
+    fetchData();
   }, []);
 
   const nameValue = form.watch('name');
@@ -291,7 +314,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
         flatVariants.push({
           color: cGroup.color || '',
           images: cGroup.images || [],
-          image: cGroup.images?.[0] || '', // Legacy support
+          image: cGroup.images?.[0] || '',
           size: sizeInfo.size || '',
           price: sizeInfo.price === '' ? 0 : Number(sizeInfo.price),
           purchasePrice: sizeInfo.purchasePrice === '' ? undefined : Number(sizeInfo.purchasePrice),
@@ -304,23 +327,67 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
       });
     });
 
-    let finalImages = values.images || [];
-    if (finalImages.length === 0) {
-      const firstVariantWithImages = (values.variants || []).find((v: any) => v.images && v.images.length > 0);
-      if (firstVariantWithImages && firstVariantWithImages.images?.[0]) {
-        finalImages = [firstVariantWithImages.images[0]];
-      }
+    const hasVariants = flatVariants.length > 0;
+    const firstVariant = hasVariants ? flatVariants[0] : null;
+
+    let derivedPrice = values.price === '' ? 0 : Number(values.price);
+    if ((!derivedPrice || derivedPrice <= 0) && firstVariant?.price) {
+      derivedPrice = Number(firstVariant.price);
     }
+
+    let derivedSalePrice = values.salePrice === '' ? undefined : Number(values.salePrice);
+    if (derivedSalePrice === undefined && firstVariant?.salePrice) {
+      derivedSalePrice = Number(firstVariant.salePrice);
+    }
+
+    let derivedPurchasePrice = values.purchasePrice === '' ? undefined : Number(values.purchasePrice);
+    if (derivedPurchasePrice === undefined && firstVariant?.purchasePrice) {
+      derivedPurchasePrice = Number(firstVariant.purchasePrice);
+    }
+
+    let derivedResellerPrice = values.resellerPrice === '' ? undefined : Number(values.resellerPrice);
+    if (derivedResellerPrice === undefined && firstVariant?.resellerPrice) {
+      derivedResellerPrice = Number(firstVariant.resellerPrice);
+    }
+
+    let derivedStock = values.stock === '' ? 0 : Number(values.stock);
+    if (derivedStock === 0 && hasVariants) {
+      derivedStock = flatVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+    }
+
+    let derivedSku = values.sku?.trim() || '';
+    if (!derivedSku && firstVariant?.sku) {
+      derivedSku = firstVariant.sku;
+    } else if (!derivedSku && values.slug) {
+      derivedSku = `${values.slug.toUpperCase()}-MAIN`;
+    }
+
+    let finalImages = values.images || [];
+    if (finalImages.length === 0 && hasVariants) {
+      const allVariantImages = flatVariants.flatMap((v) => (v.images && v.images.length > 0 ? v.images : (v.image ? [v.image] : []))).filter(Boolean);
+      finalImages = Array.from(new Set(allVariantImages));
+    }
+
+    const batches = values.batchNumber
+      ? [{
+          batchNumber: values.batchNumber,
+          expiryDate: values.expiryDate ? new Date(values.expiryDate) : undefined,
+          stock: derivedStock,
+        }]
+      : [];
 
     const cleanValues = {
       ...values,
+      sku: derivedSku,
       images: finalImages,
-      price: values.price === '' ? 0 : Number(values.price),
-      purchasePrice: values.purchasePrice === '' ? undefined : Number(values.purchasePrice),
-      resellerPrice: values.resellerPrice === '' ? undefined : Number(values.resellerPrice),
-      salePrice: values.salePrice === '' ? undefined : Number(values.salePrice),
+      brand: values.brand || undefined,
+      batches,
+      price: derivedPrice,
+      purchasePrice: derivedPurchasePrice,
+      resellerPrice: derivedResellerPrice,
+      salePrice: derivedSalePrice,
       discountRate: values.discountRate === '' || isNaN(Number(values.discountRate)) ? undefined : Number(values.discountRate),
-      stock: values.stock === '' ? 0 : Number(values.stock),
+      stock: derivedStock,
       variants: flatVariants,
     };
 
@@ -462,7 +529,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="slug"
@@ -478,6 +545,34 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                             }}
                           />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="brand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Brand</FormLabel>
+                        <Select
+                          value={field.value || 'none'}
+                          onValueChange={(val) => field.onChange(val === 'none' ? '' : val)}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="h-10">
+                              <SelectValue placeholder="Select a brand (Optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">None / No Brand</SelectItem>
+                            {brands.map((b) => (
+                              <SelectItem key={b._id} value={b._id}>
+                                {b.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -1031,7 +1126,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                     )}
                   />
                 </div>
-                <div className="mt-6">
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                   <FormField
                     control={form.control}
                     name="stock"
@@ -1048,6 +1143,34 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                           />
                         </FormControl>
                         <FormDescription>Physical stock available for sale</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="batchNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Batch Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. BATCH-001" {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormDescription>Identify inventory batch (Optional)</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="expiryDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expiry Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormDescription>Product batch expiration date (Optional)</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
