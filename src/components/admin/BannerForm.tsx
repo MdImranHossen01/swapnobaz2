@@ -50,9 +50,15 @@ type BannerFormValues = z.infer<typeof bannerSchema>;
 
 interface BannerFormProps {
   initialData?: any;
+  apiBase?: string;
+  redirectPath?: string;
 }
 
-export function BannerForm({ initialData }: BannerFormProps) {
+export function BannerForm({ 
+  initialData, 
+  apiBase = '/api/admin/banners', 
+  redirectPath = '/admin/cms/banners' 
+}: BannerFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -73,18 +79,22 @@ export function BannerForm({ initialData }: BannerFormProps) {
   const onSubmit = async (values: BannerFormValues) => {
     setLoading(true);
     try {
-      const url = initialData ? `/api/admin/banners/${initialData._id}` : '/api/admin/banners';
-      const method = initialData ? 'PUT' : 'POST';
+      const isResellerApi = apiBase.includes('/api/reseller/');
+      const url = initialData 
+        ? (isResellerApi ? apiBase : `${apiBase}/${initialData._id}`) 
+        : apiBase;
+      const method = initialData ? (isResellerApi ? 'PATCH' : 'PUT') : 'POST';
+      const payload = initialData && isResellerApi ? { ...values, id: initialData._id } : values;
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         toast.success(`Banner ${initialData ? 'updated' : 'created'} successfully`);
-        router.push('/admin/cms/banners');
+        router.push(redirectPath);
         router.refresh();
       } else {
         const error = await response.json();
