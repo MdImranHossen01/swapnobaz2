@@ -74,18 +74,35 @@ export default async function ResellerStorePage({ params }: Props) {
     }
   };
 
-  const dynamicBanners = [
-    {
-      title: storeName,
-      subtitle: description || `Shop at ${storeName}`,
-      image: logo || undefined,
-      link: '/shop',
-      primaryBtnText: 'সব পণ্য দেখুন',
-      primaryBtnLink: '/shop',
-      secondaryBtnText: `🚚 ঢাকার ভেতরে ৳${deliveryInside} | 📦 ঢাকার বাইরে ৳${deliveryOutside}`,
-      secondaryBtnLink: '/shop'
-    }
-  ];
+  const { default: Banner } = await import('@/models/Banner');
+  const resellerBanners = await Banner.find({
+    resellerId: reseller._id,
+    isActive: true,
+  }).sort({ order: 1, createdAt: -1 }).lean();
+
+  const dynamicBanners = resellerBanners.length > 0
+    ? resellerBanners.map((b: any) => ({
+        title: b.title || storeName,
+        subtitle: description || `Shop at ${storeName}`,
+        image: b.image,
+        link: b.link || b.primaryBtnLink || '/shop',
+        primaryBtnText: b.primaryBtnText || 'সব পণ্য দেখুন',
+        primaryBtnLink: b.link || b.primaryBtnLink || '/shop',
+        secondaryBtnText: `🚚 ঢাকার ভেতরে ৳${deliveryInside} | 📦 ঢাকার বাইরে ৳${deliveryOutside}`,
+        secondaryBtnLink: '/shop'
+      }))
+    : [
+        {
+          title: storeName,
+          subtitle: description || `Shop at ${storeName}`,
+          image: logo || undefined,
+          link: '/shop',
+          primaryBtnText: 'সব পণ্য দেখুন',
+          primaryBtnLink: '/shop',
+          secondaryBtnText: `🚚 ঢাকার ভেতরে ৳${deliveryInside} | 📦 ঢাকার বাইরে ৳${deliveryOutside}`,
+          secondaryBtnLink: '/shop'
+        }
+      ];
 
   const navStyle = reseller.themeOverrides?.navbar || 'v1';
   const footerStyle = reseller.themeOverrides?.footer || 'v1';
