@@ -158,7 +158,7 @@ export default function AdminResellersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>স্টোরের নাম</TableHead>
-                  <TableHead>সাবডোমেন</TableHead>
+                  <TableHead>ডোমেন / সাবডোমেন</TableHead>
                   <TableHead>মালিক</TableHead>
                   <TableHead>কমিশন রেট</TableHead>
                   <TableHead>মোট অর্ডার</TableHead>
@@ -170,22 +170,36 @@ export default function AdminResellersPage() {
               <TableBody>
                 {filtered.map(r => (
                   <TableRow key={r._id}>
-                    <TableCell className="font-bold">{r.storeName}</TableCell>
+                    <TableCell className="font-bold">
+                      <div>
+                        <span>{r.storeName}</span>
+                        {r.description && <p className="text-xs text-muted-foreground line-clamp-1 font-normal">{r.description}</p>}
+                      </div>
+                    </TableCell>
                     <TableCell>
-                      <a
-                        href={`https://${r.subdomain}.swapnobaz.com`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                      >
-                        {r.subdomain}
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                      <div className="space-y-1">
+                        <a
+                          href={`https://${r.subdomain}.swapnobaz.com`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-semibold"
+                        >
+                          {r.subdomain}.swapnobaz.com
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        {r.customDomain && (
+                          <div className="flex items-center gap-1">
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+                              Custom: {r.customDomain}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div>
                         <p className="text-sm font-medium">{r.userId?.name || 'Unknown'}</p>
-                        <p className="text-xs text-muted-foreground">{r.contact?.phone}</p>
+                        <p className="text-xs text-muted-foreground">{r.contact?.phone || r.userId?.email}</p>
                       </div>
                     </TableCell>
                     <TableCell>{r.commissionRate}%</TableCell>
