@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Zap, Award, Wallet, Save, Truck, TrendingUp, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Loader2, Zap, Award, Wallet, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ResellerMarketingPage() {
@@ -28,18 +28,6 @@ export default function ResellerMarketingPage() {
     rocketNumber: '', rocketActive: false,
     insideDhaka: 60, outsideDhaka: 120,
     paymentInstructions: '',
-  });
-
-  // Courier form state
-  const [courier, setCourier] = useState({
-    activeProvider: 'none',
-    insideDhaka: 60,
-    outsideDhaka: 120,
-    steadfastApiKey: '',
-    steadfastSecretKey: '',
-    pathaoStoreId: '',
-    redxApiKey: '',
-    bdCourierApiKey: '',
   });
 
   // Loyalty form state
@@ -74,16 +62,6 @@ export default function ResellerMarketingPage() {
         insideDhaka: r.deliveryConfig?.insideDhaka ?? 60,
         outsideDhaka: r.deliveryConfig?.outsideDhaka ?? 120,
         paymentInstructions: r.paymentConfig?.instructions || '',
-      });
-      setCourier({
-        activeProvider: r.courierConfig?.activeProvider || 'none',
-        insideDhaka: r.deliveryConfig?.insideDhaka ?? 60,
-        outsideDhaka: r.deliveryConfig?.outsideDhaka ?? 120,
-        steadfastApiKey: r.courierConfig?.steadfast?.apiKey || '',
-        steadfastSecretKey: r.courierConfig?.steadfast?.secretKey || '',
-        pathaoStoreId: r.courierConfig?.pathao?.storeId || '',
-        redxApiKey: r.courierConfig?.redx?.apiKey || '',
-        bdCourierApiKey: r.courierConfig?.bdCourier?.apiKey || '',
       });
       setLoyalty({
         isEnabled: r.loyaltyConfig?.isEnabled ?? false,
@@ -127,11 +105,14 @@ export default function ResellerMarketingPage() {
 
       <Tabs defaultValue="loyalty">
         <TabsList className="flex flex-wrap h-auto gap-1 w-full">
-          <TabsTrigger value="loyalty" className="flex-1 min-w-[90px]">Loyalty</TabsTrigger>
-          <TabsTrigger value="payment" className="flex-1 min-w-[90px]">Payment</TabsTrigger>
-          <TabsTrigger value="courier" className="flex-1 min-w-[90px]">Courier</TabsTrigger>
+          <TabsTrigger value="loyalty" className="flex-1 min-w-[120px]">
+            <Award className="h-4 w-4 mr-1.5 text-primary" /> Loyalty & Rewards
+          </TabsTrigger>
+          <TabsTrigger value="payment" className="flex-1 min-w-[120px]">
+            <Wallet className="h-4 w-4 mr-1.5 text-primary" /> Payment & Delivery Charge
+          </TabsTrigger>
           <TabsTrigger value="meta" className="flex-1 min-w-[150px]">
-            <Zap className="h-3 w-3 mr-1" /> Meta Pixel & Server Track
+            <Zap className="h-4 w-4 mr-1.5 text-primary" /> Meta Pixel & Analytics
           </TabsTrigger>
         </TabsList>
 
@@ -232,134 +213,7 @@ export default function ResellerMarketingPage() {
           </Card>
         </TabsContent>
 
-        {/* COURIER TAB */}
-        <TabsContent value="courier" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Truck className="h-5 w-5 text-primary" /> Courier & Shipping Rules
-              </CardTitle>
-              <CardDescription>Configure courier logistics and delivery charge parameters.</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="md:col-span-1 space-y-4">
-                <div className="space-y-2">
-                  <Label className="font-bold">Active Provider</Label>
-                  <select
-                    value={courier.activeProvider}
-                    onChange={e => setCourier(c => ({ ...c, activeProvider: e.target.value }))}
-                    className="w-full h-12 rounded-xl border px-3 text-sm bg-background font-medium"
-                  >
-                    <option value="none">None</option>
-                    <option value="steadfast">Steadfast</option>
-                    <option value="pathao">Pathao</option>
-                    <option value="redx">RedX</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold">Inside Dhaka (TK)</Label>
-                  <Input
-                    type="number"
-                    value={courier.insideDhaka}
-                    onChange={e => setCourier(c => ({ ...c, insideDhaka: Number(e.target.value) }))}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold">Outside Dhaka (TK)</Label>
-                  <Input
-                    type="number"
-                    value={courier.outsideDhaka}
-                    onChange={e => setCourier(c => ({ ...c, outsideDhaka: Number(e.target.value) }))}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-              </div>
 
-              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-2xl border">
-                <div className="md:col-span-2 font-black text-xs uppercase opacity-50 mb-2">Provider Credentials</div>
-                
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs">Steadfast API Key</Label>
-                  <Input
-                    type="password"
-                    placeholder="Steadfast API Key"
-                    value={courier.steadfastApiKey}
-                    onChange={e => setCourier(c => ({ ...c, steadfastApiKey: e.target.value }))}
-                    className="h-10 rounded-lg border px-3 text-xs"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs">Steadfast Secret Key</Label>
-                  <Input
-                    type="password"
-                    placeholder="Steadfast Secret Key"
-                    value={courier.steadfastSecretKey}
-                    onChange={e => setCourier(c => ({ ...c, steadfastSecretKey: e.target.value }))}
-                    className="h-10 rounded-lg border px-3 text-xs"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs">Pathao Store ID</Label>
-                  <Input
-                    type="text"
-                    placeholder="Pathao Store ID"
-                    value={courier.pathaoStoreId}
-                    onChange={e => setCourier(c => ({ ...c, pathaoStoreId: e.target.value }))}
-                    className="h-10 rounded-lg border px-3 text-xs"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="font-bold text-xs">RedX API Key</Label>
-                  <Input
-                    type="password"
-                    placeholder="RedX API Key"
-                    value={courier.redxApiKey}
-                    onChange={e => setCourier(c => ({ ...c, redxApiKey: e.target.value }))}
-                    className="h-10 rounded-lg border px-3 text-xs"
-                  />
-                </div>
-
-                <div className="md:col-span-2 space-y-2 pt-2 border-t mt-2">
-                  <Label className="font-bold text-xs">BD Courier Fraud Check API Key</Label>
-                  <Input
-                    type="password"
-                    placeholder="BD Courier API Key"
-                    value={courier.bdCourierApiKey}
-                    onChange={e => setCourier(c => ({ ...c, bdCourierApiKey: e.target.value }))}
-                    className="h-10 rounded-lg border px-3 text-xs"
-                  />
-                  <p className="text-[11px] text-muted-foreground">Used for automatic fraud detection & customer delivery success rate checking.</p>
-                </div>
-              </div>
-
-              <div className="md:col-span-3">
-                <Button
-                  onClick={() => save({
-                    courierConfig: {
-                      activeProvider: courier.activeProvider,
-                      steadfast: { apiKey: courier.steadfastApiKey, secretKey: courier.steadfastSecretKey },
-                      pathao: { storeId: courier.pathaoStoreId },
-                      redx: { apiKey: courier.redxApiKey },
-                      bdCourier: { apiKey: courier.bdCourierApiKey },
-                    },
-                    deliveryConfig: {
-                      insideDhaka: courier.insideDhaka,
-                      outsideDhaka: courier.outsideDhaka,
-                    },
-                  })}
-                  disabled={saving}
-                >
-                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  <Save className="mr-2 h-4 w-4" /> Save Courier Settings
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
         {/* META TAB */}
         <TabsContent value="meta" className="mt-4">
