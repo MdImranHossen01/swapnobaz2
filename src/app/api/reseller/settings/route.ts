@@ -114,6 +114,9 @@ export async function PATCH(request: NextRequest) {
     // Loyalty config (full replace)
     if (loyaltyConfig !== undefined) updatePayload.loyaltyConfig = loyaltyConfig;
 
+    // Pickup / Warehouse address (full replace or merge)
+    if (body.pickupAddress !== undefined) updatePayload.pickupAddress = body.pickupAddress;
+
     // Courier config (full replace)
     if (courierConfig !== undefined) updatePayload.courierConfig = courierConfig;
 

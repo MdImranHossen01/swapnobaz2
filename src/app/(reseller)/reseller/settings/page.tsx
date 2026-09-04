@@ -22,6 +22,9 @@ export default function ResellerSettingsPage() {
     metaTitle: '', metaDescription: '',
   });
   const [contact, setContact] = useState({ email: '', phone: '', address: '' });
+  const [pickup, setPickup] = useState({
+    hubName: '', contactPerson: '', phone: '', address: '', district: '', thana: '',
+  });
   const [social, setSocial] = useState({
     facebook: '', instagram: '', tiktok: '', whatsapp: '', youtube: '', twitter: '', linkedin: '',
   });
@@ -43,6 +46,14 @@ export default function ResellerSettingsPage() {
         metaDescription: r.seoConfig?.metaDescription || '',
       });
       setContact({ email: r.contact?.email || '', phone: r.contact?.phone || '', address: r.contact?.address || '' });
+      setPickup({
+        hubName: r.pickupAddress?.hubName || '',
+        contactPerson: r.pickupAddress?.contactPerson || '',
+        phone: r.pickupAddress?.phone || '',
+        address: r.pickupAddress?.address || '',
+        district: r.pickupAddress?.district || '',
+        thana: r.pickupAddress?.thana || '',
+      });
       setSocial({
         facebook: r.socialLinks?.facebook || '',
         instagram: r.socialLinks?.instagram || '',
@@ -91,6 +102,7 @@ export default function ResellerSettingsPage() {
         <TabsList className="flex flex-wrap h-auto gap-1 w-full">
           <TabsTrigger value="general" className="flex-1 min-w-[90px]">General</TabsTrigger>
           <TabsTrigger value="contact" className="flex-1 min-w-[90px]">Contact</TabsTrigger>
+          <TabsTrigger value="pickup" className="flex-1 min-w-[90px] font-semibold text-primary">Warehouse / Pickup</TabsTrigger>
           <TabsTrigger value="social" className="flex-1 min-w-[90px]">Social</TabsTrigger>
           <TabsTrigger value="domain" className="flex-1 min-w-[90px]">Domain</TabsTrigger>
           <TabsTrigger value="security" className="flex-1 min-w-[90px]">Security</TabsTrigger>
@@ -173,6 +185,75 @@ export default function ResellerSettingsPage() {
               <Button onClick={() => save({ contact })} disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <Save className="mr-2 h-4 w-4" /> Save Contact
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Warehouse / Pickup Point Tab */}
+        <TabsContent value="pickup" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">🚚 Warehouse & Courier Pickup Point</CardTitle>
+              <CardDescription>
+                Where Steadfast / Pathao courier delivery riders will pick up your sold products or return parcels.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>Hub / Shop Name</Label>
+                  <Input 
+                    value={pickup.hubName} 
+                    onChange={e => setPickup(p => ({ ...p, hubName: e.target.value }))} 
+                    placeholder="e.g. Barishal Main Warehouse / Outlet" 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Contact Person Name</Label>
+                  <Input 
+                    value={pickup.contactPerson} 
+                    onChange={e => setPickup(p => ({ ...p, contactPerson: e.target.value }))} 
+                    placeholder="e.g. Md. Imran" 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Pickup Contact Phone (Courier Rider Calls here)</Label>
+                  <Input 
+                    value={pickup.phone} 
+                    onChange={e => setPickup(p => ({ ...p, phone: e.target.value }))} 
+                    placeholder="017XXXXXXXX" 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>District / জেলা</Label>
+                  <Input 
+                    value={pickup.district} 
+                    onChange={e => setPickup(p => ({ ...p, district: e.target.value }))} 
+                    placeholder="e.g. Barishal / Barisal" 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Thana / Police Station / থানা</Label>
+                  <Input 
+                    value={pickup.thana} 
+                    onChange={e => setPickup(p => ({ ...p, thana: e.target.value }))} 
+                    placeholder="e.g. Kotwali / Sadar" 
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label>Full Pickup Address (Road, House, Landmark)</Label>
+                <Textarea 
+                  value={pickup.address} 
+                  onChange={e => setPickup(p => ({ ...p, address: e.target.value }))} 
+                  rows={2} 
+                  placeholder="e.g. Holding 124, Rupatoli Bus Stand, Barishal Sadar" 
+                />
+              </div>
+              <Button onClick={() => save({ pickupAddress: pickup })} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Save className="mr-2 h-4 w-4" /> Save Pickup Point
               </Button>
             </CardContent>
           </Card>

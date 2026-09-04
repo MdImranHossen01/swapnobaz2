@@ -18,6 +18,14 @@ export interface IReseller extends Document {
     phone?: string;
     address?: string;
   };
+  pickupAddress?: {
+    hubName?: string;
+    contactPerson?: string;
+    phone?: string;
+    address?: string;
+    district?: string;
+    thana?: string;
+  };
   socialLinks?: {
     facebook?: string;
     instagram?: string;
@@ -109,6 +117,17 @@ const ResellerSchema: Schema<IReseller> = new Schema(
     walletBalance: { type: Number, default: 0, min: 0 },
     pendingBalance: { type: Number, default: 0, min: 0 },
     contact: { type: Object, default: {} },
+    pickupAddress: {
+      type: new Schema({
+        hubName: { type: String, default: '' },
+        contactPerson: { type: String, default: '' },
+        phone: { type: String, default: '' },
+        address: { type: String, default: '' },
+        district: { type: String, default: '' },
+        thana: { type: String, default: '' },
+      }, { _id: false }),
+      default: {},
+    },
     socialLinks: { type: Object, default: {} },
     themeOverrides: { type: Object, default: {} },
     seoConfig: { type: Object, default: {} },
