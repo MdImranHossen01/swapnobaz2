@@ -322,40 +322,102 @@ function DomainTab({ reseller, onSave, saving }: { reseller: any; onSave: (p: an
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Globe className="h-4 w-4 text-primary" /> Domain Configuration</CardTitle>
+        <CardTitle className="flex items-center gap-2"><Globe className="h-5 w-5 text-primary" /> Domain Configuration & Setup</CardTitle>
+        <CardDescription>
+          Connect your free subdomain or link your own custom branded domain (e.g. www.yourbrand.com)
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="space-y-1.5">
-          <Label className="font-semibold">Subdomain</Label>
-          <div className="flex items-center gap-2">
-            <Input value={subdomain} onChange={e => setSubdomain(e.target.value)} placeholder="mystore" className="font-mono" />
-            <span className="text-sm font-semibold text-muted-foreground whitespace-nowrap">.swapnobaz.com</span>
-          </div>
+      <CardContent className="space-y-6">
+        {/* Free Subdomain Section */}
+        <div className="space-y-2 p-4 rounded-xl border bg-muted/20">
+          <Label className="font-bold text-base flex items-center gap-1.5">
+            1. Free Store Subdomain (ফ্রি সাবডোমেন)
+          </Label>
           <p className="text-xs text-muted-foreground">
-            Preview: <a href={`https://${subdomain}.swapnobaz.com`} target="_blank" rel="noreferrer" className="text-primary underline">https://{subdomain || 'yourstore'}.swapnobaz.com</a>
+            আপনার পছন্দের যেকোনো ইউনিক নাম লিখুন, এটি ইনস্ট্যান্ট কাজ করবে:
           </p>
+          <div className="flex items-center gap-2 max-w-md">
+            <Input value={subdomain} onChange={e => setSubdomain(e.target.value)} placeholder="mystore" className="font-mono text-sm" />
+            <span className="text-sm font-bold text-primary whitespace-nowrap">.swapnobaz.com</span>
+          </div>
+          {subdomain && (
+            <p className="text-xs text-muted-foreground pt-1">
+              🔗 আপনার লাইভ স্টোর লিংক: <a href={`https://${subdomain}.swapnobaz.com`} target="_blank" rel="noreferrer" className="text-primary font-semibold underline underline-offset-2">https://{subdomain}.swapnobaz.com</a>
+            </p>
+          )}
         </div>
-        <div className="border-t pt-4 space-y-1.5">
-          <Label className="font-semibold">Custom Domain</Label>
-          <Input value={customDomain} onChange={e => setCustomDomain(e.target.value)} placeholder="www.myonlinestore.com" className="font-mono" />
-          <div className="rounded-lg bg-muted/40 p-3 text-xs border mt-2 space-y-2">
-            <p className="font-bold text-foreground">DNS Setup Instructions for Custom Domain:</p>
-            <div className="space-y-1.5 font-mono text-[11px]">
-              <div className="bg-background p-2 rounded border">
-                <p className="text-muted-foreground font-sans font-medium mb-0.5">Option 1: CNAME Record (Recommended for subdomains/www)</p>
-                <p><strong>Type:</strong> CNAME &nbsp;|&nbsp; <strong>Name:</strong> www &nbsp;|&nbsp; <strong>Target:</strong> swapnobaz.com</p>
-              </div>
-              <div className="bg-background p-2 rounded border">
-                <p className="text-muted-foreground font-sans font-medium mb-0.5">Option 2: A Record (For root domain)</p>
-                <p><strong>Type:</strong> A &nbsp;|&nbsp; <strong>Name:</strong> @ &nbsp;|&nbsp; <strong>Points to:</strong> 68.183.191.215</p>
-              </div>
-            </div>
-            <p className="text-[10px] text-muted-foreground">
-              After setting DNS in your domain registrar, save the domain name above. It may take 5–15 minutes for DNS to propagate globally.
+
+        {/* Custom Domain Section */}
+        <div className="space-y-4 p-4 rounded-xl border bg-background">
+          <div>
+            <Label className="font-bold text-base flex items-center gap-1.5">
+              2. Custom Branded Domain (কাস্টম নিজস্ব ডোমেন)
+            </Label>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              যদি আপনার নিজস্ব কেনা ডোমেন থাকে (যেমন: Namecheap, GoDaddy, Cloudflare, DianaHost থেকে কেনা):
             </p>
           </div>
+
+          <div className="space-y-1.5 max-w-md">
+            <Label className="text-xs font-semibold">আপনার ডোমেন নাম লিখুন:</Label>
+            <Input value={customDomain} onChange={e => setCustomDomain(e.target.value)} placeholder="www.yourbrand.com" className="font-mono" />
+          </div>
+
+          {/* Step-by-step Setup Guideline Box */}
+          <div className="rounded-xl border bg-muted/40 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">📖</span>
+              <h4 className="font-bold text-sm text-foreground">ডোমেন কানেক্ট করার সহজ ৩টি ধাপ (Step-by-Step Guide):</h4>
+            </div>
+
+            <ol className="text-xs space-y-2.5 list-decimal list-inside text-muted-foreground leading-relaxed">
+              <li className="pl-1">
+                <strong className="text-foreground">ডোমেন ম্যানেজমেন্টে লগইন করুন:</strong> আপনি যে কোম্পানি থেকে ডোমেন কিনেছেন (যেমন: Namecheap, GoDaddy, Cloudflare) সেখানে লগইন করে <strong className="text-foreground">DNS Management / DNS Records</strong> পেজে যান।
+              </li>
+              <li className="pl-1">
+                <strong className="text-foreground">নিচের যেকোনো একটি DNS Record যুক্ত করুন:</strong>
+              </li>
+            </ol>
+
+            {/* DNS Records Options Table */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+              <div className="p-3 rounded-lg border bg-background space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">পদ্ধতি ১: CNAME Record (সুপারিশকৃত)</span>
+                </div>
+                <div className="font-mono text-[11px] space-y-1 bg-muted/30 p-2 rounded border">
+                  <p><strong className="text-muted-foreground">Type:</strong> CNAME</p>
+                  <p><strong className="text-muted-foreground">Name/Host:</strong> www</p>
+                  <p><strong className="text-muted-foreground">Target/Value:</strong> <span className="text-primary font-bold">swapnobaz.com</span></p>
+                  <p><strong className="text-muted-foreground">TTL:</strong> Automatic / 1 Hour</p>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg border bg-background space-y-1.5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-foreground bg-muted px-2 py-0.5 rounded">পদ্ধতি ২: A Record (রুট ডোমেনের জন্য)</span>
+                </div>
+                <div className="font-mono text-[11px] space-y-1 bg-muted/30 p-2 rounded border">
+                  <p><strong className="text-muted-foreground">Type:</strong> A</p>
+                  <p><strong className="text-muted-foreground">Name/Host:</strong> @</p>
+                  <p><strong className="text-muted-foreground">Points to/Value:</strong> <span className="text-primary font-bold">68.183.191.215</span></p>
+                  <p><strong className="text-muted-foreground">TTL:</strong> Automatic / 1 Hour</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-muted-foreground space-y-1 bg-background/60 p-2.5 rounded-lg border">
+              <p>
+                <strong>ধাপ ৩:</strong> DNS রেকর্ড যোগ করার পর উপরের বক্সে আপনার ডোমেন নামটি লিখে নিচের <strong>"Save Domain Settings"</strong> বাটনে ক্লিক করুন।
+              </p>
+              <p className="text-[10px] text-muted-foreground italic">
+                ℹ️ DNS আপডেট গ্লোবালি অ্যাক্টিভ হতে সাধারণত ৫ থেকে ১৫ মিনিট সময় লাগে।
+              </p>
+            </div>
+          </div>
         </div>
-        <Button onClick={() => onSave({ subdomain, customDomain })} disabled={saving}>
+
+        <Button onClick={() => onSave({ subdomain, customDomain })} disabled={saving} className="font-bold">
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           <Save className="mr-2 h-4 w-4" /> Save Domain Settings
         </Button>
