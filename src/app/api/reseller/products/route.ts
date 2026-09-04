@@ -61,6 +61,13 @@ export async function POST(request: NextRequest) {
 
     const parsedPrice = Number(price) || 0;
     const parsedSalePrice = salePrice ? Number(salePrice) : undefined;
+    const parsedPurchasePrice = Number(purchasePrice) || 0;
+    const parsedResellerPrice = Number(resellerPrice) || 0;
+    const parsedStock = Number(stock) || 0;
+    const parsedDiscountRate = discountRate ? Number(discountRate) : undefined;
+    const baseSlug = slug ? slugify(slug) : slugify(name || 'product');
+    const uniqueSlug = await generateUniqueSlug(Product, baseSlug);
+
     const settings = await GlobalSettings.findOne().lean();
     const commissionPct = settings?.platformCommissionRate ?? 10;
 
@@ -69,6 +76,7 @@ export async function POST(request: NextRequest) {
     if (parsedPurchasePrice && parsedPurchasePrice > 0) {
       computedResellerPrice = Math.round(parsedPurchasePrice * (1 + commissionPct / 100));
     }
+
 
     // Also calculate for variants if present
     const processedVariants = Array.isArray(variants) ? variants.map((v: any) => {
