@@ -79,8 +79,6 @@ const resellerNav = [
     icon: ImageIcon,
     items: [
       { title: "Hero Banners", url: "/reseller/cms/banners" },
-      { title: "Testimonials", url: "/reseller/cms/testimonials" },
-      { title: "FAQs", url: "/reseller/cms/faqs" },
     ],
   },
   {

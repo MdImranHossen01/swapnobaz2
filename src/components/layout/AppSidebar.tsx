@@ -276,14 +276,6 @@ const data = {
           title: "Banners",
           url: "/admin/cms/banners",
         },
-        {
-          title: "Testimonials",
-          url: "/admin/cms/testimonials",
-        },
-        {
-          title: "FAQs",
-          url: "/admin/cms/faqs",
-        },
       ],
     },
     {
