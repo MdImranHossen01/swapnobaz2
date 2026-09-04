@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
-import { getCachedProducts, getCachedCategories, getCachedSettings } from '@/lib/data-fetching';
+import { getCachedProducts, getCachedCategories, getCachedBrands, getCachedSettings } from '@/lib/data-fetching';
 import { ShopHeaderSkeleton, ProductCardSkeleton } from '@/components/storefront/Skeletons';
 import { ShopListingSelector } from '@/components/templates/ServerRegistry';
 
@@ -34,9 +34,10 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ShopPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   // Fetch initial data on the server with caching
-  const [initialProducts, initialCategories, settings] = await Promise.all([
+  const [initialProducts, initialCategories, initialBrands, settings] = await Promise.all([
     getCachedProducts({}, 1000),
     getCachedCategories(),
+    getCachedBrands(),
     getCachedSettings()
   ]);
 
@@ -50,6 +51,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         productCardStyle={productCardStyle}
         products={initialProducts}
         categories={initialCategories}
+        brands={initialBrands}
         searchParams={searchParams}
       />
     </Suspense>

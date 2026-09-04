@@ -37,6 +37,7 @@ export const getCachedProducts = (query = {}, limit = 10, sort: any = { createdA
       await connectToDatabase();
       const products = await Product.find({ isPublished: true, ...query })
         .populate('categories')
+        .populate('brand')
         .sort(sort as any)
         .limit(limit)
         .lean();
@@ -53,6 +54,7 @@ export const getCachedProductBySlug = (slug: string) => {
       await connectToDatabase();
       const product = await Product.findOne({ slug, isPublished: true })
         .populate('categories')
+        .populate('brand')
         .lean();
       return serialize(product);
     },

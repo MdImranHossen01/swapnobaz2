@@ -62,7 +62,8 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
   const wishlist = useAppSelector((state) => state.wishlist.items);
   const isInWishlist = wishlist.includes(product?._id);
   const router = useRouter();
-  const isAdmin = (session?.user as any)?.role === 'admin';
+  const userRole = (session?.user as any)?.role;
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
 
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -528,10 +529,13 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
             <h1 className="text-2xl md:text-4xl font-bold tracking-tight">{product.name}</h1>
             {isAdmin && (
               <DropdownMenu>
-                <DropdownMenuTrigger className="outline-none transition-colors hover:text-primary">
-                  <MoreVertical className="h-6 w-6 text-muted-foreground" />
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10">
+                    <MoreVertical className="h-5 w-5" />
+                    <span className="sr-only">Admin actions</span>
+                  </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-lg border">
                   <DropdownMenuItem onClick={() => router.push(`/admin/products/${product.slug}`)} className="cursor-pointer">
                     <Edit className="mr-2 h-4 w-4" /> Edit Product
                   </DropdownMenuItem>
@@ -826,30 +830,28 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
       </div>
 
       {/* Tabs Section for Description & Reviews */}
-      <div className="col-span-full mt-16">
+      <div className="col-span-full mt-10 md:mt-16">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 mb-8 h-auto">
+          <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0 mb-6 md:mb-8 h-auto">
             <TabsTrigger
               value="description"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-4 font-bold uppercase tracking-wider text-muted-foreground data-[state=active]:text-foreground"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-xs md:text-sm text-muted-foreground data-[state=active]:text-foreground"
             >
               Description
             </TabsTrigger>
             <TabsTrigger
               value="reviews"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-4 font-bold uppercase tracking-wider text-muted-foreground data-[state=active]:text-foreground"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-xs md:text-sm text-muted-foreground data-[state=active]:text-foreground"
             >
               Reviews
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="description" className="animate-in fade-in-50 duration-500">
-            <div className="ProseMirror max-w-none">
-              <div
-                className="ProseMirror max-w-none text-muted-foreground"
-                dangerouslySetInnerHTML={{ __html: generateHtml(product.description) }}
-              />
-            </div>
+            <div
+              className="ProseMirror !p-0 max-w-none text-muted-foreground"
+              dangerouslySetInnerHTML={{ __html: generateHtml(product.description) }}
+            />
           </TabsContent>
 
           <TabsContent value="reviews" className="animate-in fade-in-50 duration-500">

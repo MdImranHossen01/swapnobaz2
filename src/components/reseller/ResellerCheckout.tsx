@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { Loader2, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapAddressSelector } from '@/components/storefront/MapAddressSelector';
 
 const schema = z.object({
   name: z.string().min(2, 'নাম দিন'),
@@ -212,20 +211,6 @@ export function ResellerCheckout({ subdomain, storeInfo }: Props) {
               <Label>মোবাইল নম্বর</Label>
               <Input {...form.register('phone')} placeholder="01XXXXXXXXX" type="tel" />
               {form.formState.errors.phone && <p className="text-xs text-destructive">{form.formState.errors.phone.message}</p>}
-            </div>
-            <div className="space-y-2">
-              <Label>ডেলিভারি ঠিকানা (মানচিত্র)</Label>
-              <MapAddressSelector
-                onSelectAddress={({ street, city }) => {
-                  form.setValue('address', street, { shouldValidate: true, shouldDirty: true });
-                  form.setValue('city', city, { shouldValidate: true, shouldDirty: true });
-                  if (city.toLowerCase().includes('dhaka')) {
-                    form.setValue('deliveryArea', 'inside');
-                  } else {
-                    form.setValue('deliveryArea', 'outside');
-                  }
-                }}
-              />
             </div>
             <div className="space-y-1">
               <Label>ঠিকানা</Label>

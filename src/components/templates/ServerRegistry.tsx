@@ -57,11 +57,11 @@ export const BlogDetailsSelector = ({ style, blog, readingTime }: { style: strin
 // --- SHOP LISTING ---
 const ShopV1 = dynamic(() => import('./shop-page/ShopV1'));
 
-export const ShopListingSelector = ({ style, productCardStyle, products, categories, searchParams }: { style: string, productCardStyle?: string, products: any[], categories: any[], searchParams: any }) => {
+export const ShopListingSelector = ({ style, productCardStyle, products, categories, brands, searchParams }: { style: string, productCardStyle?: string, products: any[], categories: any[], brands?: any[], searchParams: any }) => {
   const activeStyle = style || 'v1';
   switch (activeStyle) {
-    case 'v1': return <ShopV1 products={products} categories={categories} searchParams={searchParams} style={activeStyle} productCardStyle={productCardStyle} />;
-    default: return <ShopV1 products={products} categories={categories} searchParams={searchParams} style={activeStyle} productCardStyle={productCardStyle} />;
+    case 'v1': return <ShopV1 products={products} categories={categories} brands={brands} searchParams={searchParams} style={activeStyle} productCardStyle={productCardStyle} />;
+    default: return <ShopV1 products={products} categories={categories} brands={brands} searchParams={searchParams} style={activeStyle} productCardStyle={productCardStyle} />;
   }
 };
 

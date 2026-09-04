@@ -18,9 +18,7 @@ import {
   CategoryShowcaseSkeleton,
   BannerSkeleton,
   BlogRecentSkeleton,
-  FeaturesSectionSkeleton,
-  FAQSectionSkeleton,
-  TestimonialsSkeleton
+  FAQSectionSkeleton
 } from '@/components/storefront/Skeletons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -99,15 +97,6 @@ const BlogRecent = dynamic(() => import('@/components/storefront/BlogRecent').th
 const FAQSection = dynamic(() => import('@/components/storefront/FAQSection').then(mod => mod.FAQSection), {
   loading: () => <FAQSectionSkeleton />
 });
-
-const Testimonials = dynamic(() => import('@/components/storefront/Testimonials').then(mod => mod.Testimonials), {
-  loading: () => <TestimonialsSkeleton />
-});
-
-const FeaturesSection = dynamic(() => import('@/components/storefront/FeaturesSection').then(mod => mod.FeaturesSection), {
-  loading: () => <FeaturesSectionSkeleton />
-});
-
 
 const ComboOfferBanner = dynamic(() => import('@/components/storefront/ComboOfferBanner').then(mod => mod.ComboOfferBanner), {
   loading: () => <BannerSkeleton />
@@ -296,12 +285,6 @@ export default async function Home() {
               />
             )}
 
-            {/* 2. Our Features (Trust Badges) */}
-            <FeaturesSection />
-
-            {/* 8. Testimonials Section */}
-            <Testimonials />
-
             {/* 11. Newsletter V2 Integration */}
             <NewsletterV2 layout={ui.layout} />
 
@@ -375,12 +358,6 @@ export default async function Home() {
               layout={ui.layout}
             />
           )}
-
-          {/* 2. Our Features (Trust Badges) */}
-          <FeaturesSection />
-
-          {/* 8. Testimonials Section */}
-          <Testimonials />
 
           {/* 11. Newsletter V2 Integration */}
           <NewsletterV2 layout={ui.layout} />

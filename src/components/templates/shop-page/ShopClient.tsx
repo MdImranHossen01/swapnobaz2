@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ProductCard } from '@/components/storefront/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,14 @@ export interface ShopCategory {
   isActive: boolean;
 }
 
+export interface ShopBrand {
+  _id: string;
+  slug?: string;
+  name: string;
+  image?: string;
+  isActive: boolean;
+}
+
 export interface ShopProduct {
   _id: string;
   name: string;
@@ -57,21 +65,24 @@ export interface ShopProduct {
   images: string[];
   stock: number;
   categories?: any[];
+  brand?: any;
 }
 
 interface ShopClientProps {
   initialProducts: ShopProduct[];
   initialCategories: ShopCategory[];
+  initialBrands?: ShopBrand[];
   searchParams?: any;
   cardStyle?: string;
 }
 
-export default function ShopClient({ initialProducts, initialCategories, searchParams: initialSearchParams, cardStyle }: ShopClientProps) {
+export default function ShopClient({ initialProducts, initialCategories, initialBrands = [], searchParams: initialSearchParams, cardStyle }: ShopClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const [products] = useState<ShopProduct[]>(initialProducts);
   const [categories] = useState<ShopCategory[]>(initialCategories);
+  const [brands] = useState<ShopBrand[]>(initialBrands);
 
   // Filters State
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
@@ -79,6 +90,13 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
     if (!initialCategory) return [];
     const cat = initialCategories.find(c => c.slug === initialCategory || c._id === initialCategory);
     return [cat ? cat.slug : initialCategory];
+  });
+
+  const [selectedBrands, setSelectedBrands] = useState<string[]>(() => {
+    const initialBrand = searchParams.get('brand');
+    if (!initialBrand) return [];
+    const b = initialBrands.find(item => item.slug === initialBrand || item._id === initialBrand || item.name.toLowerCase() === initialBrand.toLowerCase());
+    return [b ? (b.slug || b._id) : initialBrand];
   });
 
   const getParentId = useCallback((cat: any) => {
@@ -183,6 +201,14 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
         }
       }
     }
+    const urlBrand = searchParams.get('brand');
+    const resolvedBrandSlug = urlBrand
+      ? (brands.find(b => b.slug === urlBrand || b._id === urlBrand || b.name.toLowerCase() === urlBrand.toLowerCase())?.slug || urlBrand)
+      : null;
+    const newBrandSelected = resolvedBrandSlug ? [resolvedBrandSlug] : [];
+    if (JSON.stringify(newBrandSelected) !== JSON.stringify(selectedBrands)) {
+      setSelectedBrands(newBrandSelected);
+    }
     const urlPage = Number(searchParams.get('page')) || 1;
     if (urlPage !== currentPage) {
       setCurrentPage(urlPage);
@@ -192,6 +218,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
   // Track filters to reset page on render if they change
   const currentFiltersStr = JSON.stringify({
     selectedCategories,
+    selectedBrands,
     minPrice,
     maxPrice,
     sortBy,
@@ -253,6 +280,17 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
         (p.description?.toLowerCase() ?? '').includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategories.length === 0 ||
         (p.categories ?? []).some((c) => expandedMatchingSlugs.has(c.slug || '') || expandedMatchingSlugs.has(c._id || ''));
+
+      const productBrandId = p.brand?._id ? String(p.brand._id) : (typeof p.brand === 'string' ? p.brand : '');
+      const productBrandSlug = p.brand?.slug ? String(p.brand.slug) : '';
+      const productBrandName = p.brand?.name ? String(p.brand.name).toLowerCase() : '';
+
+      const matchesBrand = selectedBrands.length === 0 || selectedBrands.some(b =>
+        b === productBrandId ||
+        b === productBrandSlug ||
+        b.toLowerCase() === productBrandName
+      );
+
       const price = p.salePrice ?? p.price;
       const min = minPrice !== '' ? Number(minPrice) : 0;
       const max = maxPrice !== '' ? Number(maxPrice) : Infinity;
@@ -268,7 +306,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
       const matchesFeatured = (!showOnlyFeatured && sortBy !== 'featured') || isFeatured;
       const matchesTrending = (!showOnlyTrending && sortBy !== 'trending') || isTrending;
 
-      return matchesSearch && matchesCategory && matchesPrice && matchesNewArrival && matchesSale && matchesFeatured && matchesTrending;
+      return matchesSearch && matchesCategory && matchesBrand && matchesPrice && matchesNewArrival && matchesSale && matchesFeatured && matchesTrending;
     })
     .sort((a, b) => {
       const priceA = a.salePrice ?? a.price;
@@ -287,6 +325,24 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const toggleBrand = (brandOrSlug: ShopBrand | string) => {
+    const brandObj = typeof brandOrSlug === 'string'
+      ? brands.find(b => b.slug === brandOrSlug || b._id === brandOrSlug || b.name.toLowerCase() === brandOrSlug.toLowerCase())
+      : brandOrSlug;
+    const normalizedKey = brandObj ? (brandObj.slug || brandObj._id) : brandOrSlug;
+
+    const isSelected = selectedBrands.includes(normalizedKey) ||
+      (brandObj ? (selectedBrands.includes(brandObj._id) || (brandObj.slug && selectedBrands.includes(brandObj.slug))) : false);
+
+    if (isSelected) {
+      setSelectedBrands(prev => prev.filter(s =>
+        s !== normalizedKey && (!brandObj || (s !== brandObj._id && s !== brandObj.slug))
+      ));
+    } else {
+      setSelectedBrands(prev => [...prev, normalizedKey]);
+    }
+  };
 
   const toggleCategory = (catOrSlug: ShopCategory | string) => {
     const catObj = typeof catOrSlug === 'string'
@@ -322,6 +378,7 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
 
   const clearFilters = () => {
     setSelectedCategories([]);
+    setSelectedBrands([]);
     setMinPrice('');
     setMaxPrice('');
     setSearchTerm('');
@@ -459,6 +516,45 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
           })}
         </div>
       </div>
+
+      {/* Brands Filter */}
+      {brands.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider">Brands</h3>
+            {selectedBrands.length > 0 && (
+              <button
+                onClick={() => setSelectedBrands([])}
+                className="text-xs text-primary hover:underline font-medium"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Scrollable Brands List */}
+          <div className="max-h-[220px] overflow-y-auto space-y-1.5 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            {brands.map((b) => {
+              const isBrandSelected = selectedBrands.includes(b.slug || '') || selectedBrands.includes(b._id) || selectedBrands.includes(b.name.toLowerCase());
+              return (
+                <div key={b._id} className="flex items-center space-x-2.5 p-1.5 hover:bg-muted/40 rounded-md transition-colors">
+                  <Checkbox
+                    id={`brand-${b._id}`}
+                    checked={isBrandSelected}
+                    onCheckedChange={() => toggleBrand(b)}
+                  />
+                  <Label
+                    htmlFor={`brand-${b._id}`}
+                    className="text-sm font-semibold leading-none cursor-pointer hover:text-primary transition-colors truncate flex-1"
+                  >
+                    {b.name}
+                  </Label>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Quick Filters */}
       <div>
@@ -651,6 +747,25 @@ export default function ShopClient({ initialProducts, initialCategories, searchP
                       }}
                       className="p-0.5 rounded-full hover:bg-muted-foreground/20 hover:text-foreground cursor-pointer transition-colors"
                       aria-label={`Remove ${categoryName} filter`}
+                    >
+                      <X className="h-3 w-3 pointer-events-auto" />
+                    </button>
+                  </Badge>
+                );
+              })}
+              {selectedBrands.map(b => {
+                const brandName = brands.find(item => item.slug === b || item._id === b || item.name.toLowerCase() === b.toLowerCase())?.name || b;
+                return (
+                  <Badge key={b} variant="secondary" className="gap-1 rounded-full pl-3 pr-1 py-1 flex items-center border-primary/30">
+                    <span className="font-semibold text-primary">Brand: {brandName}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleBrand(b);
+                      }}
+                      className="p-0.5 rounded-full hover:bg-muted-foreground/20 hover:text-foreground cursor-pointer transition-colors"
+                      aria-label={`Remove ${brandName} brand filter`}
                     >
                       <X className="h-3 w-3 pointer-events-auto" />
                     </button>

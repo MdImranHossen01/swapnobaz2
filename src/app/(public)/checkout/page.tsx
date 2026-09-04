@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { MapAddressSelector } from '@/components/storefront/MapAddressSelector';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,6 +34,7 @@ import {
 } from '@/components/ui/select';
 import { fbEvent } from '@/lib/fpixel';
 import { ttEvent } from '@/lib/tiktok';
+import { normalizePhoneNumber } from '@/lib/utils';
 
 
 
@@ -361,6 +361,7 @@ function CheckoutContent() {
   const onSubmit = async (values: CheckoutValues) => {
     setLoading(true);
     try {
+      const cleanedPhone = normalizePhoneNumber(values.phone) || values.phone;
       const orderData = {
         items: items.map(item => ({
           product: item.productId,
@@ -373,8 +374,8 @@ function CheckoutContent() {
         })),
         shippingAddress: {
           fullName: values.fullName,
-          phone: values.phone,
-          email: profile?.email || `${values.phone}@store.com`,
+          phone: cleanedPhone,
+          email: profile?.email || `${cleanedPhone}@store.com`,
           street: values.street,
           city: values.deliveryArea === 'inside' ? 'Dhaka' : 'Outside Dhaka',
           state: values.deliveryArea === 'inside' ? 'Dhaka' : 'Outside Dhaka',
@@ -611,14 +612,17 @@ function CheckoutContent() {
   );
 
   return (
-    <div className="container px-4 md:px-6 py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-        {/* Left Side: Order Summary */}
-        <div className="hidden lg:block sticky top-24 self-start space-y-6">
+    <div className="container px-4 md:px-6 py-6 md:py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start">
+        {/* Left Side: Order Summary (Desktop Sticky, Mobile Top) */}
+        <div className="block lg:sticky lg:top-24 self-start space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Your Items</CardTitle>
-              <CardDescription>Items you are about to purchase.</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingBag className="h-5 w-5 text-primary" />
+                আপনার অর্ডারকৃত পণ্যসমূহ ({items.reduce((sum, i) => sum + i.quantity, 0)})
+              </CardTitle>
+              <CardDescription>যে পণ্যগুলো আপনি কিনতে যাচ্ছেন।</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2 -mr-2">
@@ -788,20 +792,6 @@ function CheckoutContent() {
                       </FormItem>
                     )}
                   />
-                  <div className="space-y-3">
-                    <Label>ডেলিভারি ঠিকানা (মানচিত্র)</Label>
-                    <MapAddressSelector
-                      onSelectAddress={({ street, city }) => {
-                        form.setValue('street', street, { shouldValidate: true, shouldDirty: true });
-                        if (city.toLowerCase().includes('dhaka')) {
-                          form.setValue('deliveryArea', 'inside');
-                        } else {
-                          form.setValue('deliveryArea', 'outside');
-                        }
-                      }}
-                    />
-                  </div>
-
                   <FormField
                     control={form.control}
                     name="street"
