@@ -1,18 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShoppingCart, Heart, Search, MoreVertical, Edit, Trash2, Settings, PlusCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import { ShoppingCart, Heart, Search, MoreVertical, Edit, Trash2, Settings, Layers } from 'lucide-react';
 import { RatingStars } from '@/components/ui/rating-stars';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addToCart } from '@/store/slices/cartSlice';
 import { toggleWishlist } from '@/store/slices/wishlistSlice';
 import { toast } from 'sonner';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +22,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { useState } from 'react';
 import { QuickViewModal } from './QuickViewModal';
 import { fbEvent } from '@/lib/fpixel';
 import { ttEvent } from '@/lib/tiktok';
@@ -30,7 +31,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import Swal from 'sweetalert2';
 
 interface ProductCardProps {
   product: {
@@ -74,6 +74,10 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
 
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
 
+  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price)
+    ? Math.round(((product.price - product.salePrice) / product.price) * 100)
+    : 0;
+
   const handleAddToCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (hasVariants) {
@@ -93,8 +97,7 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
       price: (displaySalePrice !== undefined && displaySalePrice !== null) ? displaySalePrice : displayPrice,
       basePrice: displayPrice,
       quantity: 1,
-      color: undefined,
-      size: undefined
+      image: product.images?.[0]
     }));
 
     // Track AddToCart
@@ -115,20 +118,14 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
 
   const handleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
-
-    if (status === 'loading') return;
-
     if (status === 'unauthenticated') {
-      toast.error('Please login to add to wishlist');
+      toast.error('Please login to save to wishlist');
       return;
     }
 
-    // Toggle locally (optimistic update)
+    // Optimistic update
     dispatch(toggleWishlist(product._id));
-
-    // Determine the message based on the NEW state
     const willBeInWishlist = !isInWishlist;
-    toast.success(willBeInWishlist ? 'Added to wishlist' : 'Removed from wishlist');
 
     try {
       const res = await fetch('/api/wishlist', {
@@ -138,11 +135,10 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
       });
 
       if (!res.ok) {
-        throw new Error('Failed to update wishlist server-side');
+        throw new Error('Server error updating wishlist');
       }
 
       if (willBeInWishlist) {
-        // Track AddToWishlist
         const addToWishlistPayload = {
           content_name: product.name,
           content_category: product.categories?.[0]?.name || 'Uncategorized',
@@ -154,9 +150,11 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
         fbEvent('AddToWishlist', addToWishlistPayload);
         ttEvent('AddToWishlist', addToWishlistPayload);
       }
+
+      toast.success(willBeInWishlist ? 'Saved to wishlist' : 'Removed from wishlist');
     } catch (err) {
-      console.error('API toggle error:', err);
-      // Rollback optimistic update
+      console.error('Wishlist error:', err);
+      // Rollback
       dispatch(toggleWishlist(product._id));
       toast.error('Failed to sync wishlist. Please try again.');
     }
@@ -181,187 +179,167 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
 
     if (!result.isConfirmed) return;
     try {
-      const res = await fetch(`/api/products/${product.slug}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) throw new Error('Failed to delete');
-      toast.success('Product deleted successfully');
+      const res = await fetch(`/api/products/${product.slug}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete product');
+      }
+      toast.success('Product removed successfully');
       router.refresh();
     } catch (err: any) {
-      console.error('Error deleting product:', err);
-      toast.error(`Error deleting product: ${err.message || 'Unknown error'}`);
+      toast.error(`Error: ${err.message || 'Failed to delete product'}`);
     }
   };
 
-  const discount = (product.salePrice !== undefined && product.salePrice !== null && product.price > 0)
-    ? Math.max(0, Math.round(((product.price - product.salePrice) / product.price) * 100))
-    : 0;
-
   return (
     <div
-      className="group relative flex flex-col overflow-hidden rounded-none border bg-background transition-all hover:shadow-xl"
+      className="group relative flex flex-col bg-background border border-neutral-200 dark:border-neutral-800 transition-all duration-300 hover:border-primary"
       data-aos="fade-up"
     >
-      <Link prefetch={true} href={`/product/${product.slug}`} className="relative aspect-square overflow-hidden bg-muted rounded-none">
-        {product.images?.length > 0 ? (
-          <div className="relative h-full w-full">
-            {/* Primary Image */}
-            <Image
-              src={product.images[0]}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              className={`object-cover transition-all duration-700 ${product.images.length > 1 ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-110'}`}
-            />
-            {/* Secondary Image (on Hover) */}
-            {product.images.length > 1 && (
-              <Image
-                src={product.images[1]}
-                alt={`${product.name} alternate view`}
-                fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                className="absolute inset-0 object-cover transition-all duration-700 opacity-0 group-hover:opacity-100 scale-110 group-hover:scale-100"
-              />
-            )}
-          </div>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-            No image
-          </div>
-        )}
+      {/* Industrial Visual Container */}
+      <div className="relative aspect-square overflow-hidden bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800">
+        <Link prefetch={true} href={`/product/${product.slug}`} className="relative block h-full w-full">
+          <Image
+            src={product.images?.[0] || '/placeholder.png'}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </Link>
 
-        {/* Badges */}
-        <div className="absolute top-2 left-2 flex flex-col gap-2">
+        {/* Technical Badges */}
+        <div className="absolute top-0 left-0 flex flex-col z-10">
           {discount > 0 && (
-            <Badge variant="default" className="bg-primary text-primary-foreground font-bold">-{discount}%</Badge>
-          )}
-          {product.isFeatured && (
-            <Badge variant="default" className="bg-primary hover:bg-primary font-bold uppercase text-[10px]">Featured</Badge>
-          )}
-          {product.isNewArrival && (
-            <Badge variant="secondary" className="bg-emerald-500 hover:bg-emerald-600 text-white border-none font-bold uppercase text-[10px]">New Arrival</Badge>
-          )}
-          {product.stock === 0 && (
-            <Badge variant="secondary" className="font-bold uppercase text-[10px]">Out of Stock</Badge>
+            <div className="bg-primary text-primary-foreground font-mono text-[10px] px-2 py-1 uppercase tracking-tighter">
+              DISC_{discount}%
+            </div>
           )}
           {isFlashSale && (
-            <Badge variant="default" className="bg-primary text-primary-foreground animate-pulse font-bold uppercase text-[10px]">Flash Deal</Badge>
+            <div className="bg-orange-500 text-white font-mono text-[10px] px-2 py-1 uppercase tracking-tighter animate-pulse">
+              LIVE_FLASH
+            </div>
           )}
         </div>
 
-        {/* Hover Actions */}
-        <div className="absolute inset-0 hidden md:flex items-center justify-center gap-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-black/5">
+        {/* Action Sidebar */}
+        <div className="absolute top-0 right-0 h-full hidden md:flex flex-col border-l border-neutral-100 dark:border-neutral-800 translate-x-full group-hover:translate-x-0 transition-transform duration-300 bg-background/80 backdrop-blur-md">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="h-10 w-10 rounded-full shadow-lg hover:scale-110 transition-transform bg-white text-gray-900 hover:bg-white"
+                <button
                   onClick={handleFavorite}
-                  disabled={status === 'loading'}
+                  className="flex-1 px-3 hover:text-primary transition-colors border-b border-neutral-100 dark:border-neutral-800"
                 >
-                  <Heart className={`h-4 w-4 ${isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
-                </Button>
+                  <Heart className={`h-5 w-5 ${isInWishlist ? 'fill-primary text-primary' : ''}`} />
+                </button>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent side="left">
                 <p>{isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}</p>
               </TooltipContent>
             </Tooltip>
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="h-12 w-12 rounded-full shadow-lg hover:scale-110 transition-transform bg-primary text-white hover:bg-primary/90 border-none"
+                <button
                   onClick={handleQuickView}
+                  className="flex-1 px-3 hover:text-primary transition-colors border-b border-neutral-100 dark:border-neutral-800"
                 >
                   <Search className="h-5 w-5" />
-                </Button>
+                </button>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent side="left">
                 <p>Quick View</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className="flex-1 px-3 hover:text-primary transition-colors"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toast.info('Comparison feature coming soon');
+                  }}
+                >
+                  <Layers className="h-5 w-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left">
+                <p>Compare</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
-      </Link>
 
-      {/* Admin Quick Actions Overlay */}
-      {isAdmin && (
-        <div className="absolute top-2 right-2 z-20">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="outline-none transition-transform hover:scale-110 drop-shadow-md">
-              <MoreVertical className="h-5 w-5 text-foreground/80 hover:text-primary" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
-              <DropdownMenuItem onClick={() => router.push(`/admin/products/${product.slug}`)} className="cursor-pointer">
-                <Edit className="mr-2 h-4 w-4" /> Edit Product
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDeleteProduct} className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
-                <Trash2 className="mr-2 h-4 w-4" /> Delete Product
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/admin/products')} className="cursor-pointer">
-                <Settings className="mr-2 h-4 w-4" /> Manage Products
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push('/admin/products/new')} className="cursor-pointer">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create Product
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
-
-      <div className="flex flex-1 flex-col px-2 md:px-4 py-2 md:py-4 ">
-
-        {(product.numReviews || 0) > 0 && (
-          <div
-            className="flex items-center gap-2 mb-1"
-            aria-label={`${product.ratings || 0} out of 5 stars, ${product.numReviews || 0} reviews`}
-          >
-            <RatingStars rating={product.ratings || 0} starClassName="h-3 w-3" />
-            <span className="text-[10px] text-muted-foreground font-bold">({product.numReviews})</span>
+        {/* Admin Overlay */}
+        {isAdmin && (
+          <div className="absolute bottom-2 right-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="outline" className="h-8 w-8 border-neutral-800 bg-black/50 text-white hover:bg-primary">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push(`/admin/products/${product.slug}`)}>
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDeleteProduct} className="text-destructive">
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
+      </div>
 
-        <div className="mb-2 h-12 md:h-10">
-          <Link prefetch={true}
-            href={`/product/${product.slug}`}
-            className="md:text-lg text-xs  font-semibold text-foreground hover:text-primary transition-colors line-clamp-3 md:line-clamp-2"
-          >
-            {product.name}
+      {/* Technical Content Section */}
+      <div className="p-4 flex flex-col gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-[9px] font-mono text-muted-foreground uppercase tracking-widest">
+            {product.isNewArrival && <span className="text-emerald-500">[ NEW_ARRV ]</span>}
+            {product.isFeatured && <span className="text-primary">[ FT_ITEM ]</span>}
+          </div>
+          <Link prefetch={true} href={`/product/${product.slug}`} className="block">
+            <h3 className="text-base font-bold uppercase tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
+              {product.name}
+            </h3>
           </Link>
+          {(product.numReviews || 0) > 0 && (
+            <div
+              className="flex items-center gap-1.5 mt-1"
+              aria-label={`${product.ratings || 0} out of 5 stars, ${product.numReviews || 0} reviews`}
+            >
+              <RatingStars rating={product.ratings || 0} starClassName="h-2.5 w-2.5" />
+              <span className="text-[9px] font-mono text-muted-foreground font-bold">({product.numReviews})</span>
+            </div>
+          )}
         </div>
 
-        <div className="mt-auto flex items-end justify-between gap-2">
-          <div className="flex flex-col justify-end min-h-[48px]">
-            {product.salePrice !== undefined && product.salePrice !== null ? (
-              <>
-                <span className="text-xs line-through text-muted-foreground leading-none mb-1">
-                  ৳{product.price ? Math.round(product.price) : '0'}
-                </span>
-                <span className="font-bold text-lg text-primary leading-none">
-                  ৳{Math.round(product.salePrice)}
-                </span>
-              </>
-            ) : (
-              <span className="font-bold text-lg text-primary leading-none">
-                ৳{product.price ? Math.round(product.price) : '0'}
+        <div className="flex items-end justify-between">
+          <div className="flex flex-col">
+            <span className="text-xs font-mono text-muted-foreground uppercase mb-1">Price_</span>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-black font-mono text-primary">
+                ৳{Math.round(product.salePrice ?? product.price)}
               </span>
-            )}
+              {product.salePrice != null && product.salePrice < product.price && (
+                <span className="text-xs font-mono text-muted-foreground line-through opacity-50">
+                  ৳{Math.round(product.price)}
+                </span>
+              )}
+            </div>
           </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  size="sm"
-                  className="h-9 w-9 rounded-full p-0 flex items-center justify-center transition-all hover:scale-110 cursor-pointer bg-white border border-gray-100 text-gray-900 hover:bg-gray-50"
-                  disabled={product.stock === 0}
+                  size="icon"
+                  className="rounded-none h-10 w-10 bg-primary hover:bg-primary-foreground hover:text-primary border border-primary transition-all cursor-pointer"
                   onClick={handleAddToCartClick}
+                  disabled={product.stock === 0}
                 >
-                  <ShoppingCart className="h-4 w-4" />
+                  <ShoppingCart className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -380,4 +358,5 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale }: 
     </div>
   );
 }
+
 
