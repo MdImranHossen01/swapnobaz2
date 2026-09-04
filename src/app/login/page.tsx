@@ -50,13 +50,19 @@ export default function LoginPage() {
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
       const role = (session.user as any)?.role;
-      if (role === 'admin' || role === 'super_admin') {
+      const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect');
+      
+      if (callbackUrl) {
+        router.replace(callbackUrl);
+      } else if (role === 'admin' || role === 'super_admin') {
         router.replace('/admin/dashboard');
+      } else if (role === 'reseller') {
+        router.replace('/reseller/dashboard');
       } else {
         router.replace('/dashboard');
       }
     }
-  }, [status, session, router]);
+  }, [status, session, router, searchParams]);
 
   async function loginWithGoogle() {
     setIsGoogleLoading(true);
@@ -89,7 +95,13 @@ export default function LoginPage() {
         toast.error(response.error);
       } else {
         toast.success('Logged in successfully!');
-        window.location.href = '/dashboard';
+        const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect');
+        if (callbackUrl) {
+          window.location.href = callbackUrl;
+        } else {
+          // Let NextAuth session hydrate or reload to trigger useEffect redirection
+          window.location.reload();
+        }
       }
     } catch (error) {
       toast.error('Something went wrong. Please try again.');

@@ -34,20 +34,26 @@ export const proxy = auth(async (req) => {
 
   // ── 1. Multi-Tenant Subdomain Routing ──────────────────────────────────────
   // Detect reseller subdomains (e.g. bestshop.swapnobaz.com)
-  // Rewrite to /store/[subdomain]/[path] without changing the browser URL
   const subdomain = extractSubdomain(hostname);
+  const isAuthRoute = nextUrl.pathname.startsWith("/login") || 
+                      nextUrl.pathname.startsWith("/register") || 
+                      nextUrl.pathname.startsWith("/forgot-password") || 
+                      nextUrl.pathname.startsWith("/reset-password");
+
   if (subdomain) {
-    const url = nextUrl.clone();
-    const rewrittenPath = `/store/${subdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
-    url.pathname = rewrittenPath;
-    const response = NextResponse.rewrite(url);
-    response.headers.set('x-reseller-subdomain', subdomain);
-    response.headers.set('x-pathname', nextUrl.pathname);
-    return response;
+    // If it's an auth route, let it render the unified auth page without rewriting to /store/[subdomain]/login
+    if (!isAuthRoute) {
+      const url = nextUrl.clone();
+      const rewrittenPath = `/store/${subdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
+      url.pathname = rewrittenPath;
+      const response = NextResponse.rewrite(url);
+      response.headers.set('x-reseller-subdomain', subdomain);
+      response.headers.set('x-pathname', nextUrl.pathname);
+      return response;
+    }
   }
 
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-  const isAuthRoute = nextUrl.pathname.startsWith("/login") || nextUrl.pathname.startsWith("/register");
   const isResellerRoute = nextUrl.pathname.startsWith("/reseller");
 
   // ── 2. Reseller dashboard protection ──────────────────────────────────────
