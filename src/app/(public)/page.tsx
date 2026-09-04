@@ -1,15 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Metadata } from 'next';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import connectToDatabase from '@/lib/db';
-import Banner from '@/models/Banner';
-import Category from '@/models/Category';
-import Product from '@/models/Product';
-import Blog from '@/models/Blog';
-import FAQ from '@/models/FAQ';
-import GlobalSettings from '@/models/GlobalSettings';
-import Coupon from '@/models/Coupon';
+
 import dynamic from 'next/dynamic';
 import { HeroSlider } from '@/components/storefront/HeroSlider';
 import { FreeDeliveryBanner } from '@/components/storefront/FreeDeliveryBanner';

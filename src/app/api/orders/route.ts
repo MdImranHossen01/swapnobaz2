@@ -126,17 +126,28 @@ export async function POST(req: NextRequest) {
     session.startTransaction();
 
     let user = null;
+    const { normalizePhoneNumber } = await import('@/lib/utils');
+    const normalizedPhone = normalizePhoneNumber(shippingAddress.phone);
+    const normalizedEmail = shippingAddress.email ? shippingAddress.email.toLowerCase().trim() : '';
+
     if (sessionUser?.user?.id) {
       user = await User.findOne({ _id: sessionUser.user.id }).session(session);
     } else {
-      // Guest Checkout: Find or Create User by Email
-      user = await User.findOne({ email: shippingAddress.email.toLowerCase() }).session(session);
+      // Guest Checkout: Find or Create User by Phone or Email
+      user = await User.findOne({
+        $or: [
+          ...(normalizedPhone ? [{ phone: normalizedPhone }] : []),
+          ...(normalizedEmail ? [{ email: normalizedEmail }] : []),
+          ...(normalizedPhone ? [{ email: `${normalizedPhone}@store.com` }] : []),
+          ...(normalizedPhone ? [{ email: `${normalizedPhone}@swapnobaz.com` }] : [])
+        ]
+      }).session(session);
 
       if (user) {
         // If user exists but lacks phone or address, update it
         let needsUpdate = false;
-        if (!user.phone && shippingAddress.phone) {
-          user.phone = shippingAddress.phone;
+        if (!user.phone && normalizedPhone) {
+          user.phone = normalizedPhone;
           needsUpdate = true;
         }
         if ((!user.addresses || user.addresses.length === 0) && shippingAddress.street) {
@@ -154,11 +165,12 @@ export async function POST(req: NextRequest) {
           await user.save({ session });
         }
       } else {
-        // Create a new user for this guest
+        // Create a new passwordless user for this guest order
+        const userEmail = normalizedEmail || `${normalizedPhone}@store.com`;
         const [newUser] = await User.create([{
           name: shippingAddress.fullName,
-          email: shippingAddress.email.toLowerCase(),
-          phone: shippingAddress.phone,
+          email: userEmail,
+          phone: normalizedPhone,
           role: 'user',
           addresses: [{
             street: shippingAddress.street,
@@ -172,6 +184,7 @@ export async function POST(req: NextRequest) {
         user = newUser;
       }
     }
+
 
     let serverComputedTotal = 0;
     const validatedItems: IOrderItem[] = [];

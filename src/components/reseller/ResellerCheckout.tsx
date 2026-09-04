@@ -103,13 +103,16 @@ export function ResellerCheckout({ subdomain, storeInfo }: Props) {
     if (cart.length === 0) return toast.error('কার্টে কোনো পণ্য নেই');
     setSubmitting(true);
     try {
+      const { normalizePhoneNumber } = await import('@/lib/utils');
+      const normalizedPhone = normalizePhoneNumber(values.phone) || values.phone;
+
       const res = await fetch(`/api/store/${subdomain}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer: {
             name: values.name,
-            phone: values.phone,
+            phone: normalizedPhone,
             address: { street: values.address, city: values.city },
           },
           items: cart,
@@ -121,6 +124,7 @@ export function ResellerCheckout({ subdomain, storeInfo }: Props) {
           notes: values.notes,
         }),
       });
+
       const data = await res.json();
       if (res.ok) {
         if (values.paymentMethod === 'stripe') {

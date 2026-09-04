@@ -100,6 +100,9 @@ function UsersContent() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isAssignAdminOpen, setIsAssignAdminOpen] = useState(false);
   const [adminEmail, setAdminEmail] = useState('');
+  const [adminName, setAdminName] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [adminImage, setAdminImage] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
 
   const { data: session } = useSession();
@@ -179,24 +182,33 @@ function UsersContent() {
 
   const handleAssignAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminEmail) return;
+    if (!adminEmail.trim()) return;
 
     setIsAssigning(true);
     try {
       const response = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: adminEmail }),
+        body: JSON.stringify({
+          emailOrPhone: adminEmail.trim(),
+          name: adminName.trim() || undefined,
+          password: adminPassword.trim() || undefined,
+          image: adminImage || undefined,
+        }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        toast.success(`Successfully assigned Admin role to ${adminEmail}`);
+        toast.success(data.message || 'Admin access granted successfully');
         setAdminEmail('');
+        setAdminName('');
+        setAdminPassword('');
+        setAdminImage('');
         setIsAssignAdminOpen(false);
         fetchUsers();
       } else {
-        const error = await response.json();
-        toast.error(error.message || 'Failed to assign admin');
+        toast.error(data.message || 'Failed to assign admin');
       }
     } catch (error) {
       toast.error('Error assigning admin');
@@ -204,6 +216,7 @@ function UsersContent() {
       setIsAssigning(false);
     }
   };
+
  
   const handleDeleteUser = async (userId: string, userName: string) => {
     const result = await Swal.fire({
@@ -563,39 +576,62 @@ function UsersContent() {
 
       {/* Assign Admin Modal */}
       <Dialog open={isAssignAdminOpen} onOpenChange={setIsAssignAdminOpen}>
-        <DialogContent className="sm:max-w-[450px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl">
-          <div className="bg-blue-600 p-8 text-white relative overflow-hidden">
+        <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-3xl border-none shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="bg-blue-600 p-6 text-white relative overflow-hidden shrink-0">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-400/20 rounded-full -ml-12 -mb-12 blur-xl" />
             
             <DialogHeader className="relative z-10">
-              <div className="h-12 w-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 backdrop-blur-sm border border-white/30">
-                <ShieldCheck className="h-6 w-6 text-white" />
+              <div className="h-10 w-10 bg-white/20 rounded-2xl flex items-center justify-center mb-3 backdrop-blur-sm border border-white/30">
+                <ShieldCheck className="h-5 w-5 text-white" />
               </div>
               <DialogTitle className="text-2xl font-black tracking-tight text-white">Assign Admin Access</DialogTitle>
-              <p className="text-blue-100 text-sm font-medium mt-1">Grant administrative privileges to a user by email.</p>
+              <p className="text-blue-100 text-xs font-medium mt-0.5">Grant admin access using email or phone number.</p>
             </DialogHeader>
           </div>
 
-          <form onSubmit={handleAssignAdmin} className="p-8 space-y-6 bg-white">
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
-              <div className="relative group">
-                <input
-                  type="email"
-                  value={adminEmail}
-                  onChange={(e) => setAdminEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                  className="w-full h-14 px-5 rounded-2xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-bold text-slate-700"
-                />
-              </div>
-              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-50 border border-amber-100 mt-2">
-                <div className="h-4 w-4 rounded-full bg-amber-500 flex-shrink-0 mt-0.5" />
-                <p className="text-[10px] text-amber-700 font-bold leading-normal">
-                  NOTE: When this user logs in with Google using this email, they will automatically be granted Admin status.
-                </p>
-              </div>
+          <form onSubmit={handleAssignAdmin} className="p-6 space-y-4 bg-white overflow-y-auto flex-1">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
+              <input
+                type="text"
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                placeholder="e.g. John Doe"
+                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-bold text-slate-700 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">
+                Email or Phone Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                placeholder="email@example.com or 017xxxxxxxx"
+                required
+                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-bold text-slate-700 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-black text-slate-400 uppercase tracking-wider ml-1">Password</label>
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="•••••••• (Optional for initial access)"
+                className="w-full h-12 px-4 rounded-xl border-2 border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-bold text-slate-700 text-sm"
+              />
+            </div>
+
+            <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 border border-blue-100">
+              <div className="h-4 w-4 rounded-full bg-blue-500 flex-shrink-0 mt-0.5" />
+              <p className="text-[10px] text-blue-700 font-bold leading-normal">
+                If the user logs in with this mobile number or email, they will automatically be granted Admin access.
+              </p>
             </div>
             
             <div className="flex gap-3 pt-2">
@@ -603,18 +639,18 @@ function UsersContent() {
                 type="button"
                 variant="outline"
                 onClick={() => setIsAssignAdminOpen(false)}
-                className="flex-1 h-14 rounded-2xl font-bold border-2 hover:bg-slate-50"
+                className="flex-1 h-12 rounded-xl font-bold border-2 hover:bg-slate-50"
               >
                 CANCEL
               </Button>
               <Button 
                 type="submit" 
                 disabled={isAssigning}
-                className="flex-[2] h-14 rounded-2xl font-black bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-200 border-none group"
+                className="flex-[2] h-12 rounded-xl font-black bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-200 border-none group text-white"
               >
                 {isAssigning ? (
                   <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     PROCESSING...
                   </>
                 ) : (
@@ -643,4 +679,5 @@ export default function UsersPage() {
     </Suspense>
   );
 }
+
 

@@ -21,15 +21,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectToDatabase();
-
+    const { normalizePhoneNumber } = await import('@/lib/utils');
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedPhone = normalizePhoneNumber(phone) || phone;
 
-    const existingUser = await User.findOne({ email: normalizedEmail });
+    const existingUser = await User.findOne({
+      $or: [
+        { email: normalizedEmail },
+        ...(normalizedPhone ? [{ phone: normalizedPhone }] : [])
+      ]
+    });
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'User already exists with this email.' },
+        { message: 'User already exists with this email or mobile number.' },
         { status: 409 }
       );
     }
@@ -38,8 +43,9 @@ export async function POST(req: NextRequest) {
       name,
       email: normalizedEmail,
       password,
-      phone,
+      phone: normalizedPhone,
       addresses: [{
+
         street: address,
         division: division,
         state: district,

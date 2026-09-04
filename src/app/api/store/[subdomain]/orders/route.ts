@@ -123,10 +123,43 @@ export async function POST(
     const shortId = generateShortId();
 
     const mongoose = (await import('mongoose')).default;
+    const { normalizePhoneNumber } = await import('@/lib/utils');
+    const User = (await import('@/models/User')).default;
+
+    const normalizedPhone = normalizePhoneNumber(customer.phone);
+    customer.phone = normalizedPhone || customer.phone;
+
     const sessionConn = await mongoose.startSession();
     sessionConn.startTransaction();
 
     try {
+      // Find or auto-create customer user account
+      let customerUser = await User.findOne({
+        $or: [
+          ...(normalizedPhone ? [{ phone: normalizedPhone }] : []),
+          ...(customer.email ? [{ email: customer.email.toLowerCase().trim() }] : []),
+          ...(normalizedPhone ? [{ email: `${normalizedPhone}@store.com` }] : []),
+          ...(normalizedPhone ? [{ email: `${normalizedPhone}@swapnobaz.com` }] : [])
+        ]
+      }).session(sessionConn);
+
+      if (!customerUser && normalizedPhone) {
+        const [newUser] = await User.create([{
+          name: customer.name,
+          email: customer.email ? customer.email.toLowerCase().trim() : `${normalizedPhone}@store.com`,
+          phone: normalizedPhone,
+          role: 'user',
+          addresses: [{
+            street: customer.address?.street || '',
+            city: customer.address?.city || '',
+            division: customer.address?.division || '',
+            country: 'Bangladesh',
+            isDefault: true
+          }]
+        }], { session: sessionConn });
+        customerUser = newUser;
+      }
+
       const [order] = await ResellerOrder.create([{
         resellerId: reseller._id,
         customer,
@@ -142,6 +175,7 @@ export async function POST(
         internalNote: notes || '',
         shortId,
       }], { session: sessionConn });
+
 
       // Update reseller stats (atomic)
       await Reseller.findByIdAndUpdate(reseller._id, {

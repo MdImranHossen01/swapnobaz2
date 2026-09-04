@@ -82,42 +82,96 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     const currentUserRole = (session?.user as any)?.role;
     
-    // Both admin and super_admin can manually assign admins by email
+    // Both admin and super_admin can manually assign admins by email or phone
     if (!session || (currentUserRole !== 'super_admin' && currentUserRole !== 'admin')) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const { email } = await req.json();
+    const { email, emailOrPhone, name, password, image } = await req.json();
+    const identifier = (emailOrPhone || email || '').trim();
 
-    if (!email || !/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.[A-Za-z]{2,})+$/.test(email)) {
-      return NextResponse.json({ message: 'Invalid email address' }, { status: 400 });
+    if (!identifier) {
+      return NextResponse.json({ message: 'Email or Mobile Number is required' }, { status: 400 });
     }
 
     await connectToDatabase();
 
-    // Find or Create user with this email and set role to admin
-    // If user already exists, update their role to admin
-    // If they don't exist, we create them with a placeholder name
-    const result = await User.findOneAndUpdate(
-      { email: email.toLowerCase() },
-      { 
-        $set: { role: 'admin' },
-        $setOnInsert: { 
-          name: email.split('@')[0], // Use email prefix as initial name
-        }
-      },
-      { upsert: true, new: true }
-    );
+    const isEmail = identifier.includes('@');
+    let user;
+
+    if (isEmail) {
+      if (!/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.[A-Za-z]{2,})+$/.test(identifier)) {
+        return NextResponse.json({ message: 'Invalid email address' }, { status: 400 });
+      }
+
+      const normalizedEmail = identifier.toLowerCase();
+      user = await User.findOne({ email: normalizedEmail }).select('+password');
+
+      if (user) {
+        user.role = 'admin';
+        if (name) user.name = name;
+        if (image) user.image = image;
+        if (password && password.length >= 6) user.password = password; // pre-save hook hashes password
+        await user.save();
+      } else {
+        user = await User.create({
+          name: name || normalizedEmail.split('@')[0],
+          email: normalizedEmail,
+          role: 'admin',
+          image: image || undefined,
+          ...(password && password.length >= 6 ? { password } : {})
+        });
+      }
+    } else {
+      const { normalizePhoneNumber } = await import('@/lib/utils');
+      const normalizedPhone = normalizePhoneNumber(identifier);
+
+      if (!normalizedPhone || normalizedPhone.length < 10) {
+        return NextResponse.json({ message: 'Invalid mobile number. Please enter a valid 11-digit mobile number.' }, { status: 400 });
+      }
+
+      user = await User.findOne({
+        $or: [
+          { phone: normalizedPhone },
+          { email: `${normalizedPhone}@swapnobaz.com` }
+        ]
+      }).select('+password');
+
+      if (user) {
+        user.role = 'admin';
+        user.phone = normalizedPhone;
+        if (name) user.name = name;
+        if (image) user.image = image;
+        if (password && password.length >= 6) user.password = password;
+        await user.save();
+      } else {
+        user = await User.create({
+          name: name || `Admin ${normalizedPhone.slice(-4)}`,
+          email: `${normalizedPhone}@swapnobaz.com`,
+          phone: normalizedPhone,
+          role: 'admin',
+          image: image || undefined,
+          ...(password && password.length >= 6 ? { password } : {})
+        });
+      }
+    }
 
     return NextResponse.json({ 
-      message: `Successfully assigned Admin role to ${email}`,
-      user: result
+      message: `Successfully assigned Admin role to ${identifier}`,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role
+      }
     });
   } catch (error) {
     console.error('Assign Admin Error:', error);
     return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
+
 
 export async function PATCH(req: NextRequest) {
   try {

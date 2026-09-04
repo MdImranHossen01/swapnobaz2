@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import connectToDatabase from './lib/db';
 import User from './models/User';
 import bcrypt from 'bcryptjs';
+import { normalizePhoneNumber } from './lib/utils';
 
 import authConfig from './auth.config';
 
@@ -13,26 +14,53 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email: { label: 'Email or Mobile Number', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Please provide both email and password.');
+        const identifier = (credentials?.email as string)?.trim();
+        const password = credentials?.password as string | undefined;
+
+        if (!identifier) {
+          throw new Error('Please provide your email or mobile number.');
         }
 
         await connectToDatabase();
-        const user = await User.findOne({ email: credentials.email }).select('+password');
 
-        if (!user || !user.password) {
-          throw new Error('No user found with this email on this store.');
+        const isEmail = identifier.includes('@');
+        let user;
+
+        if (isEmail) {
+          user = await User.findOne({ email: identifier.toLowerCase() }).select('+password');
+        } else {
+          const normalizedPhone = normalizePhoneNumber(identifier);
+          if (!normalizedPhone || normalizedPhone.length < 10) {
+            throw new Error('Please provide a valid mobile number (e.g. 01XXXXXXXXX).');
+          }
+          user = await User.findOne({
+            $or: [
+              { phone: normalizedPhone },
+              { email: `${normalizedPhone}@swapnobaz.com` },
+              { email: `${normalizedPhone}@store.com` }
+            ]
+          }).select('+password');
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password as string, user.password);
-
-        if (!isPasswordValid) {
-          throw new Error('Invalid credentials.');
+        if (!user) {
+          throw new Error('No account found with this ' + (isEmail ? 'email address' : 'mobile number') + '.');
         }
+
+        // If user has a password set, require password validation
+        if (user.password) {
+          if (!password) {
+            throw new Error('Password is required for this account.');
+          }
+          const isPasswordValid = await bcrypt.compare(password, user.password);
+          if (!isPasswordValid) {
+            throw new Error('Incorrect password. Please try again.');
+          }
+        }
+        // If user has no password set (e.g. auto-created from order), allow direct login!
 
         return {
           id: user._id.toString(),
@@ -45,6 +73,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
+
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user, trigger, session }) {

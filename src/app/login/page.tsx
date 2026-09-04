@@ -33,8 +33,8 @@ import { cn } from "@/lib/utils";
 import { Logo } from '@/components/ui/logo';
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address' }),
-  password: z.string().min(1, { message: 'Password is required' }),
+  email: z.string().min(1, { message: 'Email or Mobile Number is required' }),
+  password: z.string().optional().or(z.literal('')),
 });
 
 export default function LoginPage() {
@@ -76,7 +76,7 @@ export default function LoginPage() {
     try {
       const response = await signIn('credentials', {
         email: values.email,
-        password: values.password,
+        password: values.password || '',
         redirect: false,
       });
 
@@ -116,7 +116,7 @@ export default function LoginPage() {
             <div className="space-y-2 text-center">
               <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
               <p className="text-sm text-muted-foreground">
-                Enter your credentials to access your account
+                Enter your email or phone number to access your account
               </p>
             </div>
 
@@ -128,13 +128,13 @@ export default function LoginPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email Address</FormLabel>
+                        <FormLabel>Email or Mobile Number</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="m@example.com"
-                            type="email"
+                            placeholder="01XXXXXXXXX or email@example.com"
+                            type="text"
                             {...field}
-                            disabled={isLoading || isGoogleLoading}
+                            disabled={isLoading}
                             className="h-11 focus-visible:ring-primary/20"
                           />
                         </FormControl>
@@ -148,7 +148,7 @@ export default function LoginPage() {
                     render={({ field }) => (
                       <FormItem>
                         <div className="flex items-center justify-between">
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel>Password <span className="text-xs font-normal text-muted-foreground">(Optional if not set)</span></FormLabel>
                           <Link
                             href="/forgot-password"
                             className="text-sm font-medium text-foreground/80 hover:text-primary hover:underline underline-offset-4 transition-colors"
@@ -162,7 +162,7 @@ export default function LoginPage() {
                               placeholder="••••••••"
                               type={showPassword ? "text" : "password"}
                               {...field}
-                              disabled={isLoading || isGoogleLoading}
+                              disabled={isLoading}
                               className="h-11 focus-visible:ring-primary/20 pr-10"
                             />
                             <TooltipProvider>
@@ -172,7 +172,7 @@ export default function LoginPage() {
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="absolute right-0 top-0 h-11 w-11 text-muted-foreground hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 rounded-r-lg outline-none flex items-center justify-center"
-                                    disabled={isLoading || isGoogleLoading}
+                                    disabled={isLoading}
                                     aria-label={showPassword ? "Hide password" : "Show password"}
                                   >
                                     {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
@@ -192,7 +192,7 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     className="w-full h-11 text-base font-semibold transition-all hover:scale-[1.01] active:scale-[0.99]"
-                    disabled={isLoading || isGoogleLoading}
+                    disabled={isLoading}
                   >
                     {isLoading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -205,6 +205,7 @@ export default function LoginPage() {
                 </form>
               </Form>
             </div>
+
 
             <div className="text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}

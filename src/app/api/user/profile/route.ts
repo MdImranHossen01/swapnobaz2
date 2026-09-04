@@ -50,7 +50,11 @@ export async function PUT(req: NextRequest) {
 
     user.name = name;
     if (image !== undefined) user.image = image;
-    if (phone !== undefined) user.phone = phone;
+    if (phone !== undefined) {
+      const { normalizePhoneNumber } = await import('@/lib/utils');
+      user.phone = normalizePhoneNumber(phone) || phone;
+    }
+
 
     if (address) {
       if (user.addresses && user.addresses.length > 0) {
