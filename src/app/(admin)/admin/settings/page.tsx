@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -74,6 +74,7 @@ const settingsSchema = z.object({
     whatsapp: z.string().nullish().transform(v => v ?? ''),
   }),
   marqueeText: z.string().nullish().transform(val => val ?? ''),
+  platformCommissionRate: z.number().min(0, 'Commission cannot be negative').max(100, 'Cannot exceed 100%').optional(),
   metaTitle: z.string().nullish().transform(val => val ?? ''),
   metaDescription: z.string().nullish().transform(val => val ?? ''),
   subscriptionConfig: z.object({
@@ -162,6 +163,7 @@ export default function SettingsPage() {
         whatsapp: ''
       },
       marqueeText: '',
+      platformCommissionRate: 10,
       metaTitle: '',
       metaDescription: '',
       subscriptionConfig: {
@@ -226,6 +228,7 @@ export default function SettingsPage() {
                   address: result.data.contact?.address || '',
                 },
                 marqueeText: result.data.marqueeText || '',
+                platformCommissionRate: result.data.platformCommissionRate ?? 10,
                 socialLinks: {
                   facebook: result.data.socialLinks?.facebook || '',
                   twitter: result.data.socialLinks?.twitter || '',
@@ -436,6 +439,32 @@ export default function SettingsPage() {
                       )}
                     />
                   )}
+
+                  <FormField
+                    control={form.control}
+                    name="platformCommissionRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-semibold text-gray-700">Platform System Commission Rate (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={100}
+                            placeholder="10"
+                            {...field}
+                            value={field.value ?? 10}
+                            onChange={e => field.onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                            className="h-12 rounded-xl bg-gray-50 border-2 border-gray-100 focus:border-primary transition-all font-semibold"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Global percentage fee added on top of reseller base price when shared across the system / other resellers (e.g. 10%).
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField

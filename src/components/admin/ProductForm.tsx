@@ -277,12 +277,15 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     name: "variants"
   });
 
+  const [platformCommissionRate, setPlatformCommissionRate] = useState<number>(10);
+
   useEffect(() => {
     async function fetchData() {
       try {
-        const [catsRes, brandsRes] = await Promise.all([
+        const [catsRes, brandsRes, settingsRes] = await Promise.all([
           fetch('/api/categories'),
-          fetch('/api/brands?all=true')
+          fetch('/api/brands?all=true'),
+          fetch('/api/settings')
         ]);
         if (catsRes.ok) {
           const data = await catsRes.json();
@@ -292,8 +295,14 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
           const brandData = await brandsRes.json();
           setBrands(Array.isArray(brandData) ? brandData : []);
         }
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          if (settingsData?.platformCommissionRate !== undefined) {
+            setPlatformCommissionRate(Number(settingsData.platformCommissionRate));
+          }
+        }
       } catch (error) {
-        console.error('Error fetching categories/brands:', error);
+        console.error('Error fetching categories/brands/settings:', error);
       }
     }
     fetchData();
@@ -870,7 +879,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                                         )}
                                       </div>
                                       <div>
-                                        <Label className="text-xs font-medium text-muted-foreground">Purchase (Tk)</Label>
+                                        <Label className="text-xs font-medium text-muted-foreground">{isReseller ? 'Cost (Tk)' : 'Purchase (Tk)'}</Label>
                                         <Input
                                           type="number"
                                           value={form.watch(`variants.${colorIndex}.sizes.${sizeIndex}.purchasePrice`) ?? ''}
@@ -878,6 +887,10 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                                           onChange={(e) => {
                                             const val = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
                                             form.setValue(`variants.${colorIndex}.sizes.${sizeIndex}.purchasePrice`, val);
+                                            if (val !== '' && typeof val === 'number' && val > 0) {
+                                              const computed = Math.round(val * (1 + platformCommissionRate / 100));
+                                              form.setValue(`variants.${colorIndex}.sizes.${sizeIndex}.resellerPrice`, computed);
+                                            }
                                           }}
                                         />
                                       </div>
@@ -1028,7 +1041,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                     name="purchasePrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Purchase Price (Tk)</FormLabel>
+                        <FormLabel>{isReseller ? 'Base / Cost Price (Tk)' : 'Purchase Price (Tk)'}</FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -1038,6 +1051,11 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                             onChange={(e) => {
                               const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
                               field.onChange(value);
+                              // Auto calculate reseller price with platform commission rate
+                              if (value !== '' && typeof value === 'number' && value > 0) {
+                                const computed = Math.round(value * (1 + platformCommissionRate / 100));
+                                form.setValue('resellerPrice', computed);
+                              }
                             }}
                           />
                         </FormControl>
@@ -1050,7 +1068,9 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                     name="resellerPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Reseller Price (Tk)</FormLabel>
+                        <FormLabel>
+                          {isReseller ? `Shared Catalog Price (+${platformCommissionRate}% System Fee)` : 'Reseller Price (Tk)'}
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -1063,6 +1083,11 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                             }}
                           />
                         </FormControl>
+                        {isReseller && (
+                          <FormDescription className="text-xs">
+                            Base cost (৳{form.watch('purchasePrice') || 0}) + {platformCommissionRate}% system platform fee = ৳{field.value || 0}
+                          </FormDescription>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

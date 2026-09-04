@@ -6,6 +6,8 @@ import Product from '@/models/Product';
 import { generateUniqueSlug } from '@/lib/slugify-server';
 import { slugify } from '@/lib/slugify';
 
+import GlobalSettings from '@/models/GlobalSettings';
+
 async function getResellerId(userId: string) {
   await dbConnect();
   const reseller = await Reseller.findOne({ userId });
@@ -59,13 +61,27 @@ export async function POST(request: NextRequest) {
 
     const parsedPrice = Number(price) || 0;
     const parsedSalePrice = salePrice ? Number(salePrice) : undefined;
-    const parsedPurchasePrice = purchasePrice ? Number(purchasePrice) : undefined;
-    const parsedResellerPrice = resellerPrice ? Number(resellerPrice) : undefined;
-    const parsedStock = Number(stock) || 0;
-    const parsedDiscountRate = discountRate ? Number(discountRate) : undefined;
+    const settings = await GlobalSettings.findOne().lean();
+    const commissionPct = settings?.platformCommissionRate ?? 10;
 
-    const currentSlug = slug || slugify(name);
-    const uniqueSlug = await generateUniqueSlug(Product, currentSlug);
+    // Automatically calculate resellerPrice (Base purchase price + System Commission %)
+    let computedResellerPrice = parsedResellerPrice;
+    if (parsedPurchasePrice && parsedPurchasePrice > 0) {
+      computedResellerPrice = Math.round(parsedPurchasePrice * (1 + commissionPct / 100));
+    }
+
+    // Also calculate for variants if present
+    const processedVariants = Array.isArray(variants) ? variants.map((v: any) => {
+      const vPurchase = Number(v.purchasePrice) || 0;
+      let vReseller = Number(v.resellerPrice) || 0;
+      if (vPurchase > 0) {
+        vReseller = Math.round(vPurchase * (1 + commissionPct / 100));
+      }
+      return {
+        ...v,
+        resellerPrice: vReseller || undefined,
+      };
+    }) : [];
 
     const newProduct = await Product.create({
       name,
@@ -74,7 +90,7 @@ export async function POST(request: NextRequest) {
       price: parsedPrice,
       salePrice: parsedSalePrice,
       purchasePrice: parsedPurchasePrice,
-      resellerPrice: parsedResellerPrice,
+      resellerPrice: computedResellerPrice,
       discountRate: parsedDiscountRate,
       sku,
       stock: parsedStock,
@@ -82,7 +98,7 @@ export async function POST(request: NextRequest) {
       tags: tags || [],
       images: images || [],
       attributes: attributes || [],
-      variants: variants || [],
+      variants: processedVariants.length > 0 ? processedVariants : (variants || []),
       isFeatured: !!isFeatured,
       isNewArrival: !!isNewArrival,
       isPublished: isPublished !== undefined ? !!isPublished : true,
@@ -124,6 +140,30 @@ export async function PATCH(request: NextRequest) {
         updateData[key] = body[key];
       }
     });
+
+    const settings = await GlobalSettings.findOne().lean();
+    const commissionPct = settings?.platformCommissionRate ?? 10;
+
+    if (updateData.purchasePrice !== undefined) {
+      const pPrice = Number(updateData.purchasePrice) || 0;
+      if (pPrice > 0) {
+        updateData.resellerPrice = Math.round(pPrice * (1 + commissionPct / 100));
+      }
+    }
+
+    if (Array.isArray(updateData.variants)) {
+      updateData.variants = updateData.variants.map((v: any) => {
+        const vPurchase = Number(v.purchasePrice) || 0;
+        let vReseller = Number(v.resellerPrice) || 0;
+        if (vPurchase > 0) {
+          vReseller = Math.round(vPurchase * (1 + commissionPct / 100));
+        }
+        return {
+          ...v,
+          resellerPrice: vReseller || undefined,
+        };
+      });
+    }
 
     const product = await Product.findOneAndUpdate(
       { _id: targetId, uploadedBy: resellerId },

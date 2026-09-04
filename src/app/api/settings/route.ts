@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
     const allowedFields = [
       'brandName', 'contact', 'socialLinks',
       'marqueeText', 'metaTitle', 'metaDescription',
+      'platformCommissionRate',
       'subscriptionConfig',
       'freeDeliveryThreshold',
       'deliveryChargeInsideDhaka',
