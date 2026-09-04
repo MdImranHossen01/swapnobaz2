@@ -86,40 +86,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       
       return token;
     },
-    async signIn({ user, account }) {
-      if (account?.provider === 'google') {
-        if (!user.email) return false;
-        
-        try {
-          const savedUser = await User.findOneAndUpdate(
-            { email: user.email },
-            { 
-              $set: {
-                name: user.name || 'Unknown',
-                image: user.image || '',
-                googleId: account.providerAccountId,
-              },
-              $setOnInsert: {
-                role: 'user',
-                status: 'active',
-              }
-            },
-            { upsert: true, new: true }
-          );
-
-          if (savedUser) {
-            user.id = savedUser._id.toString();
-            if (user.email === 'imranshuvo101@gmail.com') {
-              (user as any).role = 'super_admin';
-            }
-          }
-          return true;
-        } catch (error) {
-          console.error('Error in Google signIn:', error);
-          return true;
-        }
-      }
-      return true;
-    },
   },
 });
