@@ -32,22 +32,48 @@ export const proxy = auth(async (req) => {
   const isLoggedIn = !!req.auth;
   const role = (req.auth?.user as any)?.role as string | undefined;
 
-  // ── 1. Multi-Tenant Subdomain Routing ──────────────────────────────────────
-  // Detect reseller subdomains (e.g. bestshop.swapnobaz.com)
-  const subdomain = extractSubdomain(hostname);
+  // ── 1. Multi-Tenant Subdomain & Custom Domain Routing ──────────────────────
+  let targetSubdomain = extractSubdomain(hostname);
+  const cleanHost = hostname.split(':')[0].toLowerCase();
+
+  // If not a subdomain of swapnobaz.com, and not localhost/IP, check if it's a custom domain
+  if (!targetSubdomain && 
+      cleanHost !== 'localhost' && 
+      cleanHost !== '127.0.0.1' && 
+      !/^\d+\.\d+\.\d+\.\d+$/.test(cleanHost) &&
+      cleanHost !== ROOT_DOMAIN &&
+      cleanHost !== `www.${ROOT_DOMAIN}`) {
+    try {
+      // Lookup custom domain via internal origin fetch
+      const lookupUrl = new URL(`/api/reseller/domain-lookup?domain=${encodeURIComponent(cleanHost)}`, nextUrl.origin);
+      const res = await fetch(lookupUrl.toString(), {
+        headers: { 'x-internal-lookup': 'true' },
+        next: { revalidate: 60 } // cache resolution for 60 seconds
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.found && data.subdomain) {
+          targetSubdomain = data.subdomain;
+        }
+      }
+    } catch (err) {
+      console.error('Custom domain lookup failed in proxy:', err);
+    }
+  }
+
   const isAuthRoute = nextUrl.pathname.startsWith("/login") || 
                       nextUrl.pathname.startsWith("/register") || 
                       nextUrl.pathname.startsWith("/forgot-password") || 
                       nextUrl.pathname.startsWith("/reset-password");
 
-  if (subdomain) {
+  if (targetSubdomain) {
     // If it's an auth route, let it render the unified auth page without rewriting to /store/[subdomain]/login
     if (!isAuthRoute) {
       const url = nextUrl.clone();
-      const rewrittenPath = `/store/${subdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
+      const rewrittenPath = `/store/${targetSubdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
       url.pathname = rewrittenPath;
       const response = NextResponse.rewrite(url);
-      response.headers.set('x-reseller-subdomain', subdomain);
+      response.headers.set('x-reseller-subdomain', targetSubdomain);
       response.headers.set('x-pathname', nextUrl.pathname);
       return response;
     }

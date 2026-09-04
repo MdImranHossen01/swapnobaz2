@@ -338,13 +338,21 @@ function DomainTab({ reseller, onSave, saving }: { reseller: any; onSave: (p: an
         <div className="border-t pt-4 space-y-1.5">
           <Label className="font-semibold">Custom Domain</Label>
           <Input value={customDomain} onChange={e => setCustomDomain(e.target.value)} placeholder="www.myonlinestore.com" className="font-mono" />
-          <div className="rounded-lg bg-muted/40 p-3 text-xs border mt-2 space-y-1.5">
-            <p className="font-bold text-foreground">DNS CNAME Setup Instructions:</p>
-            <div className="font-mono bg-background p-2 rounded border space-y-1 text-[11px]">
-              <p><strong>Type:</strong> CNAME</p>
-              <p><strong>Host / Name:</strong> @ (or www)</p>
-              <p><strong>Target / Value:</strong> cname.swapnobaz.com</p>
+          <div className="rounded-lg bg-muted/40 p-3 text-xs border mt-2 space-y-2">
+            <p className="font-bold text-foreground">DNS Setup Instructions for Custom Domain:</p>
+            <div className="space-y-1.5 font-mono text-[11px]">
+              <div className="bg-background p-2 rounded border">
+                <p className="text-muted-foreground font-sans font-medium mb-0.5">Option 1: CNAME Record (Recommended for subdomains/www)</p>
+                <p><strong>Type:</strong> CNAME &nbsp;|&nbsp; <strong>Name:</strong> www &nbsp;|&nbsp; <strong>Target:</strong> swapnobaz.com</p>
+              </div>
+              <div className="bg-background p-2 rounded border">
+                <p className="text-muted-foreground font-sans font-medium mb-0.5">Option 2: A Record (For root domain)</p>
+                <p><strong>Type:</strong> A &nbsp;|&nbsp; <strong>Name:</strong> @ &nbsp;|&nbsp; <strong>Points to:</strong> 68.183.191.215</p>
+              </div>
             </div>
+            <p className="text-[10px] text-muted-foreground">
+              After setting DNS in your domain registrar, save the domain name above. It may take 5–15 minutes for DNS to propagate globally.
+            </p>
           </div>
         </div>
         <Button onClick={() => onSave({ subdomain, customDomain })} disabled={saving}>
