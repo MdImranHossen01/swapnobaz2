@@ -368,7 +368,7 @@ export default function RegisterPage() {
                   <Button
                     type="submit"
                     className="w-full h-11 text-base font-semibold transition-all hover:scale-[1.01] active:scale-[0.99] mt-6"
-                    disabled={isLoading || isGoogleLoading}
+                    disabled={isLoading}
                   >
                     {isLoading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
