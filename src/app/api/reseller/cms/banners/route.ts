@@ -40,17 +40,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, image, link, primaryBtnText, primaryBtnLink, secondaryBtnText, secondaryBtnLink, order, isActive } = body;
 
-    if (!title || !image) {
-      return NextResponse.json({ error: 'Title and image are required' }, { status: 400 });
+    if (!image) {
+      return NextResponse.json({ error: 'Banner image is required' }, { status: 400 });
     }
 
     const banner = await Banner.create({
       resellerId,
-      title,
+      title: title || 'Promotional Banner',
       image,
-      link: link || '',
+      link: link || primaryBtnLink || '',
       primaryBtnText: primaryBtnText || '',
-      primaryBtnLink: primaryBtnLink || '',
+      primaryBtnLink: link || primaryBtnLink || '',
       secondaryBtnText: secondaryBtnText || '',
       secondaryBtnLink: secondaryBtnLink || '',
       order: order ?? 0,

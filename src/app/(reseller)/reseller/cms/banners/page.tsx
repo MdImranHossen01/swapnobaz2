@@ -71,24 +71,22 @@ export default function ResellerBannersPage() {
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="w-[180px]">Preview</TableHead>
-              <TableHead>Title</TableHead>
+              <TableHead>Destination Link</TableHead>
               <TableHead>Order</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Primary CTA</TableHead>
-              <TableHead>Secondary CTA</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={7} className="h-40 text-center">
+              <TableRow><TableCell colSpan={5} className="h-40 text-center">
                 <div className="flex flex-col items-center justify-center gap-2">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">Loading banners...</p>
                 </div>
               </TableCell></TableRow>
             ) : banners.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="h-40 text-center">
+              <TableRow><TableCell colSpan={5} className="h-40 text-center">
                 <div className="flex flex-col items-center justify-center gap-2">
                   <p className="text-lg font-medium">No banners found</p>
                   <p className="text-sm text-muted-foreground">Add your first banner to get started.</p>
@@ -101,12 +99,16 @@ export default function ResellerBannersPage() {
               banners.map((banner) => (
                 <TableRow key={banner._id} className="group hover:bg-muted/30 transition-colors">
                   <TableCell>
-                    <div className="aspect-[21/9] w-full overflow-hidden rounded-md border bg-muted relative">
-                      <Image src={banner.image} alt={banner.title} width={180} height={77}
+                    <div className="aspect-[21/9] w-[180px] overflow-hidden rounded-md border bg-muted relative">
+                      <Image src={banner.image} alt={banner.title || 'Banner'} width={180} height={77}
                         className="absolute inset-0 h-full w-full object-cover" />
                     </div>
                   </TableCell>
-                  <TableCell><span className="font-semibold">{banner.title}</span></TableCell>
+                  <TableCell>
+                    <span className="text-xs font-mono text-muted-foreground break-all max-w-[250px] inline-block">
+                      {banner.link || banner.primaryBtnLink || 'No link (Image only)'}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline" className="font-mono">{banner.order}</Badge>
                   </TableCell>
@@ -117,18 +119,6 @@ export default function ResellerBannersPage() {
                       </Badge>
                     </button>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-medium">{banner.primaryBtnText || 'Shop Now'}</span>
-                      <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{banner.primaryBtnLink || 'No link'}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-medium">{banner.secondaryBtnText || 'Contact'}</span>
-                      <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">{banner.secondaryBtnLink || 'No link'}</span>
-                    </div>
-                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Link href={`/reseller/cms/banners/${banner._id}/edit`}>
@@ -137,7 +127,7 @@ export default function ResellerBannersPage() {
                         </Button>
                       </Link>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(banner._id, banner.title)}>
+                        onClick={() => handleDelete(banner._id, banner.title || 'Banner')}>
                         <Trash className="h-4 w-4" />
                       </Button>
                     </div>
