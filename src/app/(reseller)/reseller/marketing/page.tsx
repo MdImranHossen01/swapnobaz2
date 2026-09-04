@@ -215,55 +215,119 @@ export default function ResellerMarketingPage() {
 
 
 
-        {/* META TAB */}
-        <TabsContent value="meta" className="mt-4">
+        {/* META & ANALYTICS TAB */}
+        <TabsContent value="meta" className="space-y-6 mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Meta (Facebook) Pixel</CardTitle>
-              <CardDescription>Configure Facebook Ads pixel and server-side conversion tracking</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { key: 'metaPixelId', label: 'Meta Pixel ID', placeholder: '1403937488264485' },
-                { key: 'facebookDomainVerification', label: 'Domain Verification Code', placeholder: 'abc123...' },
-              ].map(f => (
-                <div key={f.key} className="space-y-1">
-                  <Label>{f.label}</Label>
-                  <Input value={(tracking as any)[f.key]} onChange={e => setTracking(t => ({ ...t, [f.key]: e.target.value }))} placeholder={f.placeholder} className="font-mono text-sm" />
-                </div>
-              ))}
-              <Button onClick={() => save({ seoConfig: { ...reseller?.seoConfig, ...tracking } })} disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" /> Save Changes
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="mt-4">
-            <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-primary" /> Server-Side Tracking
+                <Zap className="h-5 w-5 text-primary" /> Tracking Pixels & Analytics
               </CardTitle>
-              <CardDescription>Configure Facebook Conversions API, TikTok Events API, and Google Tag Manager</CardDescription>
+              <CardDescription>
+                Configure Meta Pixel, Facebook Conversions API (CAPI), TikTok Events, and Google Tag Manager
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {[
-                { key: 'facebookAccessToken', label: 'Facebook Access Token (CAPI)', placeholder: 'EAA...', type: 'password' },
-                { key: 'facebookTestEventCode', label: 'Test Event Code', placeholder: 'TEST12345' },
-                { key: 'tiktokPixelId', label: 'TikTok Pixel ID', placeholder: 'CXXXXXXXX' },
-                { key: 'tiktokAccessToken', label: 'TikTok Access Token', placeholder: 'tok...', type: 'password' },
-                { key: 'googleTagManagerId', label: 'Google Tag Manager ID', placeholder: 'GTM-XXXXXXX' },
-                { key: 'googleAnalyticsId', label: 'Google Analytics 4 ID', placeholder: 'G-XXXXXXXXXX' },
-              ].map(f => (
-                <div key={f.key} className="space-y-1">
-                  <Label>{f.label}</Label>
-                  <Input type={f.type || 'text'} value={(tracking as any)[f.key]} onChange={e => setTracking(t => ({ ...t, [f.key]: e.target.value }))} placeholder={f.placeholder} className="font-mono text-sm" />
+            <CardContent className="space-y-6">
+              {/* Meta Pixel Section */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="font-semibold text-sm flex items-center gap-1.5">
+                    Meta (Facebook) Pixel & Domain Verification
+                  </h3>
                 </div>
-              ))}
-              <Button onClick={() => save({ seoConfig: { ...reseller?.seoConfig, ...tracking } })} disabled={saving}>
-                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                <Save className="mr-2 h-4 w-4" /> Save Changes
-              </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Meta Pixel ID</Label>
+                    <Input
+                      value={tracking.metaPixelId}
+                      onChange={e => setTracking(t => ({ ...t, metaPixelId: e.target.value }))}
+                      placeholder="1403937488264485"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Domain Verification Code</Label>
+                    <Input
+                      value={tracking.facebookDomainVerification}
+                      onChange={e => setTracking(t => ({ ...t, facebookDomainVerification: e.target.value }))}
+                      placeholder="abc123xyz..."
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Server-Side Tracking Section */}
+              <div className="space-y-4">
+                <div className="border-b pb-2">
+                  <h3 className="font-semibold text-sm">Server-Side Tracking & Conversions API (CAPI)</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Facebook Access Token (CAPI)</Label>
+                    <Input
+                      type="password"
+                      value={tracking.facebookAccessToken}
+                      onChange={e => setTracking(t => ({ ...t, facebookAccessToken: e.target.value }))}
+                      placeholder="EAA..."
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Facebook Test Event Code</Label>
+                    <Input
+                      value={tracking.facebookTestEventCode}
+                      onChange={e => setTracking(t => ({ ...t, facebookTestEventCode: e.target.value }))}
+                      placeholder="TEST12345"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">TikTok Pixel ID</Label>
+                    <Input
+                      value={tracking.tiktokPixelId}
+                      onChange={e => setTracking(t => ({ ...t, tiktokPixelId: e.target.value }))}
+                      placeholder="CXXXXXXXX"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">TikTok Access Token</Label>
+                    <Input
+                      type="password"
+                      value={tracking.tiktokAccessToken}
+                      onChange={e => setTracking(t => ({ ...t, tiktokAccessToken: e.target.value }))}
+                      placeholder="tok..."
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Google Tag Manager ID</Label>
+                    <Input
+                      value={tracking.googleTagManagerId}
+                      onChange={e => setTracking(t => ({ ...t, googleTagManagerId: e.target.value }))}
+                      placeholder="GTM-XXXXXXX"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Google Analytics 4 (GA4) ID</Label>
+                    <Input
+                      value={tracking.googleAnalyticsId}
+                      onChange={e => setTracking(t => ({ ...t, googleAnalyticsId: e.target.value }))}
+                      placeholder="G-XXXXXXXXXX"
+                      className="font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Single Save Button */}
+              <div className="pt-2">
+                <Button onClick={() => save({ seoConfig: { ...reseller?.seoConfig, ...tracking } })} disabled={saving}>
+                  {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  <Save className="mr-2 h-4 w-4" /> Save All Tracking Settings
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
