@@ -330,10 +330,10 @@ export default function ShopClient({ initialProducts, initialCategories, initial
     const brandObj = typeof brandOrSlug === 'string'
       ? brands.find(b => b.slug === brandOrSlug || b._id === brandOrSlug || b.name.toLowerCase() === brandOrSlug.toLowerCase())
       : brandOrSlug;
-    const normalizedKey = brandObj ? (brandObj.slug || brandObj._id) : brandOrSlug;
+    const normalizedKey = brandObj ? (brandObj.slug || brandObj._id) : (typeof brandOrSlug === 'string' ? brandOrSlug : brandOrSlug._id);
 
     const isSelected = selectedBrands.includes(normalizedKey) ||
-      (brandObj ? (selectedBrands.includes(brandObj._id) || (brandObj.slug && selectedBrands.includes(brandObj.slug))) : false);
+      (brandObj ? (selectedBrands.includes(brandObj._id) || (Boolean(brandObj.slug) && selectedBrands.includes(brandObj.slug!))) : false);
 
     if (isSelected) {
       setSelectedBrands(prev => prev.filter(s =>
