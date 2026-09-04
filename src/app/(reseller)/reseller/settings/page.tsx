@@ -375,33 +375,27 @@ function DomainTab({ reseller, onSave, saving }: { reseller: any; onSave: (p: an
                 <strong className="text-foreground">ডোমেন ম্যানেজমেন্টে লগইন করুন:</strong> আপনি যে কোম্পানি থেকে ডোমেন কিনেছেন (যেমন: Namecheap, GoDaddy, Cloudflare) সেখানে লগইন করে <strong className="text-foreground">DNS Management / DNS Records</strong> পেজে যান।
               </li>
               <li className="pl-1">
-                <strong className="text-foreground">নিচের যেকোনো একটি DNS Record যুক্ত করুন:</strong>
+                <strong className="text-foreground">নিচের CNAME Record-টি যুক্ত করুন:</strong>
               </li>
             </ol>
 
-            {/* DNS Records Options Table */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-              <div className="p-3 rounded-lg border bg-background space-y-1.5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">পদ্ধতি ১: CNAME Record (সুপারিশকৃত)</span>
-                </div>
-                <div className="font-mono text-[11px] space-y-1 bg-muted/30 p-2 rounded border">
-                  <p><strong className="text-muted-foreground">Type:</strong> CNAME</p>
-                  <p><strong className="text-muted-foreground">Name/Host:</strong> www</p>
-                  <p><strong className="text-muted-foreground">Target/Value:</strong> <span className="text-primary font-bold">swapnobaz.com</span></p>
-                  <p><strong className="text-muted-foreground">TTL:</strong> Automatic / 1 Hour</p>
-                </div>
+            {/* Pure CNAME Record Card */}
+            <div className="p-3.5 rounded-lg border bg-background space-y-2 shadow-sm max-w-xl">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">CNAME Record Setup</span>
               </div>
-
-              <div className="p-3 rounded-lg border bg-background space-y-1.5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-foreground bg-muted px-2 py-0.5 rounded">পদ্ধতি ২: A Record (রুট ডোমেনের জন্য)</span>
+              <div className="grid grid-cols-3 gap-2 font-mono text-xs bg-muted/30 p-2.5 rounded border">
+                <div>
+                  <p className="text-[10px] text-muted-foreground font-sans font-bold">TYPE</p>
+                  <p className="font-bold text-foreground">CNAME</p>
                 </div>
-                <div className="font-mono text-[11px] space-y-1 bg-muted/30 p-2 rounded border">
-                  <p><strong className="text-muted-foreground">Type:</strong> A</p>
-                  <p><strong className="text-muted-foreground">Name/Host:</strong> @</p>
-                  <p><strong className="text-muted-foreground">Points to/Value:</strong> <span className="text-primary font-bold">68.183.191.215</span></p>
-                  <p><strong className="text-muted-foreground">TTL:</strong> Automatic / 1 Hour</p>
+                <div>
+                  <p className="text-[10px] text-muted-foreground font-sans font-bold">NAME / HOST</p>
+                  <p className="font-bold text-foreground">www <span className="text-[10px] text-muted-foreground font-sans">(or @)</span></p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground font-sans font-bold">TARGET / VALUE</p>
+                  <p className="font-bold text-primary">swapnobaz.com</p>
                 </div>
               </div>
             </div>
