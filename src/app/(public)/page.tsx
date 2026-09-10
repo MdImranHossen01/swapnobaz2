@@ -15,6 +15,7 @@ import {
 } from '@/components/storefront/Skeletons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { ResellerSupplierCTA } from '@/components/storefront/ResellerSupplierCTA';
 
 import { headers } from 'next/headers';
 import {
@@ -177,114 +178,119 @@ export default async function Home() {
       <FreeDeliveryBanner settings={data.settings} />
 
       {isLayoutV3 ? (
-        <div className="container mx-auto max-w-[1400px] px-0 py-0 lg:px-4 lg:py-4 flex gap-6 items-start">
-          {/* Left Sticky Sidebar */}
-          <aside className="w-64 shrink-0 hidden lg:block sticky top-14 bg-card rounded-xl border border-border/80 shadow-sm p-4 overflow-y-auto max-h-[calc(100vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex flex-col gap-1.5">
-              {data.categories.map((category: any) => (
-                <Link
-                  key={category._id}
-                  href={`/shop?category=${encodeURIComponent(category.slug)}`}
-                  className="flex items-center justify-between p-2.5 rounded-lg hover:bg-accent text-sm font-medium transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {category.image ? (
-                      <div className="relative w-6 h-6 flex-shrink-0">
-                        <Image
-                          src={category.image}
-                          alt={category.name}
-                          fill
-                          sizes="24px"
-                          className="object-contain"
-                        />
-                      </div>
-                    ) : (
-                      <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase">
-                        {category.name.slice(0, 2)}
-                      </span>
-                    )}
-                    <span className="text-foreground text-[13px] font-bold">{category.name}</span>
-                  </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
-                </Link>
-              ))}
+        <>
+          <div className="container mx-auto max-w-[1400px] px-0 py-0 lg:px-4 lg:py-4 flex gap-6 items-start">
+            {/* Left Sticky Sidebar */}
+            <aside className="w-64 shrink-0 hidden lg:block sticky top-14 bg-card rounded-xl border border-border/80 shadow-sm p-4 overflow-y-auto max-h-[calc(100vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="flex flex-col gap-1.5">
+                {data.categories.map((category: any) => (
+                  <Link
+                    key={category._id}
+                    href={`/shop?category=${encodeURIComponent(category.slug)}`}
+                    className="flex items-center justify-between p-2.5 rounded-lg hover:bg-accent text-sm font-medium transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {category.image ? (
+                        <div className="relative w-6 h-6 flex-shrink-0">
+                          <Image
+                            src={category.image}
+                            alt={category.name}
+                            fill
+                            sizes="24px"
+                            className="object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold uppercase">
+                          {category.name.slice(0, 2)}
+                        </span>
+                      )}
+                      <span className="text-foreground text-[13px] font-bold">{category.name}</span>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                  </Link>
+                ))}
+              </div>
+            </aside>
+
+            {/* Right Content Area */}
+            <div className="flex-1 min-w-0 flex flex-col gap-6">
+              {/* 1. Hero Section */}
+              <HeroSlider banners={data.banners} style={ui.hero} layout={ui.layout} />
+
+              {/* 4. Categories Showcase */}
+              <CategoryShowcase categories={data.categories} style={ui.categories} />
+
+              {/* 8. Featured Products */}
+              {data.featuredProducts.length > 0 && (
+                <ProductCarouselSection
+                  title="Featured Collections"
+                  description="Explore our best-selling and most popular products hand-picked just for you."
+                  products={data.featuredProducts}
+                  viewAllLink="/shop?filter=featured"
+                  bgColor="bg-background"
+                  cardStyle={ui.productCard}
+                  layout={ui.layout}
+                />
+              )}
+
+
+              {/* 3. Flash Sale (Timed) */}
+              {data.flashSale.length > 0 && (
+                <ProductCarouselSection
+                  title="Flash Sale"
+                  products={data.flashSale}
+                  viewAllLink="/shop?filter=sale"
+                  isFlashSale={true}
+                  bgColor="bg-primary/5"
+                  cardStyle={ui.productCard}
+                  layout={ui.layout}
+                />
+              )}
+
+              {/* 7. Combo Discount Promotion */}
+              <ComboOfferBanner activeCoupon={data.activeCoupon} settings={data.settings} layout={ui.layout} />
+
+              {/* 6. Trending Products */}
+              {data.trending.length > 0 && (
+                <ProductCarouselSection
+                  title="Trending Now"
+                  description="The most popular items according to our community ratings and reviews."
+                  products={data.trending}
+                  viewAllLink="/shop?filter=trending"
+                  bgColor="bg-muted/20"
+                  cardStyle={ui.productCard}
+                  layout={ui.layout}
+                />
+              )}
+
+              {/* 9. Recent Blogs section */}
+              <BlogRecent blogs={data.blogs} />
+
+              {/* 5. New Arrivals */}
+              {data.newArrivals.length > 0 && (
+                <ProductCarouselSection
+                  title="New Arrivals"
+                  description="Discover the latest additions to our collection. Stay ahead of the curve."
+                  products={data.newArrivals}
+                  viewAllLink="/shop?filter=new"
+                  bgColor="bg-background"
+                  cardStyle={ui.productCard}
+                  layout={ui.layout}
+                />
+              )}
+
+              {/* 11. Newsletter V2 Integration */}
+              <NewsletterV2 layout={ui.layout} />
+
+              {/* 10. FAQ Accordion Section */}
+              <FAQSection faqs={data.faqs} />
             </div>
-          </aside>
-
-          {/* Right Content Area */}
-          <div className="flex-1 min-w-0 flex flex-col gap-6">
-            {/* 1. Hero Section */}
-            <HeroSlider banners={data.banners} style={ui.hero} layout={ui.layout} />
-
-            {/* 4. Categories Showcase */}
-            <CategoryShowcase categories={data.categories} style={ui.categories} />
-
-            {/* 8. Featured Products */}
-            {data.featuredProducts.length > 0 && (
-              <ProductCarouselSection
-                title="Featured Collections"
-                description="Explore our best-selling and most popular products hand-picked just for you."
-                products={data.featuredProducts}
-                viewAllLink="/shop?filter=featured"
-                bgColor="bg-background"
-                cardStyle={ui.productCard}
-                layout={ui.layout}
-              />
-            )}
-
-
-            {/* 3. Flash Sale (Timed) */}
-            {data.flashSale.length > 0 && (
-              <ProductCarouselSection
-                title="Flash Sale"
-                products={data.flashSale}
-                viewAllLink="/shop?filter=sale"
-                isFlashSale={true}
-                bgColor="bg-primary/5"
-                cardStyle={ui.productCard}
-                layout={ui.layout}
-              />
-            )}
-
-            {/* 7. Combo Discount Promotion */}
-            <ComboOfferBanner activeCoupon={data.activeCoupon} settings={data.settings} layout={ui.layout} />
-
-            {/* 6. Trending Products */}
-            {data.trending.length > 0 && (
-              <ProductCarouselSection
-                title="Trending Now"
-                description="The most popular items according to our community ratings and reviews."
-                products={data.trending}
-                viewAllLink="/shop?filter=trending"
-                bgColor="bg-muted/20"
-                cardStyle={ui.productCard}
-                layout={ui.layout}
-              />
-            )}
-
-            {/* 9. Recent Blogs section */}
-            <BlogRecent blogs={data.blogs} />
-
-            {/* 5. New Arrivals */}
-            {data.newArrivals.length > 0 && (
-              <ProductCarouselSection
-                title="New Arrivals"
-                description="Discover the latest additions to our collection. Stay ahead of the curve."
-                products={data.newArrivals}
-                viewAllLink="/shop?filter=new"
-                bgColor="bg-background"
-                cardStyle={ui.productCard}
-                layout={ui.layout}
-              />
-            )}
-
-            {/* 11. Newsletter V2 Integration */}
-            <NewsletterV2 layout={ui.layout} />
-
-            {/* 10. FAQ Accordion Section */}
-            <FAQSection faqs={data.faqs} />
           </div>
-        </div>
+
+          {/* Reseller & Supplier CTA */}
+          <ResellerSupplierCTA />
+        </>
       ) : (
         <>
           {/* 1. Hero Section */}
@@ -357,6 +363,9 @@ export default async function Home() {
 
           {/* 10. FAQ Accordion Section */}
           <FAQSection faqs={data.faqs} />
+
+          {/* Reseller & Supplier CTA */}
+          <ResellerSupplierCTA />
         </>
       )}
     </div>
