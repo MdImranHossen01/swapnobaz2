@@ -67,16 +67,13 @@ export const proxy = auth(async (req) => {
                       nextUrl.pathname.startsWith("/reset-password");
 
   if (targetSubdomain) {
-    // If it's an auth route, let it render the unified auth page without rewriting to /store/[subdomain]/login
-    if (!isAuthRoute) {
-      const url = nextUrl.clone();
-      const rewrittenPath = `/store/${targetSubdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
-      url.pathname = rewrittenPath;
-      const response = NextResponse.rewrite(url);
-      response.headers.set('x-reseller-subdomain', targetSubdomain);
-      response.headers.set('x-pathname', nextUrl.pathname);
-      return response;
-    }
+    const url = nextUrl.clone();
+    const rewrittenPath = `/store/${targetSubdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
+    url.pathname = rewrittenPath;
+    const response = NextResponse.rewrite(url);
+    response.headers.set('x-reseller-subdomain', targetSubdomain);
+    response.headers.set('x-pathname', nextUrl.pathname);
+    return response;
   }
 
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
