@@ -66,7 +66,7 @@ export function ResellerSupplierCTA() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/about"
+                  href="/reseller-program"
                   className="inline-flex items-center justify-center gap-2 border border-border bg-card/60 hover:bg-accent hover:text-accent-foreground text-foreground font-semibold text-sm sm:text-base py-3 px-5 rounded-xl transition-all duration-200"
                 >
                   বিস্তারিত জানুন
@@ -149,7 +149,7 @@ export function ResellerSupplierCTA() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/about"
+                  href="/supplier-program"
                   className="inline-flex items-center justify-center gap-2 border border-border bg-card/60 hover:bg-accent hover:text-accent-foreground text-foreground font-semibold text-sm sm:text-base py-3 px-5 rounded-xl transition-all duration-200"
                 >
                   বিস্তারিত জানুন
