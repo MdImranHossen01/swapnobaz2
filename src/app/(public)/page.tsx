@@ -15,7 +15,7 @@ import {
 } from '@/components/storefront/Skeletons';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ResellerSupplierCTA } from '@/components/storefront/ResellerSupplierCTA';
+import { ResellerCTA } from '@/components/storefront/ResellerCTA';
 
 import { headers } from 'next/headers';
 import {
@@ -288,8 +288,8 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Reseller & Supplier CTA */}
-          <ResellerSupplierCTA />
+          {/* Reseller CTA */}
+          <ResellerCTA />
         </>
       ) : (
         <>
@@ -364,8 +364,8 @@ export default async function Home() {
           {/* 10. FAQ Accordion Section */}
           <FAQSection faqs={data.faqs} />
 
-          {/* Reseller & Supplier CTA */}
-          <ResellerSupplierCTA />
+          {/* Reseller CTA */}
+          <ResellerCTA />
         </>
       )}
     </div>

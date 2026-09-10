@@ -250,10 +250,6 @@ const data = {
           url: "/admin/users?role=reseller",
         },
         {
-          title: "Suppliers",
-          url: "/admin/users?role=supplier",
-        },
-        {
           title: "Admins",
           url: "/admin/users?role=admin",
         },

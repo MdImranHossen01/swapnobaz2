@@ -28,11 +28,7 @@ export async function GET(req: NextRequest) {
       { name: 'Moderator One', email: 'moderator1@swapnobaz.com', role: 'moderator' as const, phone: '01700000007' },
       { name: 'Moderator Two', email: 'moderator2@swapnobaz.com', role: 'moderator' as const, phone: '01700000008' },
 
-      // 5. Supplier Role
-      { name: 'Supplier One', email: 'supplier1@swapnobaz.com', role: 'supplier' as const, phone: '01700000009' },
-      { name: 'Supplier Two', email: 'supplier2@swapnobaz.com', role: 'supplier' as const, phone: '01700000010' },
-
-      // 6. Reseller Role
+      // 5. Reseller Role
       { name: 'Reseller One', email: 'reseller1@swapnobaz.com', role: 'reseller' as const, phone: '01700000011', subdomain: 'reseller1store', storeName: 'Reseller One Store' },
       { name: 'Reseller Two', email: 'reseller2@swapnobaz.com', role: 'reseller' as const, phone: '01700000012', subdomain: 'reseller2store', storeName: 'Reseller Two Store' },
 
