@@ -80,11 +80,14 @@ export const proxy = auth(async (req) => {
   const isResellerRoute = nextUrl.pathname.startsWith("/reseller");
 
   // ── 2. Reseller dashboard protection ──────────────────────────────────────
+  const isResellerRegisterPage = nextUrl.pathname === '/reseller/register';
+
   if (isResellerRoute) {
     if (!isLoggedIn) {
       return NextResponse.redirect(new URL("/login", nextUrl));
     }
-    if (!role || !['reseller', 'admin', 'super_admin'].includes(role)) {
+    // /reseller/register is open to any logged-in user (so customers can apply)
+    if (!isResellerRegisterPage && (!role || !['reseller', 'admin', 'super_admin'].includes(role))) {
       return NextResponse.redirect(new URL("/", nextUrl));
     }
   }
