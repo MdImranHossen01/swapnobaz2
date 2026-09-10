@@ -141,7 +141,7 @@ export function ResellerSupplierCTA() {
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
-                  href="/contact"
+                  href="/supplier/register"
                   className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-sm sm:text-base py-3 px-6 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
                 >
                   <Package className="h-4 w-4" />

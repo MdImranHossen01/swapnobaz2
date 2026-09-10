@@ -130,7 +130,7 @@ export default function SupplierProgramPage() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
                 <Button asChild size="lg" className="w-full sm:w-auto font-bold text-base px-8 py-6 rounded-xl shadow-lg hover:shadow-xl">
-                  <Link href="/contact" className="flex items-center gap-2">
+                  <Link href="/supplier/register" className="flex items-center gap-2">
                     <Package className="h-5 w-5" />
                     সাপ্লায়ার হিসেবে আবেদন করুন
                     <ArrowRight className="h-4 w-4" />
@@ -270,7 +270,7 @@ export default function SupplierProgramPage() {
           </p>
           <div className="pt-2">
             <Button asChild size="lg" className="font-bold text-base px-10 py-6 rounded-xl shadow-xl hover:scale-105 transition-all">
-              <Link href="/contact" className="flex items-center gap-2">
+              <Link href="/supplier/register" className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
                 সাপ্লায়ার হিসেবে আবেদন করুন
                 <ArrowRight className="h-4 w-4" />
