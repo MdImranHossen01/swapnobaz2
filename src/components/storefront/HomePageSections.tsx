@@ -188,12 +188,15 @@ async function BlogRecentSection() {
 
 // ─── Exported Wrapper Components (with Suspense) ──────────────────────────────
 
-interface SectionProps {
+interface ProductSectionProps {
   cardStyle: string;
   layout: string;
+}
+
+interface ComboOfferProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   settings?: any;
-  style?: string;
+  layout: string;
 }
 
 export function StreamedCategoryShowcase({ style }: { style: string }) {
@@ -204,7 +207,7 @@ export function StreamedCategoryShowcase({ style }: { style: string }) {
   );
 }
 
-export function StreamedFeaturedProducts({ cardStyle, layout }: SectionProps) {
+export function StreamedFeaturedProducts({ cardStyle, layout }: ProductSectionProps) {
   return (
     <Suspense fallback={<SectionSkeleton />}>
       <FeaturedProductsSection cardStyle={cardStyle} layout={layout} />
@@ -212,7 +215,7 @@ export function StreamedFeaturedProducts({ cardStyle, layout }: SectionProps) {
   );
 }
 
-export function StreamedFlashSale({ cardStyle, layout }: SectionProps) {
+export function StreamedFlashSale({ cardStyle, layout }: ProductSectionProps) {
   return (
     <Suspense fallback={<SectionSkeleton />}>
       <FlashSaleSection cardStyle={cardStyle} layout={layout} />
@@ -220,7 +223,7 @@ export function StreamedFlashSale({ cardStyle, layout }: SectionProps) {
   );
 }
 
-export function StreamedComboOffer({ settings, layout }: SectionProps) {
+export function StreamedComboOffer({ settings, layout }: ComboOfferProps) {
   return (
     <Suspense fallback={<BannerSkeleton />}>
       <ComboOfferSection settings={settings} layout={layout} />
@@ -228,7 +231,7 @@ export function StreamedComboOffer({ settings, layout }: SectionProps) {
   );
 }
 
-export function StreamedTrending({ cardStyle, layout }: SectionProps) {
+export function StreamedTrending({ cardStyle, layout }: ProductSectionProps) {
   return (
     <Suspense fallback={<SectionSkeleton />}>
       <TrendingSection cardStyle={cardStyle} layout={layout} />
@@ -236,7 +239,7 @@ export function StreamedTrending({ cardStyle, layout }: SectionProps) {
   );
 }
 
-export function StreamedRootCategorySections({ cardStyle, layout }: SectionProps) {
+export function StreamedRootCategorySections({ cardStyle, layout }: ProductSectionProps) {
   return (
     <Suspense fallback={<SectionSkeleton />}>
       <RootCategorySections cardStyle={cardStyle} layout={layout} />
@@ -252,7 +255,7 @@ export function StreamedBlogRecent() {
   );
 }
 
-export function StreamedNewArrivals({ cardStyle, layout }: SectionProps) {
+export function StreamedNewArrivals({ cardStyle, layout }: ProductSectionProps) {
   return (
     <Suspense fallback={<SectionSkeleton />}>
       <NewArrivalsSection cardStyle={cardStyle} layout={layout} />
