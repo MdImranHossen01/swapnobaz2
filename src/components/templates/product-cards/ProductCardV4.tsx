@@ -173,12 +173,14 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
                 src={product.images[0]}
                 alt={product.name}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="object-cover transition-opacity duration-1000 group-hover:opacity-0"
               />
               <Image
                 src={product.images[1]}
                 alt={product.name}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="absolute inset-0 object-cover opacity-0 transition-opacity duration-1000 group-hover:opacity-100"
               />
             </>
@@ -187,6 +189,7 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
               src={product.images?.[0] || '/placeholder.png'}
               alt={product.name}
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-cover transition-transform duration-1000 group-hover:scale-105"
             />
           )}

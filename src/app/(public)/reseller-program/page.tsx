@@ -19,33 +19,33 @@ import {
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
-  title: 'রিসেলার প্রোগ্রাম | Swapnobaz',
-  description: 'স্বপ্নবাজ রিসেলার প্রোগ্রাম - কোনো পুঁজি ছাড়াই নিজের ব্র্যান্ডে ই-কমার্স ব্যবসা শুরু করুন। হাজারো পণ্য নিজের দামে বিক্রি করে আকর্ষণীয় মুনাফা অর্জন করুন।',
+  title: 'Reseller Program | Swapnobaz',
+  description: 'Swapnobaz Reseller Program - Launch your branded e-commerce business with zero upfront capital. Sell quality products at your own prices and earn high profit margins.',
 };
 
 const steps = [
   {
-    step: '০১',
-    title: 'ফ্রি রেজিস্ট্রেশন ও স্টোর সেটআপ',
-    desc: 'মাত্র ২ মিনিটে নিজের স্টোরের নাম ও সাবডোমেন দিয়ে বিনামূল্যে রিসেলার অ্যাকাউন্ট খুলুন।',
+    step: '01',
+    title: 'Free Registration & Store Setup',
+    desc: 'Register in minutes with your store name and custom subdomain to get your free storefront.',
     icon: Store,
   },
   {
-    step: '০২',
-    title: 'পণ্য নির্বাচন ও মূল্য নির্ধারণ',
-    desc: 'আমাদের প্ল্যাটফর্মের হাজারো কোয়ালিটি পণ্য থেকে আপনার পছন্দের প্রডাক্ট বেছে নিজের কাঙ্ক্ষিত প্রফিট মার্জিন সেট করুন।',
+    step: '02',
+    title: 'Pick Products & Set Profit Margins',
+    desc: 'Choose from thousands of catalog products and set your desired selling price and markup.',
     icon: PackageCheck,
   },
   {
-    step: '০৩',
-    title: 'অর্ডার সংগ্রহ ও শেয়ারিং',
-    desc: 'সোশ্যাল মিডিয়া, ফেসবুক পেজ বা আপনার নিজস্ব স্টোর লিংকের মাধ্যমে কাস্টমারদের কাছে প্রডাক্ট প্রমোট করে অর্ডার নিন।',
+    step: '03',
+    title: 'Promote & Receive Orders',
+    desc: 'Promote products to customers via your storefront, social media, or marketing channels.',
     icon: Laptop,
   },
   {
-    step: '০৪',
-    title: 'ডেলিভারি ও লাভ বুঝে নেওয়া',
-    desc: 'কাস্টমারের ঠিকানায় প্যাকেজিং ও হোম ডেলিভারি আমরা করবো। পণ্য ডেলিভারি সম্পন্ন হলেই আপনার লাভ ওয়ালেটে যোগ হবে।',
+    step: '04',
+    title: 'Automated Delivery & Fast Payouts',
+    desc: 'We pack and ship the products to your customers. Once delivered, your profit is credited instantly to your wallet.',
     icon: Wallet,
   },
 ];
@@ -53,52 +53,52 @@ const steps = [
 const features = [
   {
     icon: DollarSign,
-    title: 'জিরো ইনভেস্টমেন্ট',
-    desc: 'পণ্য স্টক বা গোডাউনের কোনো খরচ নেই। এক টাকাও ইনভেস্ট না করে ব্যবসা শুরু করুন।',
+    title: 'Zero Capital Investment',
+    desc: 'No warehouse or inventory stocking fees. Start selling without any upfront capital.',
   },
   {
     icon: Laptop,
-    title: 'নিজস্ব কাস্টম ওয়েবসাইট',
-    desc: 'আপনার ব্র্যান্ডের নামে সম্পূর্ণ রেডিমেড ই-কমার্স ওয়েবসাইট ও কাস্টম ডোমেইন সাপোর্ট।',
+    title: 'Dedicated Custom Website',
+    desc: 'A ready-to-use e-commerce website under your brand name with custom domain support.',
   },
   {
     icon: Truck,
-    title: 'দেশব্যাপী কুরিয়ার সুবিধা',
-    desc: 'সারা দেশে দ্রুত ক্যাশ অন ডেলিভারি এবং রিয়েল-টাইম কুরিয়ার ট্র্যাকিং সিস্টেম।',
+    title: 'Nationwide Courier Delivery',
+    desc: 'Fast Cash on Delivery across the entire country with automated live parcel tracking.',
   },
   {
     icon: Wallet,
-    title: 'সহজ ও দ্রুত পেমেন্ট উইথড্র',
-    desc: 'আপনার উপার্জিত প্রফিট বিকাশ, নগদ বা ব্যাংক একাউন্টে সহজে ও নিয়মিত উত্তোলন করুন।',
+    title: 'Easy & Fast Profit Withdrawals',
+    desc: 'Withdraw your accumulated earnings directly to bKash, Nagad, or Bank account anytime.',
   },
   {
     icon: ShieldCheck,
-    title: 'কোয়ালিটি কন্ট্রোল ও রিটার্ন সাপোর্ট',
-    desc: '১০০% কোয়ালিটি চেকে পণ্য ডেলিভারি এবং কাস্টমার রিটার্ন হ্যান্ডেল করার পূর্ণ সুবিধা।',
+    title: 'Quality Control & Return Handling',
+    desc: 'Every item passes rigorous quality checks, and we handle legitimate customer returns seamlessly.',
   },
   {
     icon: Users,
-    title: 'ডেডিকেটেড রিসেলার হেল্পডেস্ক',
-    desc: 'আপনার ব্যবসার প্রসারে যেকোনো টেকনিক্যাল ও সেলস সাপোর্টের জন্য আমাদের টিম সদা প্রস্তুত।',
+    title: 'Dedicated Reseller Support',
+    desc: 'Get access to hands-on support from our dedicated reseller and operations team.',
   },
 ];
 
 const faqs = [
   {
-    q: 'রিসেলার হিসেবে যুক্ত হতে কি কোনো ফি বা জামানত দিতে হয়?',
-    a: 'না, স্বপ্নবাজ রিসেলার প্ল্যাটফর্মে জয়েন করা সম্পূর্ণ বিনামূল্যে। কোনো প্রকার হিডেন চার্জ বা সাবস্ক্রিপশন ফি নেই।',
+    q: 'Are there any registration or membership fees to join?',
+    a: 'No, joining the Swapnobaz Reseller Program is 100% free with no hidden charges or subscription fees.',
   },
   {
-    q: 'পণ্য ডেলিভারি কার নামে যাবে?',
-    a: 'কাস্টমারের কাছে পার্সেল আপনার স্টোর/ব্র্যান্ডের নামেই ডেলিভারি হবে, যাতে আপনার ব্র্যান্ড ভ্যালু বৃদ্ধি পায়।',
+    q: 'Under whose brand name are the parcels delivered?',
+    a: 'Parcels are delivered to your customers with your store/brand name on the packaging to preserve your brand identity.',
   },
   {
-    q: 'আমি কীভাবে প্রফিট পাবো এবং কত দিনে টাকা তোলা যায়?',
-    a: 'কাস্টমার অর্ডার রিসিভ করার সাথে সাথে আপনার নির্ধারিত লাভ আপনার স্বপ্নবাজ ওয়ালেটে জমা হবে। আপনি সপ্তাহে যেকোনো সময় বিকাশ, নগদ বা ব্যাংক একাউন্টে উইথড্র রিকোয়েস্ট করতে পারবেন।',
+    q: 'How and when do I receive my profits?',
+    a: 'As soon as an order is marked delivered, your profit margin is automatically credited to your Swapnobaz wallet, which you can withdraw anytime.',
   },
   {
-    q: 'কাস্টমার যদি পার্সেল রিটার্ন করে তবে কি আমার ক্ষতি হবে?',
-    a: 'না, জেনুইন রিটার্ন বা কাস্টমার ক্যান্সেলেশনের ক্ষেত্রে প্রোডাক্টের দামের কোনো দায়ভার রিসেলারের উপর থাকে না।',
+    q: 'What happens if a customer returns a parcel?',
+    a: 'For legitimate customer returns and cancellations, resellers do not bear any product inventory costs.',
   },
 ];
 
@@ -114,31 +114,32 @@ export default function ResellerProgramPage() {
             <div className="space-y-6 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 bg-primary/15 text-primary border border-primary/20 px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold tracking-wide">
                 <Sparkles className="h-4 w-4" />
-                স্বপ্নবাজ রিসেলার পার্টনারশিপ
+                Reseller Partnership Program
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground tracking-tight leading-tight">
-                পুঁজি ছাড়াই শুরু হোক আপনার{' '}
+                Launch Your Own{' '}
                 <span className="text-primary underline decoration-primary/30 decoration-wavy underline-offset-8">
-                  ই-কমার্স ব্র্যান্ড
-                </span>
+                  E-Commerce Brand
+                </span>{' '}
+                with Zero Risk
               </h1>
 
               <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
-                হোলসেল দামে হাজারো প্রিমিয়াম পণ্য থেকে নিজের স্টোরে যুক্ত করুন, নিজের দামে বিক্রি করে নিশ্চিত লাভ বুঝে নিন। পণ্য সোর্সিং থেকে ডেলিভারি—সব দায়িত্ব আমাদের!
+                Source thousands of quality products at wholesale rates, set your prices, and earn instant profits. We handle sourcing, storage, packaging, and door-to-door delivery!
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
                 <Button asChild size="lg" className="w-full sm:w-auto font-bold text-base px-8 py-6 rounded-xl shadow-lg hover:shadow-xl">
                   <Link href="/reseller/register" className="flex items-center gap-2">
                     <Store className="h-5 w-5" />
-                    এখনই ফ্রি রেজিস্টার করুন
+                    Register Free as Reseller
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg" className="w-full sm:w-auto font-semibold px-6 py-6 rounded-xl">
                   <Link href="#how-it-works">
-                    কীভাবে কাজ করে জানুন
+                    How It Works
                   </Link>
                 </Button>
               </div>
@@ -148,7 +149,7 @@ export default function ResellerProgramPage() {
               <div className="relative w-full max-w-md lg:max-w-lg aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-border bg-card">
                 <Image
                   src="/assets/images/sectionbanner/reseller-section.webp"
-                  alt="স্বপ্নবাজ রিসেলার প্রোগ্রাম"
+                  alt="Reseller Program"
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
@@ -161,15 +162,15 @@ export default function ResellerProgramPage() {
         </div>
       </section>
 
-      {/* ── 2. How it works (ধাপে ধাপে কীভাবে কাজ করে) ── */}
+      {/* ── 2. How it works ── */}
       <section id="how-it-works" className="py-16 md:py-24 bg-card/40 border-b border-border/60">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground">
-              কীভাবে কাজ করে <span className="text-primary">স্বপ্নবাজ রিসেলিং?</span>
+              How Does <span className="text-primary">Swapnobaz Reselling</span> Work?
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base">
-              খুবই সহজ ৪টি ধাপে আপনি নিজেই আপনার অনলাইন ব্যবসা পরিচালনা করতে পারবেন
+              Run your automated e-commerce business in 4 simple steps
             </p>
           </div>
 
@@ -195,19 +196,19 @@ export default function ResellerProgramPage() {
         </div>
       </section>
 
-      {/* ── 3. Features & Benefits (রিসেলারদের সুবিধাসমূহ) ── */}
+      {/* ── 3. Features & Benefits ── */}
       <section className="py-16 md:py-24 bg-background">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">
               <TrendingUp className="h-3.5 w-3.5" />
-              আপনার ব্যবসার সুবিধা
+              Empowering Entrepreneurs
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-foreground">
-              কেন স্বপ্নবাজ রিসেলার প্ল্যাটফর্ম <span className="text-primary">সেরা?</span>
+              Why Choose the <span className="text-primary">Swapnobaz Platform?</span>
             </h2>
             <p className="text-muted-foreground text-sm sm:text-base">
-              আমরা আপনাকে দিচ্ছি একটি স্বয়ংসম্পূর্ণ টেকনোলজি ও লজিস্টিকস সমাধান
+              We provide you with complete e-commerce technology, inventory, and logistics support
             </p>
           </div>
 
@@ -236,10 +237,10 @@ export default function ResellerProgramPage() {
           <div className="text-center max-w-xl mx-auto mb-12 space-y-2">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">
               <HelpCircle className="h-3.5 w-3.5" />
-              সাধারণ জিজ্ঞাসা
+              Frequently Asked Questions
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-foreground">
-              সচরাচর জিজ্ঞাসিত প্রশ্নাবলী
+              Got Questions? We’ve Got Answers
             </h2>
           </div>
 
@@ -263,16 +264,16 @@ export default function ResellerProgramPage() {
       <section className="py-16 md:py-20 bg-gradient-to-r from-primary/15 via-primary/5 to-card">
         <div className="container mx-auto px-4 max-w-4xl text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-black text-foreground">
-            দেরি না করে আজই শুরু করুন আপনার সফল ই-কমার্স যাত্রা
+            Start Your E-Commerce Journey Today
           </h2>
           <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
-            হাজারো সফল উদ্যোক্তার সাথে যুক্ত হয়ে ঘরে বসেই স্বাধীনভাবে ব্যবসা গড়ে তুলুন।
+            Join thousands of successful business owners and build your brand with freedom and ease.
           </p>
           <div className="pt-2">
             <Button asChild size="lg" className="font-bold text-base px-10 py-6 rounded-xl shadow-xl hover:scale-105 transition-all">
               <Link href="/reseller/register" className="flex items-center gap-2">
                 <Store className="h-5 w-5" />
-                রিসেলার হিসেবে নিবন্ধন করুন
+                Register as a Reseller
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

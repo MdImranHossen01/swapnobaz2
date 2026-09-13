@@ -183,9 +183,7 @@ ResellerSchema.pre('updateOne', function(this: any, next: any) {
   if (typeof next === 'function') next();
 });
 
-ResellerSchema.index({ subdomain: 1 });
 ResellerSchema.index({ customDomain: 1 }, { sparse: true });
-ResellerSchema.index({ userId: 1 });
 ResellerSchema.index({ status: 1 });
 
 const Reseller: Model<IReseller> =

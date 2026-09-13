@@ -172,6 +172,7 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
             src={product.images?.[0] || '/placeholder.png'}
             alt={product.name}
             fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className="object-cover transition-transform duration-1000 group-hover:scale-110"
           />
         </Link>

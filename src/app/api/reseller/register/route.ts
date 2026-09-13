@@ -12,14 +12,14 @@ export async function POST(request: NextRequest) {
     const { storeName, subdomain, phone, address, description, name, email, password } = body;
 
     if (!storeName || !subdomain || !phone) {
-      return NextResponse.json({ error: 'স্টোরের নাম, সাবডোমেন এবং মোবাইল নম্বর আবশ্যক' }, { status: 400 });
+      return NextResponse.json({ error: 'Store name, subdomain, and phone number are required.' }, { status: 400 });
     }
 
     const cleanSubdomain = subdomain.toLowerCase().trim();
-    // Validate subdomain format (4-63 lowercase alphanumeric characters or hyphens)
-    if (!/^[a-z0-9][a-z0-9-]{2,62}[a-z0-9]$/.test(cleanSubdomain)) {
+    // Validate subdomain format (3-63 lowercase alphanumeric characters or hyphens)
+    if (!/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(cleanSubdomain)) {
       return NextResponse.json({
-        error: 'সাবডোমেন ৪ থেকে ৬৩ অক্ষরের ইংরেজি বর্ণ, সংখ্যা বা হাইফেন (-) হতে হবে'
+        error: 'Subdomain must be between 3 to 63 characters containing lowercase letters, numbers, and hyphens (-).'
       }, { status: 400 });
     }
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Check if subdomain is already taken
     const subdomainTaken = await Reseller.findOne({ subdomain: cleanSubdomain });
     if (subdomainTaken) {
-      return NextResponse.json({ error: 'এই সাবডোমেনটি ইতোমধ্যে অন্য কেউ ব্যবহার করছে' }, { status: 400 });
+      return NextResponse.json({ error: 'This subdomain is already in use. Please choose another one.' }, { status: 400 });
     }
 
     let targetUserId: string;
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       // Check if user already has a reseller profile
       const existingReseller = await Reseller.findOne({ userId: targetUserId });
       if (existingReseller) {
-        return NextResponse.json({ error: 'আপনার ইতোমধ্যে একটি রিসেলার অ্যাকাউন্ট রয়েছে' }, { status: 400 });
+        return NextResponse.json({ error: 'You already have a registered reseller account.' }, { status: 400 });
       }
 
       // Update user role to reseller if normal user
@@ -55,11 +55,11 @@ export async function POST(request: NextRequest) {
     } else {
       // 2. Guest user registering as a new reseller
       if (!name || !email || !password) {
-        return NextResponse.json({ error: 'নাম, ইমেইল এবং পাসওয়ার্ড আবশ্যক' }, { status: 400 });
+        return NextResponse.json({ error: 'Full name, email address, and password are required.' }, { status: 400 });
       }
 
       if (password.length < 6) {
-        return NextResponse.json({ error: 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে' }, { status: 400 });
+        return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 });
       }
 
       const normalizedEmail = email.toLowerCase().trim();
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
       if (existingUser) {
         return NextResponse.json({
-          error: 'এই ইমেইল অথবা মোবাইল নম্বর দিয়ে ইতোমধ্যে অ্যাকাউন্ট আছে। অনুগ্রহ করে লগইন করে আবেদন করুন।'
+          error: 'An account with this email or phone already exists. Please sign in to apply.'
         }, { status: 409 });
       }
 
@@ -108,17 +108,23 @@ export async function POST(request: NextRequest) {
         address: address || '',
         email: targetEmail,
       },
+      pickupAddress: {
+        hubName: `${storeName} Hub`,
+        contactPerson: name || session?.user?.name || storeName,
+        phone: phone,
+        address: address || '',
+      },
     });
 
     return NextResponse.json({
       success: true,
-      message: 'নিবন্ধন সফল হয়েছে! স্টোরটি পর্যালোচনার জন্য অপেক্ষমাণ রয়েছে।',
+      message: 'Registration successful! Your store application is under review.',
       reseller: newReseller,
     });
   } catch (error: any) {
     if (error.code === 11000 && (error.keyPattern?.subdomain || error.message?.includes('subdomain'))) {
-      return NextResponse.json({ error: 'এই সাবডোমেনটি ইতোমধ্যে অন্য কেউ ব্যবহার করছে' }, { status: 400 });
+      return NextResponse.json({ error: 'This subdomain is already taken. Please choose another one.' }, { status: 400 });
     }
-    return NextResponse.json({ error: error.message || 'সার্ভার ত্রুটি ঘটেছে' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'An unexpected server error occurred.' }, { status: 500 });
   }
 }

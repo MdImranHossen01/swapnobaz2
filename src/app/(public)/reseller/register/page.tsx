@@ -12,20 +12,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Store, Loader2, CheckCircle2, User, Mail, Lock, Phone, MapPin, Sparkles } from 'lucide-react';
+import { Store, Loader2, CheckCircle2, User, Mail, Lock, Phone, MapPin, Sparkles, Globe, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 const createSchema = (isLoggedIn: boolean) => z.object({
-  name: isLoggedIn ? z.string().optional() : z.string().min(2, 'আপনার নাম লিখুন'),
-  email: isLoggedIn ? z.string().optional() : z.string().email('সঠিক ইমেইল ঠিকানা দিন'),
-  password: isLoggedIn ? z.string().optional() : z.string().min(6, 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে'),
-  storeName: z.string().min(3, 'স্টোরের নাম কমপক্ষে ৩ অক্ষরের হতে হবে'),
+  name: isLoggedIn ? z.string().optional() : z.string().min(2, 'Please enter your full name'),
+  email: isLoggedIn ? z.string().optional() : z.string().email('Please enter a valid email address'),
+  password: isLoggedIn ? z.string().optional() : z.string().min(6, 'Password must be at least 6 characters'),
+  storeName: z.string().min(3, 'Store name must be at least 3 characters'),
   subdomain: z.string()
-    .min(4, 'সাবডোমেন কমপক্ষে ৪ অক্ষরের হতে হবে')
-    .max(30, 'সর্বোচ্চ ৩০ অক্ষর')
-    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'শুধুমাত্র ছোট হাতের ইংরেজি অক্ষর, সংখ্যা এবং হাইফেন (-) ব্যবহার করা যাবে'),
-  phone: z.string().min(11, '১১ ডিজিটের সঠিক মোবাইল নম্বর দিন'),
-  address: z.string().min(5, 'ঠিকানা কমপক্ষে ৫ অক্ষরের হতে হবে'),
+    .min(3, 'Subdomain must be at least 3 characters')
+    .max(30, 'Subdomain cannot exceed 30 characters')
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Only lowercase letters, numbers, and hyphens (-) are allowed'),
+  phone: z.string().min(11, 'Please enter a valid 11-digit phone number'),
+  address: z.string().min(5, 'Please enter a valid address (min 5 characters)'),
   description: z.string().optional(),
 });
 
@@ -60,16 +60,16 @@ export default function ResellerRegisterPage() {
     setSubmitting(true);
     try {
       const payload: any = {
-        storeName: values.storeName,
-        subdomain: values.subdomain,
-        phone: values.phone,
-        address: values.address,
-        description: values.description || '',
+        storeName: values.storeName.trim(),
+        subdomain: values.subdomain.toLowerCase().trim(),
+        phone: values.phone.trim(),
+        address: values.address.trim(),
+        description: values.description?.trim() || '',
       };
 
       if (!isLoggedIn) {
-        payload.name = values.name;
-        payload.email = values.email;
+        payload.name = values.name?.trim();
+        payload.email = values.email?.trim().toLowerCase();
         payload.password = values.password;
       }
 
@@ -82,7 +82,7 @@ export default function ResellerRegisterPage() {
 
       if (res.ok) {
         setSuccess(true);
-        toast.success('রিসেলার আবেদন সফলভাবে সম্পন্ন হয়েছে!');
+        toast.success('Reseller application submitted successfully!');
 
         // If guest registered, attempt automatic signIn in background
         if (!isLoggedIn && values.email && values.password) {
@@ -97,10 +97,10 @@ export default function ResellerRegisterPage() {
           }
         }
       } else {
-        toast.error(data.error || 'নিবন্ধন করতে সমস্যা হয়েছে');
+        toast.error(data.error || 'Failed to submit application. Please try again.');
       }
     } catch {
-      toast.error('নেটওয়ার্ক সংযোগে সমস্যা হয়েছে, অনুগ্রহ করে আবার চেষ্টা করুন');
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -108,22 +108,22 @@ export default function ResellerRegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-muted/20 font-sans">
+      <div className="min-h-[80vh] flex items-center justify-center p-4 bg-muted/20 font-sans">
         <Card className="max-w-md w-full text-center border-border shadow-2xl">
           <CardContent className="pt-8 pb-6 space-y-4">
-            <div className="h-16 w-16 bg-green-500/10 text-green-600 rounded-full flex items-center justify-center mx-auto">
+            <div className="h-16 w-16 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
               <CheckCircle2 className="h-10 w-10" />
             </div>
-            <CardTitle className="text-2xl font-black text-foreground">নিবন্ধন সফল হয়েছে!</CardTitle>
+            <CardTitle className="text-2xl font-black text-foreground">Application Submitted!</CardTitle>
             <CardDescription className="text-sm leading-relaxed text-muted-foreground">
-              আপনার রিসেলার স্টোরের আবেদন পর্যালোচনা করা হচ্ছে। অ্যাডমিন অনুমোদনের পর স্টোরটি সক্রিয় হবে এবং আপনি আপনার ড্যাশবোর্ডে সম্পূর্ণ অ্যাক্সেস পাবেন।
+              Your reseller application has been received and is being reviewed. Once approved by our team, your storefront will be activated and you will have full access to your reseller dashboard.
             </CardDescription>
             <div className="pt-2 flex flex-col gap-2">
               <Button onClick={() => router.push('/reseller/dashboard')} className="w-full font-bold">
-                ড্যাশবোর্ডে প্রবেশ করুন
+                Go to Reseller Dashboard
               </Button>
               <Button variant="outline" onClick={() => router.push('/')} className="w-full">
-                হোমপেজে ফিরে যান
+                Return to Home
               </Button>
             </div>
           </CardContent>
@@ -133,41 +133,41 @@ export default function ResellerRegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 py-12 bg-muted/20 font-sans">
+    <div className="min-h-[85vh] flex items-center justify-center p-4 py-12 bg-muted/20 font-sans">
       <Card className="max-w-xl w-full border-border/80 shadow-2xl bg-card">
         <CardHeader className="text-center space-y-2">
           <div className="h-12 w-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto border border-primary/20">
             <Store className="h-6 w-6" />
           </div>
           <CardTitle className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
-            রিসেলার হিসেবে নিবন্ধন করুন
+            Become a Reseller
           </CardTitle>
-          <CardDescription className="text-sm text-muted-foreground">
-            কোনো পুঁজি ছাড়াই নিজস্ব ব্র্যান্ডে ড্রপশিপিং ই-কমার্স ব্যবসা শুরু করুন
+          <CardDescription className="text-sm text-muted-foreground max-w-sm mx-auto">
+            Launch your own branded e-commerce store with zero upfront inventory investment
           </CardDescription>
 
           {isLoggedIn && session?.user && (
             <div className="inline-flex items-center gap-2 bg-primary/5 border border-primary/20 text-primary text-xs font-semibold px-3 py-1 rounded-full mt-1">
               <Sparkles className="h-3.5 w-3.5" />
-              লগইন করা অ্যাকাউন্ট: {session.user.name || session.user.email}
+              Logged in as: {session.user.name || session.user.email}
             </div>
           )}
         </CardHeader>
 
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Guest Details: Name, Email, Password */}
+            {/* Guest Account Details */}
             {!isLoggedIn && (
               <div className="space-y-4 p-4 rounded-xl bg-muted/40 border border-border/60">
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  অ্যাকাউন্ট তথ্য
+                  Personal & Account Details
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">আপনার পুরো নাম</Label>
+                  <Label className="text-xs font-semibold">Full Name</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input {...form.register('name')} placeholder="মোঃ করিম উদ্দিন" className="pl-9" />
+                    <Input {...form.register('name')} placeholder="John Doe" className="pl-9" />
                   </div>
                   {form.formState.errors.name && (
                     <p className="text-xs text-destructive">{form.formState.errors.name.message as string}</p>
@@ -176,10 +176,10 @@ export default function ResellerRegisterPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold">ইমেইল ঠিকানা</Label>
+                    <Label className="text-xs font-semibold">Email Address</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input {...form.register('email')} type="email" placeholder="you@domain.com" className="pl-9" />
+                      <Input {...form.register('email')} type="email" placeholder="you@example.com" className="pl-9" />
                     </div>
                     {form.formState.errors.email && (
                       <p className="text-xs text-destructive">{form.formState.errors.email.message as string}</p>
@@ -187,10 +187,10 @@ export default function ResellerRegisterPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold">পাসওয়ার্ড</Label>
+                    <Label className="text-xs font-semibold">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input {...form.register('password')} type="password" placeholder="কমপক্ষে ৬ অক্ষর" className="pl-9" />
+                      <Input {...form.register('password')} type="password" placeholder="At least 6 characters" className="pl-9" />
                     </div>
                     {form.formState.errors.password && (
                       <p className="text-xs text-destructive">{form.formState.errors.password.message as string}</p>
@@ -203,14 +203,14 @@ export default function ResellerRegisterPage() {
             {/* Store Information */}
             <div className="space-y-4 p-4 rounded-xl bg-muted/40 border border-border/60">
               <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                স্টোর ও যোগাযোগের তথ্য
+                Store & Contact Information
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold">স্টোরের নাম</Label>
+                <Label className="text-xs font-semibold">Store / Brand Name</Label>
                 <div className="relative">
                   <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input {...form.register('storeName')} placeholder="যেমন: ক্লাইম্যাক্স ফ্যাশন" className="pl-9" />
+                  <Input {...form.register('storeName')} placeholder="e.g. Apex Trends" className="pl-9" />
                 </div>
                 {form.formState.errors.storeName && (
                   <p className="text-xs text-destructive">{form.formState.errors.storeName.message as string}</p>
@@ -218,11 +218,11 @@ export default function ResellerRegisterPage() {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold">সাবডোমেন (Subdomain)</Label>
+                <Label className="text-xs font-semibold">Subdomain</Label>
                 <div className="flex items-center">
                   <Input
                     {...form.register('subdomain')}
-                    placeholder="climax-store"
+                    placeholder="apextrends"
                     className="rounded-r-none border-r-0 font-medium"
                   />
                   <span className="h-10 px-3 bg-muted border border-l-0 text-xs sm:text-sm font-semibold text-muted-foreground flex items-center rounded-r-md select-none">
@@ -230,8 +230,9 @@ export default function ResellerRegisterPage() {
                   </span>
                 </div>
                 {subdomainValue && (
-                  <p className="text-[11px] text-primary mt-1 font-medium">
-                    আপনার স্টোরের লিংক হবে: <strong>https://{subdomainValue.toLowerCase()}.swapnobaz.com</strong>
+                  <p className="text-[11px] text-primary mt-1 font-medium flex items-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    Your store URL will be: <strong>https://{subdomainValue.toLowerCase().trim()}.swapnobaz.com</strong>
                   </p>
                 )}
                 {form.formState.errors.subdomain && (
@@ -241,10 +242,10 @@ export default function ResellerRegisterPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">মোবাইল নম্বর</Label>
+                  <Label className="text-xs font-semibold">Phone Number</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input {...form.register('phone')} placeholder="01XXXXXXXXX" type="tel" className="pl-9" />
+                    <Input {...form.register('phone')} placeholder="017XXXXXXXX" type="tel" className="pl-9" />
                   </div>
                   {form.formState.errors.phone && (
                     <p className="text-xs text-destructive">{form.formState.errors.phone.message as string}</p>
@@ -252,10 +253,10 @@ export default function ResellerRegisterPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">ঠিকানা</Label>
+                  <Label className="text-xs font-semibold">Business / Personal Address</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input {...form.register('address')} placeholder="আপনার বর্তমান ঠিকানা" className="pl-9" />
+                    <Input {...form.register('address')} placeholder="House/Street, Area, City" className="pl-9" />
                   </div>
                   {form.formState.errors.address && (
                     <p className="text-xs text-destructive">{form.formState.errors.address.message as string}</p>
@@ -264,8 +265,8 @@ export default function ResellerRegisterPage() {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs font-semibold">স্টোরের বিবরণ (ঐচ্ছিক)</Label>
-                <Textarea {...form.register('description')} placeholder="আপনার ব্যবসার অভিজ্ঞতা বা পরিকল্পনা সম্পর্কে কিছু লিখুন..." rows={2} />
+                <Label className="text-xs font-semibold">Store Description (Optional)</Label>
+                <Textarea {...form.register('description')} placeholder="Tell us briefly about your business plans or product niche..." rows={2} />
               </div>
             </div>
 
@@ -273,10 +274,13 @@ export default function ResellerRegisterPage() {
               {submitting ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  আবেদন প্রক্রিয়াধীন...
+                  Submitting Application...
                 </>
               ) : (
-                'রিসেলার আবেদন সম্পূর্ণ করুন'
+                <span className="flex items-center gap-2">
+                  Complete Reseller Registration
+                  <ArrowRight className="h-4 w-4" />
+                </span>
               )}
             </Button>
           </form>
@@ -284,9 +288,9 @@ export default function ResellerRegisterPage() {
 
         {!isLoggedIn && (
           <CardFooter className="flex justify-center border-t border-border/40 pt-4 text-xs text-muted-foreground">
-            আগে থেকেই কি আপনার অ্যাকাউন্ট আছে?{' '}
+            Already have an account?{' '}
             <Link href="/login?redirect=/reseller/register" className="text-primary font-semibold hover:underline ml-1">
-              এখানে লগইন করুন
+              Sign In here
             </Link>
           </CardFooter>
         )}

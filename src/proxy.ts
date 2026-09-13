@@ -37,7 +37,9 @@ export const proxy = auth(async (req) => {
   const cleanHost = hostname.split(':')[0].toLowerCase();
 
   // If not a subdomain of swapnobaz.com, and not localhost/IP, check if it's a custom domain
-  if (!targetSubdomain && 
+  if (cleanHost &&
+      !nextUrl.pathname.startsWith('/api/') &&
+      !targetSubdomain && 
       cleanHost !== 'localhost' && 
       cleanHost !== '127.0.0.1' && 
       !/^\d+\.\d+\.\d+\.\d+$/.test(cleanHost) &&
