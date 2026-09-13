@@ -201,7 +201,7 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
     <div className="w-full bg-card border border-border/60 rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg group flex flex-col h-full relative">
       {/* Image Area */}
       <div className="relative w-full aspect-[4/5] bg-muted/20 overflow-hidden">
-        <Link href={`/product/${product.slug}`} className="relative block h-full w-full">
+        <Link prefetch={true} href={`/product/${product.slug}`} className="relative block h-full w-full">
           <Image
             src={product.images?.[0] || '/placeholder.png'}
             alt={product.name}
@@ -216,12 +216,12 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
         {(isFlashSale || discount > 0 || product.isNewArrival || product.isFeatured) && (
           <div className="absolute top-0 left-0 overflow-hidden w-20 h-20 z-10 pointer-events-none">
             <div className={`absolute top-0 left-0 text-[8px] font-black py-0.5 w-28 text-center -rotate-45 -translate-x-8 translate-y-3.5 shadow-md uppercase tracking-wider ${isFlashSale
-                ? 'bg-orange-600 text-white animate-pulse'
-                : discount > 0
-                  ? 'bg-primary text-primary-foreground'
-                  : product.isNewArrival
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-secondary text-secondary-foreground'
+              ? 'bg-orange-600 text-white animate-pulse'
+              : discount > 0
+                ? 'bg-primary text-primary-foreground'
+                : product.isNewArrival
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-secondary text-secondary-foreground'
               }`}>
               {isFlashSale
                 ? 'Flash'
@@ -308,7 +308,7 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
           <Link href={`/shop?category=${mainCategory?.slug || ''}`} className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors block">
             {categoryName}
           </Link>
-          <Link href={`/product/${product.slug}`} className="block group/title">
+          <Link prefetch={true} href={`/product/${product.slug}`} className="block group/title">
             <h3 className="text-xs font-medium md:text-sm md:font-bold text-foreground line-clamp-2 min-h-[32px] md:min-h-[38px] group-hover/title:text-primary transition-colors leading-snug">
               {product.name}
             </h3>
