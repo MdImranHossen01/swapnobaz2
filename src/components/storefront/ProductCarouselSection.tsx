@@ -47,7 +47,7 @@ export function ProductCarouselSection({
 
   return (
     <section className={`py-8 ${bgColor} overflow-hidden`}>
-      <div className="container mx-auto px-4 md:px-0">
+      <div className="px-[2px] md:px-4">
 
         {/* Header */}
         <div className="flex flex-row items-center justify-between mb-8 md:mb-10 gap-4">
@@ -80,11 +80,11 @@ export function ProductCarouselSection({
         {/* Embla Carousel Viewport */}
         <div className="relative">
           <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
-            <div className="flex -ml-4">
+            <div className="flex -ml-[2px]">
               {products.map((product) => (
                 <div
                   key={product._id}
-                  className="flex-[0_0_42%] min-w-0 pl-4 md:flex-[0_0_33.33%] lg:flex-[0_0_25%]"
+                  className="flex-[0_0_42%] min-w-0 pl-[2px] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] md:pl-4"
                 >
                   <ProductCard product={product} isFlashSale={isFlashSale} style={cardStyle} layout={layout} />
                 </div>

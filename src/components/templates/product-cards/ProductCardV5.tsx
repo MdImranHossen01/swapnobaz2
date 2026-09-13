@@ -260,8 +260,8 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
       </div>
 
       {/* Minimalist Content Section */}
-      <div className="pt-8 px-4 space-y-4">
-        <div className="space-y-2">
+      <div className="px-[2px] pt-3 space-y-2 md:pt-8 md:px-4 md:space-y-4">
+        <div className="space-y-1 md:space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {product.isNewArrival && <span className="h-1 w-1 rounded-full bg-emerald-500" />}
@@ -274,7 +274,7 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
             </Link>
           </div>
           <Link prefetch={true} href={`/product/${product.slug}`} className="block">
-            <h3 className="text-2xl font-bold tracking-tighter leading-tight hover:text-primary transition-colors line-clamp-1">
+            <h3 className="text-xs font-medium md:text-2xl md:font-bold tracking-tighter leading-tight hover:text-primary transition-colors line-clamp-1">
               {product.name}
             </h3>
           </Link>

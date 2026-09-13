@@ -265,7 +265,7 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
       </div>
 
       {/* Boutique Content Section */}
-      <div className="pt-6 pb-2 px-2 flex flex-col items-center text-center">
+      <div className="px-[2px] pt-3 pb-2 md:px-2 md:pt-6 md:pb-2 flex flex-col items-center text-center">
         {(product.numReviews || 0) > 0 && (
           <div
             className="flex items-center gap-1.5 mb-2"
@@ -279,7 +279,7 @@ export default function ProductCardV4({ product: initialProduct, isFlashSale }: 
         )}
 
         <Link prefetch={true} href={`/product/${product.slug}`} className="block mb-2">
-          <h3 className="text-xl font-serif italic tracking-tight line-clamp-1 hover:text-primary transition-colors">
+          <h3 className="text-xs font-medium md:text-xl md:font-serif md:italic tracking-tight line-clamp-1 hover:text-primary transition-colors">
             {product.name}
           </h3>
         </Link>

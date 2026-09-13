@@ -248,11 +248,11 @@ export default function ProductCardV6({ product: initialProduct, isFlashSale, pr
       </div>
 
       {/* Product Info */}
-      <div className="mt-4 text-center space-y-4 px-2 pb-2 flex-1 flex flex-col justify-between">
-        <div className="min-h-[5.25rem] sm:min-h-[4.5rem] flex flex-col justify-center">
+      <div className="mt-2 sm:mt-4 text-center space-y-2 sm:space-y-4 px-[2px] sm:px-2 pb-2 flex-1 flex flex-col justify-between">
+        <div className="min-h-[4rem] sm:min-h-[4.5rem] flex flex-col justify-center">
           <Link prefetch={true}
             href={`/product/${product.slug}`}
-            className={`text-sm ${layout === 'v3' ? 'lg:text-xs' : 'sm:text-base'} font-semibold text-foreground hover:text-primary transition-colors leading-tight px-2 line-clamp-3 sm:line-clamp-2`}
+            className={`text-xs font-medium sm:px-2 ${layout === 'v3' ? 'lg:text-xs' : 'sm:text-base'} sm:font-semibold text-foreground hover:text-primary transition-colors leading-tight line-clamp-3 sm:line-clamp-2`}
             title={product.name}
           >
             {product.name}

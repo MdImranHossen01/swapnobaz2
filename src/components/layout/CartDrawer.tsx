@@ -35,7 +35,7 @@ export function CartDrawer({ children }: { children: React.ReactElement }) {
 
   return (
     <Sheet>
-      <SheetTrigger nativeButton={false} render={children} />
+      <SheetTrigger render={children} />
       <SheetContent className="flex flex-col w-full sm:max-w-md bg-background border-l shadow-2xl pb-24 md:pb-6">
         <SheetHeader className="pb-6 border-b">
           <div className="flex items-center justify-between">

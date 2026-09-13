@@ -215,22 +215,21 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
         {/* Unified Ribbon Badge (Top Left) */}
         {(isFlashSale || discount > 0 || product.isNewArrival || product.isFeatured) && (
           <div className="absolute top-0 left-0 overflow-hidden w-20 h-20 z-10 pointer-events-none">
-            <div className={`absolute top-0 left-0 text-[8px] font-black py-0.5 w-28 text-center -rotate-45 -translate-x-8 translate-y-3.5 shadow-md uppercase tracking-wider ${
-              isFlashSale
+            <div className={`absolute top-0 left-0 text-[8px] font-black py-0.5 w-28 text-center -rotate-45 -translate-x-8 translate-y-3.5 shadow-md uppercase tracking-wider ${isFlashSale
                 ? 'bg-orange-600 text-white animate-pulse'
                 : discount > 0
-                ? 'bg-primary text-primary-foreground'
-                : product.isNewArrival
-                ? 'bg-emerald-600 text-white'
-                : 'bg-secondary text-secondary-foreground'
-            }`}>
+                  ? 'bg-primary text-primary-foreground'
+                  : product.isNewArrival
+                    ? 'bg-emerald-600 text-white'
+                    : 'bg-secondary text-secondary-foreground'
+              }`}>
               {isFlashSale
                 ? 'Flash'
                 : discount > 0
-                ? `${discount}% OFF`
-                : product.isNewArrival
-                ? 'New'
-                : 'Featured'}
+                  ? `${discount}% OFF`
+                  : product.isNewArrival
+                    ? 'New'
+                    : 'Featured'}
             </div>
           </div>
         )}
@@ -303,14 +302,14 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
       </div>
 
       {/* Content Area */}
-      <div className="px-3 py-4 flex flex-col justify-between flex-grow gap-4">
+      <div className="px-[2px] py-2 md:px-3 md:py-4 flex flex-col justify-between flex-grow gap-2 md:gap-4">
         {/* Category & Title */}
-        <div className="space-y-1 w-full">
+        <div className="space-y-0.5 md:space-y-1 w-full">
           <Link href={`/shop?category=${mainCategory?.slug || ''}`} className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors block">
             {categoryName}
           </Link>
           <Link href={`/product/${product.slug}`} className="block group/title">
-            <h3 className="text-sm font-bold text-foreground line-clamp-2 min-h-[38px] group-hover/title:text-primary transition-colors leading-snug">
+            <h3 className="text-xs font-medium md:text-sm md:font-bold text-foreground line-clamp-2 min-h-[32px] md:min-h-[38px] group-hover/title:text-primary transition-colors leading-snug">
               {product.name}
             </h3>
           </Link>
@@ -327,13 +326,13 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
         </div>
 
         {/* Price & Button Stack */}
-        <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end sm:justify-between mt-auto pt-1 w-full">
+        <div className="flex flex-col items-center gap-2 sm:gap-3 sm:flex-row sm:items-end sm:justify-between mt-auto pt-1 w-full">
           <div className="flex flex-col items-center sm:items-start">
-            <span className="text-[16px] font-black text-primary">
+            <span className="text-sm sm:text-[16px] font-black text-primary">
               Tk {Math.round(product.salePrice ?? product.price).toLocaleString()}
             </span>
             {product.salePrice != null && product.salePrice < product.price && (
-              <span className="text-xs text-muted-foreground line-through decoration-primary/20">
+              <span className="text-[10px] sm:text-xs text-muted-foreground line-through decoration-primary/20">
                 Tk {Math.round(product.price).toLocaleString()}
               </span>
             )}
@@ -341,7 +340,7 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
           <Button
             onClick={handleAddToCartClick}
             disabled={product.stock === 0}
-            className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors duration-200"
+            className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-1.5 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors duration-200"
           >
             <ShoppingBag className="h-4 w-4" />
             {product.stock === 0 ? 'Out' : 'Add'}

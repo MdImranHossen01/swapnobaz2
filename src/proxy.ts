@@ -79,7 +79,7 @@ export const proxy = auth(async (req) => {
   }
 
   const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-  const isResellerRoute = nextUrl.pathname.startsWith("/reseller");
+  const isResellerRoute = nextUrl.pathname.startsWith("/reseller") && !nextUrl.pathname.startsWith("/reseller-program");
 
   // ── 2. Reseller dashboard protection ──────────────────────────────────────
   const isResellerRegisterPage = nextUrl.pathname === '/reseller/register';

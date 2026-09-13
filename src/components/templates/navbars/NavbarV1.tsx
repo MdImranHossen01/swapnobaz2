@@ -369,111 +369,90 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                   <Menu className="h-5 w-5" />
                   <span className="sr-only">Toggle mobile menu</span>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[350px] p-6 overflow-y-auto bg-background text-foreground border-r border-border">
-                  <div className="mb-4">
-                    <Logo onClick={() => setMobileOpen(false)} />
-                  </div>
-
-                  <nav className="flex flex-col gap-6">
-                    {/* Public Links */}
-                    <div className="space-y-4 border-t pt-4 font-medium tracking-tight">
-                      {navItems.map((item, index) => {
-                        const isActive = pathname === item.href;
-                        return (
-                          <React.Fragment key={item.href}>
-                            <Link
-                              href={item.href}
-                              className={`block px-4 py-2 rounded-xl transition-all ${isActive
-                                ? 'bg-primary text-white font-bold shadow-lg shadow-primary/20'
-                                : 'hover:text-primary font-medium'
-                                }`}
-                              onClick={() => setMobileOpen(false)}
-                            >
-                              {item.label}
-                            </Link>
-                            {/* Insert Categories Accordion after Home (index 0) */}
-                            {index === 0 && (
-                              <Accordion type="single" collapsible>
-                                <AccordionItem value="cats" className="border-none">
-                                  <AccordionTrigger className="py-2 hover:no-underline uppercase text-[12px] font-bold tracking-[0.2em] text-left">Categories</AccordionTrigger>
-                                  <AccordionContent className="pt-2 pl-4 flex flex-col gap-3">
-                                    {mainCategories.map((cat) => {
-                                      const subs = getSubcategories(cat._id);
-                                      if (subs.length === 0) {
-                                        return (
-                                          <Link
-                                            key={cat._id}
-                                            href={`/shop?category=${cat.slug}`}
-                                            onClick={() => setMobileOpen(false)}
-                                            className="hover:text-primary text-[11px] font-bold uppercase tracking-[0.1em]"
-                                          >
-                                            {cat.name}
-                                          </Link>
-                                        );
-                                      }
-                                      return (
-                                        <Accordion key={cat._id} type="single" collapsible>
-                                          <AccordionItem value={cat._id} className="border-none">
-                                            <AccordionTrigger className="py-1 hover:no-underline text-[11px] font-bold uppercase tracking-[0.1em] text-left hover:text-primary">
-                                              {cat.name}
-                                            </AccordionTrigger>
-                                            <AccordionContent className="pl-3 flex flex-col gap-2">
-                                              <Link
-                                                href={`/shop?category=${cat.slug}`}
-                                                onClick={() => setMobileOpen(false)}
-                                                className="text-[10px] font-bold text-muted-foreground hover:text-primary uppercase tracking-wider"
-                                              >
-                                                All {cat.name}
-                                              </Link>
-                                              {subs.map((sub) => (
-                                                <Link
-                                                  key={sub._id}
-                                                  href={`/shop?category=${sub.slug}`}
-                                                  onClick={() => setMobileOpen(false)}
-                                                  className="text-[10px] font-bold text-muted-foreground hover:text-primary uppercase tracking-wider"
-                                                >
-                                                  {sub.name}
-                                                </Link>
-                                              ))}
-                                            </AccordionContent>
-                                          </AccordionItem>
-                                        </Accordion>
-                                      );
-                                    })}
-                                  </AccordionContent>
-                                </AccordionItem>
-                              </Accordion>
-                            )}
-
-                            {/* Insert Brands Accordion after Categories (index 0) */}
-                            {index === 0 && (
-                              <Accordion type="single" collapsible>
-                                <AccordionItem value="brands" className="border-none">
-                                  <AccordionTrigger className="py-2 hover:no-underline uppercase text-[12px] font-bold tracking-[0.2em] text-left">Brands</AccordionTrigger>
-                                  <AccordionContent className="pt-2 pl-4 flex flex-col gap-3">
-                                    {brands.length > 0 ? (
-                                      brands.map((b) => (
-                                        <Link
-                                          key={b._id}
-                                          href={`/shop?brand=${b.slug || b.name}`}
-                                          onClick={() => setMobileOpen(false)}
-                                          className="hover:text-primary text-[11px] font-bold uppercase tracking-[0.1em]"
-                                        >
-                                          {b.name}
-                                        </Link>
-                                      ))
-                                    ) : (
-                                      <span className="text-[11px] text-muted-foreground italic">No brands available</span>
-                                    )}
-                                  </AccordionContent>
-                                </AccordionItem>
-                              </Accordion>
-                            )}
-                          </React.Fragment>
-                        );
-                      })}
+                <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0 bg-background text-foreground border-r border-border">
+                  <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', paddingBottom: '64px' }} className="md:pb-0">
+                    <div className="px-6 py-[6px]" style={{ flexShrink: 0 }}>
+                      <Logo onClick={() => setMobileOpen(false)} />
                     </div>
-                  </nav>
+                    <nav style={{ flex: 1, overflowY: 'auto' }} className="px-6 pb-4 flex flex-col gap-6">
+                      <div className="space-y-4 border-t pt-4 font-medium tracking-tight">
+                        {navItems.map((item, index) => {
+                          const isActive = pathname === item.href;
+                          return (
+                            <React.Fragment key={item.href}>
+                              <Link
+                                href={item.href}
+                                className={`block px-4 py-2 rounded-xl transition-all ${isActive ? 'bg-primary text-white font-bold shadow-lg shadow-primary/20' : 'hover:text-primary font-medium'}`}
+                                onClick={() => setMobileOpen(false)}
+                              >
+                                {item.label}
+                              </Link>
+                              {index === 0 && (
+                                <Accordion type="single" collapsible>
+                                  <AccordionItem value="cats" className="border-none">
+                                    <AccordionTrigger className="py-2 hover:no-underline uppercase text-[12px] font-bold tracking-[0.2em] text-left">Categories</AccordionTrigger>
+                                    <AccordionContent className="pt-2 pl-4 flex flex-col gap-3">
+                                      {mainCategories.map((cat) => {
+                                        const subs = getSubcategories(cat._id);
+                                        if (subs.length === 0) {
+                                          return (
+                                            <Link key={cat._id} href={`/shop?category=${cat.slug}`} onClick={() => setMobileOpen(false)} className="hover:text-primary text-[11px] font-bold uppercase tracking-[0.1em]">
+                                              {cat.name}
+                                            </Link>
+                                          );
+                                        }
+                                        return (
+                                          <Accordion key={cat._id} type="single" collapsible>
+                                            <AccordionItem value={cat._id} className="border-none">
+                                              <AccordionTrigger className="py-1 hover:no-underline text-[11px] font-bold uppercase tracking-[0.1em] text-left hover:text-primary">{cat.name}</AccordionTrigger>
+                                              <AccordionContent className="pl-3 flex flex-col gap-2">
+                                                <Link href={`/shop?category=${cat.slug}`} onClick={() => setMobileOpen(false)} className="text-[10px] font-bold text-muted-foreground hover:text-primary uppercase tracking-wider">All {cat.name}</Link>
+                                                {subs.map((sub) => (
+                                                  <Link key={sub._id} href={`/shop?category=${sub.slug}`} onClick={() => setMobileOpen(false)} className="text-[10px] font-bold text-muted-foreground hover:text-primary uppercase tracking-wider">{sub.name}</Link>
+                                                ))}
+                                              </AccordionContent>
+                                            </AccordionItem>
+                                          </Accordion>
+                                        );
+                                      })}
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                </Accordion>
+                              )}
+                              {index === 0 && (
+                                <Accordion type="single" collapsible>
+                                  <AccordionItem value="brands" className="border-none">
+                                    <AccordionTrigger className="py-2 hover:no-underline uppercase text-[12px] font-bold tracking-[0.2em] text-left">Brands</AccordionTrigger>
+                                    <AccordionContent className="pt-2 pl-4 flex flex-col gap-3">
+                                      {brands.length > 0 ? (
+                                        brands.map((b) => (
+                                          <Link key={b._id} href={`/shop?brand=${b.slug || b.name}`} onClick={() => setMobileOpen(false)} className="hover:text-primary text-[11px] font-bold uppercase tracking-[0.1em]">{b.name}</Link>
+                                        ))
+                                      ) : (
+                                        <span className="text-[11px] text-muted-foreground italic">No brands available</span>
+                                      )}
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                </Accordion>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
+                    </nav>
+                    <div style={{ flexShrink: 0 }} className="px-4 py-3 border-t border-border bg-background flex gap-2">
+                    <Link href="/reseller-program" onClick={() => setMobileOpen(false)} className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-primary text-primary text-xs font-bold py-2 hover:bg-primary hover:text-white transition-colors">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Be a Reseller
+                      </Link>
+                      {!session && (
+                        <Link href="/login" onClick={() => setMobileOpen(false)} className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-primary text-white text-xs font-bold py-2 hover:bg-primary/90 transition-colors">
+                          <User className="h-3.5 w-3.5" />
+                          Login
+                        </Link>
+                      )}
+                    </div>
+                  </div>
                 </SheetContent>
               </Sheet>
             </div>

@@ -263,14 +263,14 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
       </div>
 
       {/* Technical Content Section */}
-      <div className="p-4 flex flex-col gap-4">
+      <div className="px-[2px] py-2 md:p-4 flex flex-col gap-2 md:gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-[9px] font-mono text-muted-foreground uppercase tracking-widest">
             {product.isNewArrival && <span className="text-emerald-500">[ NEW_ARRV ]</span>}
             {product.isFeatured && <span className="text-primary">[ FT_ITEM ]</span>}
           </div>
           <Link prefetch={true} href={`/product/${product.slug}`} className="block">
-            <h3 className="text-base font-bold uppercase tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
+            <h3 className="text-xs font-medium md:text-base md:font-bold uppercase tracking-tight line-clamp-1 group-hover:text-primary transition-colors">
               {product.name}
             </h3>
           </Link>
