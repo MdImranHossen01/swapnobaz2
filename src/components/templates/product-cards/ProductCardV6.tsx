@@ -53,14 +53,26 @@ export default function ProductCardV6({ product: initialProduct, isFlashSale, pr
   const isInWishlist = wishlist.includes(initialProduct._id);
 
   const firstVariant = initialProduct.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null;
-  const product = firstVariant ? {
+  const initialBasePrice = Number(initialProduct.price ?? (initialProduct as any).retailPrice ?? 0);
+  const initialSalePrice = initialProduct.salePrice !== undefined && initialProduct.salePrice !== null
+    ? Number(initialProduct.salePrice)
+    : (initialProduct.price !== undefined ? Number(initialProduct.price) : Number((initialProduct as any).retailPrice ?? 0));
+
+  const variantPrice = firstVariant && (firstVariant.price !== undefined && firstVariant.price !== null)
+    ? Number(firstVariant.price)
+    : initialBasePrice;
+  const variantSalePrice = firstVariant && (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null)
+    ? Number(firstVariant.salePrice)
+    : (firstVariant && firstVariant.price !== undefined ? Number(firstVariant.price) : initialSalePrice);
+
+  const product = {
     ...initialProduct,
-    price: firstVariant.price,
-    salePrice: firstVariant.salePrice,
-    stock: firstVariant.stock ?? initialProduct.stock,
-    sku: firstVariant.sku ?? initialProduct.sku,
-    images: firstVariant.image ? [firstVariant.image, ...initialProduct.images.filter((img: string) => img !== firstVariant.image)] : initialProduct.images
-  } : initialProduct;
+    price: isNaN(variantPrice) ? 0 : variantPrice,
+    salePrice: isNaN(variantSalePrice) ? variantPrice : variantSalePrice,
+    stock: firstVariant?.stock ?? initialProduct.stock ?? 0,
+    sku: firstVariant?.sku ?? initialProduct.sku,
+    images: firstVariant?.image ? [firstVariant.image, ...((initialProduct.images || []).filter((img: string) => img !== firstVariant.image))] : (initialProduct.images || [])
+  };
 
   const hasVariants = product.variants && product.variants.length > 0;
 
@@ -258,13 +270,13 @@ export default function ProductCardV6({ product: initialProduct, isFlashSale, pr
             {product.name}
           </Link>
           <div className="flex items-center justify-center gap-2 mt-2">
-            {product.salePrice ? (
+            {product.salePrice && product.salePrice < product.price ? (
               <>
-                <span className={`text-foreground font-black text-sm ${layout === 'v3' ? 'lg:text-[14px]' : 'sm:text-[16px]'}`}>৳{Math.round(product.salePrice)}</span>
-                <span className={`text-muted-foreground line-through text-[11px] ${layout === 'v3' ? 'lg:text-[11px]' : 'sm:text-[13px]'} font-normal`}>৳{Math.round(product.price)}</span>
+                <span className={`text-foreground font-black text-sm ${layout === 'v3' ? 'lg:text-[14px]' : 'sm:text-[16px]'}`}>৳{Math.round(product.salePrice ?? 0)}</span>
+                <span className={`text-muted-foreground line-through text-[11px] ${layout === 'v3' ? 'lg:text-[11px]' : 'sm:text-[13px]'} font-normal`}>৳{Math.round(product.price ?? 0)}</span>
               </>
             ) : (
-              <span className={`text-foreground font-black text-sm ${layout === 'v3' ? 'lg:text-[14px]' : 'sm:text-[16px]'}`}>৳{Math.round(product.price)}</span>
+              <span className={`text-foreground font-black text-sm ${layout === 'v3' ? 'lg:text-[14px]' : 'sm:text-[16px]'}`}>৳{Math.round(product.salePrice ?? product.price ?? 0)}</span>
             )}
           </div>
         </div>

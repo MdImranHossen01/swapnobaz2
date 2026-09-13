@@ -69,23 +69,29 @@ export default async function ResellerShopPage({ params, searchParams }: Props) 
   // Format reseller products so they match the standard storefront Product shape
   const formattedProducts = (resellerProducts || []).map((rp: any) => {
     const parent = rp.productId || {};
+    const finalPrice = typeof rp.retailPrice === 'number' && !isNaN(rp.retailPrice) 
+      ? rp.retailPrice 
+      : (typeof parent.price === 'number' ? parent.price : 0);
     return {
       _id: rp._id.toString(),
-      name: rp.name || parent.name,
+      productId: parent._id ? parent._id.toString() : rp.productId?.toString(),
+      name: rp.name || parent.name || 'Product',
       slug: rp.slug || parent.slug,
-      price: rp.retailPrice || parent.price,
-      salePrice: rp.retailPrice || parent.salePrice,
+      price: finalPrice,
+      salePrice: finalPrice,
+      retailPrice: rp.retailPrice,
       images: rp.images?.length > 0 ? rp.images : parent.images || [],
       description: parent.description,
       categories: parent.categories || [],
       brand: parent.brand || null,
-      stock: rp.stock ?? parent.stock,
+      stock: rp.stock ?? parent.stock ?? 0,
       isPublished: rp.isPublished,
-      isNewArrival: parent.isNewArrival,
-      isFeatured: parent.isFeatured,
-      isFlashSale: false,
+      isNewArrival: Boolean(parent.isNewArrival),
+      isFeatured: Boolean(parent.isFeatured),
+      isFlashSale: Boolean(parent.isFlashSale),
       rating: parent.rating || 5,
       numReviews: parent.numReviews || 0,
+      variants: parent.variants || [],
       createdAt: rp.createdAt || parent.createdAt,
     };
   });

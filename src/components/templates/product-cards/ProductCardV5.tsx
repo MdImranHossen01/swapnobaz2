@@ -59,16 +59,28 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
   const isAdmin = (session?.user as any)?.role === 'admin';
 
   const firstVariant = initialProduct.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null;
-  const product = firstVariant ? {
-    ...initialProduct,
-    price: firstVariant.price,
-    salePrice: firstVariant.salePrice,
-    stock: firstVariant.stock ?? initialProduct.stock,
-    sku: firstVariant.sku ?? initialProduct.sku,
-    images: firstVariant.image ? [firstVariant.image, ...initialProduct.images.filter((img: string) => img !== firstVariant.image)] : initialProduct.images
-  } : initialProduct;
+  const initialBasePrice = Number(initialProduct.price ?? (initialProduct as any).retailPrice ?? 0);
+  const initialSalePrice = initialProduct.salePrice !== undefined && initialProduct.salePrice !== null
+    ? Number(initialProduct.salePrice)
+    : (initialProduct.price !== undefined ? Number(initialProduct.price) : Number((initialProduct as any).retailPrice ?? 0));
 
-  const hasVariants = product.variants && product.variants.length > 0;
+  const variantPrice = firstVariant && (firstVariant.price !== undefined && firstVariant.price !== null)
+    ? Number(firstVariant.price)
+    : initialBasePrice;
+  const variantSalePrice = firstVariant && (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null)
+    ? Number(firstVariant.salePrice)
+    : (firstVariant && firstVariant.price !== undefined ? Number(firstVariant.price) : initialSalePrice);
+
+  const product = {
+    ...initialProduct,
+    price: isNaN(variantPrice) ? 0 : variantPrice,
+    salePrice: isNaN(variantSalePrice) ? variantPrice : variantSalePrice,
+    stock: firstVariant?.stock ?? initialProduct.stock ?? 0,
+    sku: firstVariant?.sku ?? initialProduct.sku,
+    images: firstVariant?.image ? [firstVariant.image, ...((initialProduct.images || []).filter((img: string) => img !== firstVariant.image))] : (initialProduct.images || [])
+  };
+
+  const hasVariants = initialProduct.variants && initialProduct.variants.length > 0;
 
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -293,11 +305,11 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
 
         <div className="flex items-center gap-4">
           <span className="text-2xl font-black text-primary">
-            ৳{Math.round(product.salePrice ?? product.price)}
+            ৳{Math.round(product.salePrice ?? product.price ?? 0)}
           </span>
           {product.salePrice != null && product.salePrice < product.price && (
             <span className="text-sm text-muted-foreground line-through opacity-40 font-bold">
-              ৳{Math.round(product.price)}
+              ৳{Math.round(product.price ?? 0)}
             </span>
           )}
         </div>
