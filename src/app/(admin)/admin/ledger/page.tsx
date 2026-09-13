@@ -41,6 +41,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
 import { Pagination } from '@/components/ui/pagination';
+import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
 function AccountsLedgerContent() {
   const router = useRouter();
@@ -334,51 +335,51 @@ function AccountsLedgerContent() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div className="space-y-4 md:space-y-6 px-0 py-2 md:p-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Accounts Ledger</h2>
-          <p className="text-muted-foreground text-sm">
+          <h2 className="text-xl md:text-3xl font-bold tracking-tight">Accounts Ledger</h2>
+          <p className="text-muted-foreground text-xs md:text-sm mt-0.5">
             Manage cash & bank opening balances, record manual entries, and track account receivables.
           </p>
         </div>
-        <Button onClick={() => setIsTxOpen(true)} className="w-full md:w-auto bg-primary text-primary-foreground">
-          <Plus className="mr-2 h-4 w-4" /> New Journal Entry
+        <Button onClick={() => setIsTxOpen(true)} className="w-full sm:w-auto bg-primary text-primary-foreground font-bold h-9 text-xs">
+          <Plus className="mr-1.5 h-4 w-4" /> New Journal Entry
         </Button>
       </div>
 
       {/* Account Balance Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
         {accounts.map((acc) => {
           const isCash = acc.code === 'CASH';
           const isBank = acc.code === 'BANK';
 
           return (
-            <Card key={acc._id} className="relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Card key={acc._id} className="relative overflow-hidden shadow-xs">
+              <CardHeader className="flex flex-row items-center justify-between pb-1.5 p-3 md:p-4">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {acc.name}
                 </CardTitle>
                 {isCash ? (
-                  <Wallet className="h-5 w-5 text-primary" />
+                  <Wallet className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 ) : isBank ? (
-                  <Landmark className="h-5 w-5 text-primary" />
+                  <Landmark className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 ) : (
-                  <DollarSign className="h-5 w-5 text-primary" />
+                  <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 )}
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="text-3xl font-bold tracking-tight">৳{Math.round(acc.currentBalance)}</div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-2">
-                  <span>Opening: ৳{Math.round(acc.openingBalance || 0)}</span>
+              <CardContent className="space-y-2 p-3 md:p-4 pt-0">
+                <div className="text-xl md:text-3xl font-bold tracking-tight">৳{Math.round(acc.currentBalance).toLocaleString()}</div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-1.5">
+                  <span>Opening: ৳{Math.round(acc.openingBalance || 0).toLocaleString()}</span>
                   <Button
                     variant="ghost"
-                    size="xs"
+                    size="sm"
                     onClick={() => {
                       setEditingAccount(acc);
                       setNewOpeningBalance(acc.openingBalance || 0);
                     }}
-                    className="h-6 px-2 hover:bg-muted"
+                    className="h-6 px-1.5 text-xs hover:bg-muted"
                   >
                     <Edit2 className="h-3 w-3 mr-1" /> Edit
                   </Button>
@@ -390,31 +391,31 @@ function AccountsLedgerContent() {
       </div>
 
       {/* Transactions Journal */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle>Transaction Journal</CardTitle>
+      <Card className="shadow-xs overflow-hidden">
+        <CardHeader className="p-3 md:p-4 bg-muted/20 border-b">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <CardTitle className="text-sm md:text-base font-bold">Transaction Journal</CardTitle>
             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-              <div className="relative w-full md:w-72">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <div className="relative flex-1 sm:w-60 md:w-72">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  placeholder="Search description or reference..."
-                  className="pl-8"
+                  placeholder="Search description / ref..."
+                  className="pl-8 h-8 text-xs"
                   value={journalSearchTerm}
                   onChange={(e) => setJournalSearchTerm(e.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-md border text-sm">
+              <div className="flex items-center gap-1 bg-muted/50 p-0.5 rounded-md border text-xs">
                 <Input
                   type="date"
-                  className="h-8 w-36 border-none bg-transparent focus-visible:ring-0"
+                  className="h-7 w-28 border-none bg-transparent focus-visible:ring-0 text-xs px-1"
                   value={dateFilter.from}
                   onChange={(e) => setDateFilter(prev => ({ ...prev, from: e.target.value }))}
                 />
-                <span className="text-muted-foreground text-xs">to</span>
+                <span className="text-muted-foreground text-[10px]">to</span>
                 <Input
                   type="date"
-                  className="h-8 w-36 border-none bg-transparent focus-visible:ring-0"
+                  className="h-7 w-28 border-none bg-transparent focus-visible:ring-0 text-xs px-1"
                   value={dateFilter.to}
                   onChange={(e) => setDateFilter(prev => ({ ...prev, to: e.target.value }))}
                 />
@@ -427,99 +428,154 @@ function AccountsLedgerContent() {
                     setDateFilter({ from: '', to: '' });
                     setJournalSearchTerm('');
                   }}
-                  className="text-xs text-muted-foreground hover:text-primary"
+                  className="text-xs text-muted-foreground hover:text-primary h-7 px-2"
                 >
-                  Clear All
+                  Clear
                 </Button>
               )}
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
             <div className="flex h-32 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : filteredTransactions.length === 0 ? (
-            <div className="flex h-32 flex-col items-center justify-center text-muted-foreground">
-              <Plus className="h-10 w-10 mb-2 stroke-1" />
+            <div className="flex h-32 flex-col items-center justify-center text-muted-foreground text-xs">
+              <Plus className="h-8 w-8 mb-2 stroke-1" />
               <p>No journal entries found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Account</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Amount (৳)</TableHead>
-                    <TableHead className="text-right">Running Balance (৳)</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedTransactions.map((tx) => (
-                    <TableRow key={tx._id}>
-                      <TableCell className="text-muted-foreground">
-                        {format(new Date(tx.date), 'dd MMM yyyy')}
-                      </TableCell>
-                      <TableCell className="font-medium">{tx.account?.name}</TableCell>
-                      <TableCell>
-                        <div className="space-y-0.5">
-                          <p>{tx.description}</p>
-                          {tx.reference && (
-                            <span className="text-xs text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded">
-                              Ref: {tx.reference}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={tx.type === 'debit' ? 'default' : 'outline'}
-                          className={tx.type === 'debit' ? 'bg-primary/20 text-primary hover:bg-primary/20 border-transparent' : ''}
-                        >
-                          {tx.type === 'debit' ? 'Debit (+)' : 'Credit (-)'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">৳{Math.round(tx.amount)}</TableCell>
-                      <TableCell className="text-right font-semibold">৳{Math.round(tx.balanceAfter)}</TableCell>
-                      <TableCell className="text-right">
-                        {tx.reference && ['manual-deposit', 'manual-withdrawal', 'manual-transfer'].includes(tx.reference) ? (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleEditClick(tx)}>
-                                  <Edit2 className="mr-2 h-4 w-4 text-indigo-600" /> Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onClick={() => handleDeleteTx(tx._id)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Account</TableHead>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="text-right">Amount (৳)</TableHead>
+                      <TableHead className="text-right">Running Balance (৳)</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedTransactions.map((tx) => (
+                      <TableRow key={tx._id}>
+                        <TableCell className="text-muted-foreground">
+                          {format(new Date(tx.date), 'dd MMM yyyy')}
+                        </TableCell>
+                        <TableCell className="font-medium">{tx.account?.name}</TableCell>
+                        <TableCell>
+                          <div className="space-y-0.5">
+                            <p>{tx.description}</p>
+                            {tx.reference && (
+                              <span className="text-xs text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded">
+                                Ref: {tx.reference}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={tx.type === 'debit' ? 'default' : 'outline'}
+                            className={tx.type === 'debit' ? 'bg-primary/20 text-primary hover:bg-primary/20 border-transparent' : ''}
+                          >
+                            {tx.type === 'debit' ? 'Debit (+)' : 'Credit (-)'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">৳{Math.round(tx.amount).toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-semibold">৳{Math.round(tx.balanceAfter).toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          {tx.reference && ['manual-deposit', 'manual-withdrawal', 'manual-transfer'].includes(tx.reference) ? (
+                            <div className="flex items-center justify-end gap-1.5">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleEditClick(tx)}>
+                                    <Edit2 className="mr-2 h-4 w-4 text-indigo-600" /> Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onClick={() => handleDeleteTx(tx._id)}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card List */}
+              <div className="block md:hidden p-2 space-y-2.5">
+                {paginatedTransactions.map((tx) => (
+                  <MobileDataCard
+                    key={tx._id}
+                    title={tx.description || 'Transaction'}
+                    badge={
+                      <Badge
+                        variant={tx.type === 'debit' ? 'default' : 'outline'}
+                        className={`text-[10px] ${tx.type === 'debit' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}
+                      >
+                        {tx.type === 'debit' ? 'Debit (+)' : 'Credit (-)'}
+                      </Badge>
+                    }
+                    footer={
+                      <div className="flex items-center justify-between w-full font-bold text-xs">
+                        <span className="text-muted-foreground">Running Balance:</span>
+                        <span className="text-foreground text-sm">৳{Math.round(tx.balanceAfter).toLocaleString()}</span>
+                      </div>
+                    }
+                  >
+                    <MobileDataRow label="Date" value={format(new Date(tx.date), 'dd MMM yyyy')} />
+                    <MobileDataRow label="Account" value={<span className="font-semibold">{tx.account?.name}</span>} />
+                    <MobileDataRow 
+                      label="Amount" 
+                      value={
+                        <span className={`font-bold ${tx.type === 'debit' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {tx.type === 'debit' ? '+' : '-'}৳{Math.round(tx.amount).toLocaleString()}
+                        </span>
+                      } 
+                    />
+                    {tx.reference && (
+                      <MobileDataRow 
+                        label="Reference" 
+                        value={<span className="font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded">{tx.reference}</span>} 
+                      />
+                    )}
+                    {tx.reference && ['manual-deposit', 'manual-withdrawal', 'manual-transfer'].includes(tx.reference) && (
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                        <Button variant="outline" size="sm" onClick={() => handleEditClick(tx)} className="h-7 text-xs px-2">
+                          <Edit2 className="h-3 w-3 mr-1 text-indigo-600" /> Edit
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteTx(tx._id)} className="h-7 text-xs px-2">
+                          <Trash2 className="h-3 w-3 mr-1" /> Delete
+                        </Button>
+                      </div>
+                    )}
+                  </MobileDataCard>
+                ))}
+              </div>
+            </>
           )}
+
           {totalPages > 1 && (
-            <div className="py-4 border-t bg-background px-6">
+            <div className="py-3 border-t bg-background px-3">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -554,7 +610,7 @@ function AccountsLedgerContent() {
               <Button type="button" variant="outline" onClick={() => setEditingAccount(null)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={updatingOpening} className="bg-primary text-primary-foreground">
+              <Button type="submit" disabled={updatingOpening} className="bg-primary text-primary-foreground font-bold">
                 {updatingOpening && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Balance
               </Button>
@@ -577,7 +633,7 @@ function AccountsLedgerContent() {
                 type="button"
                 className={`flex-1 py-2 text-sm font-semibold border-b-2 transition-all ${
                   activeTab === 'journal'
-                    ? 'border-primary text-primary font-bold animate-pulse-subtle'
+                    ? 'border-primary text-primary font-bold'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
                 onClick={() => setActiveTab('journal')}
@@ -588,7 +644,7 @@ function AccountsLedgerContent() {
                 type="button"
                 className={`flex-1 py-2 text-sm font-semibold border-b-2 transition-all ${
                   activeTab === 'transfer'
-                    ? 'border-primary text-primary font-bold animate-pulse-subtle'
+                    ? 'border-primary text-primary font-bold'
                     : 'border-transparent text-muted-foreground hover:text-foreground'
                 }`}
                 onClick={() => setActiveTab('transfer')}
@@ -598,40 +654,41 @@ function AccountsLedgerContent() {
             </div>
           )}
 
-          <form onSubmit={handleCreateTransaction} className="space-y-4 pt-2">
+          <form onSubmit={handleCreateTransaction} className="space-y-3 pt-2 text-xs">
             {activeTab === 'journal' ? (
               <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="txDate">Transaction Date</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="txDate" className="text-xs">Transaction Date</Label>
                     <Input
                       id="txDate"
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
                       required
+                      className="h-8 text-xs"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="accCode">Target Account</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="accCode" className="text-xs">Target Account</Label>
                     <Select
                       value={accountCode}
                       onValueChange={(val: any) => setAccountCode(val)}
                     >
-                      <SelectTrigger id="accCode">
+                      <SelectTrigger id="accCode" className="h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="CASH">Cash Account</SelectItem>
-                        <SelectItem value="BANK">Bank Account</SelectItem>
+                        <SelectItem value="CASH" className="text-xs">Cash Account</SelectItem>
+                        <SelectItem value="BANK" className="text-xs">Bank Account</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Type</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Type</Label>
                   <div className="flex items-center gap-6 pt-1">
                     <label className="flex items-center space-x-2 cursor-pointer select-none">
                       <input
@@ -642,7 +699,7 @@ function AccountsLedgerContent() {
                         onChange={() => setJournalType('in')}
                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300"
                       />
-                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-sm">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-xs">
                         Debit (Cash In)
                       </span>
                     </label>
@@ -655,7 +712,7 @@ function AccountsLedgerContent() {
                         onChange={() => setJournalType('out')}
                         className="h-4 w-4 text-rose-600 focus:ring-rose-500 border-gray-300"
                       />
-                      <span className="text-rose-600 dark:text-rose-400 font-semibold text-sm">
+                      <span className="text-rose-600 dark:text-rose-400 font-semibold text-xs">
                         Credit (Cash Out)
                       </span>
                     </label>
@@ -664,19 +721,20 @@ function AccountsLedgerContent() {
               </>
             ) : (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="txDate">Transaction Date</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="txDate" className="text-xs">Transaction Date</Label>
                   <Input
                     id="txDate"
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                     required
+                    className="h-8 text-xs"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fromAcc">From Account</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="fromAcc" className="text-xs">From Account</Label>
                     <Select
                       value={fromAccountCode}
                       onValueChange={(val: any) => {
@@ -686,17 +744,17 @@ function AccountsLedgerContent() {
                         }
                       }}
                     >
-                      <SelectTrigger id="fromAcc">
+                      <SelectTrigger id="fromAcc" className="h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="CASH">Cash</SelectItem>
-                        <SelectItem value="BANK">Bank</SelectItem>
+                        <SelectItem value="CASH" className="text-xs">Cash</SelectItem>
+                        <SelectItem value="BANK" className="text-xs">Bank</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="toAcc">To Account</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="toAcc" className="text-xs">To Account</Label>
                     <Select
                       value={toAccountCode}
                       onValueChange={(val: any) => {
@@ -706,12 +764,12 @@ function AccountsLedgerContent() {
                         }
                       }}
                     >
-                      <SelectTrigger id="toAcc">
+                      <SelectTrigger id="toAcc" className="h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="CASH">Cash</SelectItem>
-                        <SelectItem value="BANK">Bank</SelectItem>
+                        <SelectItem value="CASH" className="text-xs">Cash</SelectItem>
+                        <SelectItem value="BANK" className="text-xs">Bank</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -719,8 +777,8 @@ function AccountsLedgerContent() {
               </>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="txDesc">Title</Label>
+            <div className="space-y-1">
+              <Label htmlFor="txDesc" className="text-xs">Title</Label>
               <Input
                 id="txDesc"
                 ref={titleRef}
@@ -733,12 +791,13 @@ function AccountsLedgerContent() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
+                className="h-8 text-xs"
               />
             </div>
 
             {activeTab === 'journal' ? (
-              <div className="space-y-2">
-                <Label htmlFor="journalAmt">Amount (৳)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="journalAmt" className="text-xs">Amount (৳)</Label>
                 <Input
                   id="journalAmt"
                   type="number"
@@ -747,11 +806,12 @@ function AccountsLedgerContent() {
                   value={journalAmount}
                   onChange={(e) => setJournalAmount(e.target.value)}
                   required
+                  className="h-8 text-xs"
                 />
               </div>
             ) : (
-              <div className="space-y-2">
-                <Label htmlFor="transferAmt">Transfer Amount (৳)</Label>
+              <div className="space-y-1">
+                <Label htmlFor="transferAmt" className="text-xs">Transfer Amount (৳)</Label>
                 <Input
                   id="transferAmt"
                   type="number"
@@ -760,15 +820,16 @@ function AccountsLedgerContent() {
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
                   required
+                  className="h-8 text-xs"
                 />
               </div>
             )}
 
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsTxOpen(false)}>
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsTxOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={creatingTx} className="bg-primary text-primary-foreground">
+              <Button type="submit" size="sm" disabled={creatingTx} className="bg-primary text-primary-foreground font-bold">
                 {creatingTx && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Log Transaction
               </Button>

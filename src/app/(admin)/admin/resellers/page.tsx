@@ -122,22 +122,22 @@ export default function AdminResellersPage() {
   );
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">রিসেলার স্টোর সমূহ</h1>
-          <p className="text-sm text-muted-foreground">সব রিসেলার স্টোর এবং তাদের কমিশন রেট এখানে পরিচালনা করুন</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">রিসেলার স্টোর সমূহ</h1>
+          <p className="text-xs md:text-sm text-muted-foreground">সব রিসেলার স্টোর এবং তাদের কমিশন রেট এখানে পরিচালনা করুন</p>
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative w-72">
+      <div className="flex items-center justify-between gap-4 px-1 md:px-0">
+        <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="স্টোর, ডোমেন বা মালিকের নাম..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 h-9 text-xs md:text-sm"
           />
         </div>
       </div>
@@ -154,105 +154,204 @@ export default function AdminResellersPage() {
               <p>কোনো রিসেলার স্টোর খুঁজে পাওয়া যায়নি</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>স্টোরের নাম</TableHead>
-                  <TableHead>ডোমেন / সাবডোমেন</TableHead>
-                  <TableHead>মালিক</TableHead>
-                  <TableHead>কমিশন রেট</TableHead>
-                  <TableHead>মোট অর্ডার</TableHead>
-                  <TableHead>মোট রেভিনিউ</TableHead>
-                  <TableHead>স্ট্যাটাস</TableHead>
-                  <TableHead className="text-right">অ্যাকশন</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map(r => (
-                  <TableRow key={r._id}>
-                    <TableCell className="font-bold">
-                      <div>
-                        <span>{r.storeName}</span>
-                        {r.description && <p className="text-xs text-muted-foreground line-clamp-1 font-normal">{r.description}</p>}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <a
-                          href={`https://${r.subdomain}.swapnobaz.com`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-semibold"
-                        >
-                          {r.subdomain}.swapnobaz.com
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                        {r.customDomain && (
-                          <div className="flex items-center gap-1">
-                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
-                              Custom: {r.customDomain}
-                            </Badge>
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>স্টোরের নাম</TableHead>
+                      <TableHead>ডোমেন / সাবডোমেন</TableHead>
+                      <TableHead>মালিক</TableHead>
+                      <TableHead>কমিশন রেট</TableHead>
+                      <TableHead>মোট অর্ডার</TableHead>
+                      <TableHead>মোট রেভিনিউ</TableHead>
+                      <TableHead>স্ট্যাটাস</TableHead>
+                      <TableHead className="text-right">অ্যাকশন</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map(r => (
+                      <TableRow key={r._id}>
+                        <TableCell className="font-bold">
+                          <div>
+                            <span>{r.storeName}</span>
+                            {r.description && <p className="text-xs text-muted-foreground line-clamp-1 font-normal">{r.description}</p>}
                           </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <a
+                              href={`https://${r.subdomain}.swapnobaz.com`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-semibold"
+                            >
+                              {r.subdomain}.swapnobaz.com
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                            {r.customDomain && (
+                              <div className="flex items-center gap-1">
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+                                  Custom: {r.customDomain}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="text-sm font-medium">{r.userId?.name || 'Unknown'}</p>
+                            <p className="text-xs text-muted-foreground">{r.contact?.phone || r.userId?.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{r.commissionRate}%</TableCell>
+                        <TableCell>{r.totalOrders}</TableCell>
+                        <TableCell>৳{r.totalRevenue?.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={statusBadgeColor[r.status] || ''}>
+                            {r.status === 'active' ? 'সক্রিয়' : r.status === 'pending' ? 'অনুমোদন পেন্ডিং' : 'স্থগিত'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right space-x-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingReseller(r);
+                              setCommissionRate(r.commissionRate);
+                            }}
+                          >
+                            <Edit className="h-3.5 w-3.5 mr-1" />কমিশন
+                          </Button>
+                          {r.status === 'pending' && (
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleStatusChange(r._id, 'active', r.storeName)}
+                            >
+                              <Check className="h-3.5 w-3.5 mr-1" />অনুমোদন
+                            </Button>
+                          )}
+                          {r.status === 'active' && (
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleStatusChange(r._id, 'suspended', r.storeName)}
+                            >
+                              <ShieldAlert className="h-3.5 w-3.5 mr-1" />স্থগিত
+                            </Button>
+                          )}
+                          {r.status === 'suspended' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleStatusChange(r._id, 'active', r.storeName)}
+                            >
+                              <Check className="h-3.5 w-3.5 mr-1" />সক্রিয়
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="block md:hidden p-2 space-y-2.5">
+                {filtered.map(r => (
+                  <div key={r._id} className="p-3 bg-card border rounded-lg shadow-sm space-y-2.5">
+                    <div className="flex items-start justify-between gap-2 border-b pb-2">
                       <div>
-                        <p className="text-sm font-medium">{r.userId?.name || 'Unknown'}</p>
-                        <p className="text-xs text-muted-foreground">{r.contact?.phone || r.userId?.email}</p>
+                        <h4 className="font-bold text-sm text-foreground">{r.storeName}</h4>
+                        <p className="text-[11px] text-muted-foreground">{r.userId?.name || 'Unknown'} • {r.contact?.phone || r.userId?.email}</p>
                       </div>
-                    </TableCell>
-                    <TableCell>{r.commissionRate}%</TableCell>
-                    <TableCell>{r.totalOrders}</TableCell>
-                    <TableCell>৳{r.totalRevenue?.toLocaleString()}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={statusBadgeColor[r.status] || ''}>
+                      <Badge variant="outline" className={`text-[10px] shrink-0 ${statusBadgeColor[r.status] || ''}`}>
                         {r.status === 'active' ? 'সক্রিয়' : r.status === 'pending' ? 'অনুমোদন পেন্ডিং' : 'স্থগিত'}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-right space-x-1">
+                    </div>
+
+                    <div className="text-xs space-y-1">
+                      <a
+                        href={`https://${r.subdomain}.swapnobaz.com`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline font-semibold"
+                      >
+                        {r.subdomain}.swapnobaz.com
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                      {r.customDomain && (
+                        <div>
+                          <Badge variant="secondary" className="text-[9px] px-1 py-0 font-mono">
+                            Custom: {r.customDomain}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1.5 bg-muted/40 p-2 rounded text-center text-xs">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block">কমিশন</span>
+                        <span className="font-semibold text-primary">{r.commissionRate}%</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block">অর্ডার</span>
+                        <span className="font-semibold">{r.totalOrders || 0}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-muted-foreground block">রেভিনিউ</span>
+                        <span className="font-semibold">৳{(r.totalRevenue || 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-1.5 pt-1">
                       <Button
                         size="sm"
                         variant="outline"
+                        className="h-7 text-xs px-2.5"
                         onClick={() => {
                           setEditingReseller(r);
                           setCommissionRate(r.commissionRate);
                         }}
                       >
-                        <Edit className="h-3.5 w-3.5 mr-1" />কমিশন
+                        <Edit className="h-3 w-3 mr-1" />কমিশন
                       </Button>
                       {r.status === 'pending' && (
                         <Button
                           size="sm"
-                          className="bg-green-600 hover:bg-green-700"
+                          className="h-7 text-xs px-2.5 bg-green-600 hover:bg-green-700"
                           onClick={() => handleStatusChange(r._id, 'active', r.storeName)}
                         >
-                          <Check className="h-3.5 w-3.5 mr-1" />অনুমোদন
+                          <Check className="h-3 w-3 mr-1" />অনুমোদন
                         </Button>
                       )}
                       {r.status === 'active' && (
                         <Button
                           size="sm"
                           variant="destructive"
+                          className="h-7 text-xs px-2.5"
                           onClick={() => handleStatusChange(r._id, 'suspended', r.storeName)}
                         >
-                          <ShieldAlert className="h-3.5 w-3.5 mr-1" />স্থগিত
+                          <ShieldAlert className="h-3 w-3 mr-1" />স্থগিত
                         </Button>
                       )}
                       {r.status === 'suspended' && (
                         <Button
                           size="sm"
                           variant="outline"
+                          className="h-7 text-xs px-2.5"
                           onClick={() => handleStatusChange(r._id, 'active', r.storeName)}
                         >
-                          <Check className="h-3.5 w-3.5 mr-1" />সক্রিয়
+                          <Check className="h-3 w-3 mr-1" />সক্রিয়
                         </Button>
                       )}
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

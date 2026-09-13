@@ -44,6 +44,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Pagination } from '@/components/ui/pagination';
+import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
 interface BillItemInput {
   name: string;
@@ -287,7 +288,6 @@ function ClientChalansContent() {
         throw new Error(errorData.message || `Failed to ${editingChalan ? 'update' : 'create'} challan`);
       }
 
-      const createdChalan = await res.json();
       toast.success(editingChalan ? 'Delivery Challan updated successfully!' : 'Delivery Challan generated successfully!');
 
       setIsCreateOpen(false);
@@ -410,122 +410,196 @@ function ClientChalansContent() {
   );
 
   return (
-    <div className="flex-1 space-y-6 px-0 py-4 md:p-8">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div className="flex-1 space-y-4 md:space-y-6 px-0 py-2 md:p-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Delivery Challans</h2>
-          <p className="text-muted-foreground text-sm">Create, manage, and print delivery challans for goods dispatched, and convert them to Bills.</p>
+          <h2 className="text-xl md:text-3xl font-bold tracking-tight">Delivery Challans</h2>
+          <p className="text-muted-foreground text-xs md:text-sm mt-0.5">Create, manage, and print delivery challans for goods dispatched, and convert them to Bills.</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="w-full md:w-auto bg-primary text-primary-foreground">
-          <Plus className="mr-2 h-4 w-4" /> Create Delivery Challan
+        <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto bg-primary text-primary-foreground font-bold h-9 text-xs">
+          <Plus className="mr-1.5 h-4 w-4" /> Create Delivery Challan
         </Button>
       </div>
 
-      {/* Challans Table */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <CardTitle>Challans List</CardTitle>
+      {/* Challans Table Card */}
+      <Card className="shadow-xs overflow-hidden">
+        <CardHeader className="p-3 md:p-4 bg-muted/20 border-b">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <CardTitle className="text-sm md:text-base font-bold">Challans List</CardTitle>
             <div className="relative w-full md:w-72">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 placeholder="Search by client or challan..."
-                className="pl-8"
+                className="pl-8 h-8 text-xs"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
             <div className="flex h-32 items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : filteredChalans.length === 0 ? (
-            <div className="flex h-32 flex-col items-center justify-center text-muted-foreground">
-              <FileText className="h-10 w-10 mb-2 stroke-1" />
+            <div className="flex h-32 flex-col items-center justify-center text-muted-foreground text-xs">
+              <FileText className="h-8 w-8 mb-2 stroke-1" />
               <p>No delivery challans found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Challan No</TableHead>
-                    <TableHead>Client Name</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedChalans.map((chalan) => (
-                    <TableRow key={chalan._id}>
-                      <TableCell className="font-semibold">{chalan.invoiceNo}</TableCell>
-                      <TableCell>{chalan.clientName}</TableCell>
-                      <TableCell>{chalan.clientPhone}</TableCell>
-                      <TableCell>{format(new Date(chalan.date), 'dd MMM yyyy')}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
-                            onClick={() => generateBillPDF(chalan, settings, 'print')}
-                            title="Print Challan"
-                          >
-                            <Printer className="h-4 w-4" />
-                          </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedChalan(chalan)}>
-                                <Eye className="mr-2 h-4 w-4" /> View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setEditingChalan(chalan);
-                                  setClientName(chalan.clientName);
-                                  setClientPhone(chalan.clientPhone);
-                                  setClientAddress(chalan.clientAddress);
-                                  setBillItems(chalan.items);
-                                  setIsCreateOpen(true);
-                                }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" /> Edit Challan
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => generateBillPDF(chalan, settings, 'download')}>
-                                <Download className="mr-2 h-4 w-4" /> Download PDF
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => generateBillPDF(chalan, settings, 'print')}>
-                                <Printer className="mr-2 h-4 w-4" /> Print PDF
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleConvertToBill(chalan)}>
-                                <ArrowRight className="mr-2 h-4 w-4" /> Convert to Bill
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() => handleDeleteChalan(chalan._id)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
+            <>
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Challan No</TableHead>
+                      <TableHead>Client Name</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedChalans.map((chalan) => (
+                      <TableRow key={chalan._id}>
+                        <TableCell className="font-semibold font-mono">{chalan.invoiceNo}</TableCell>
+                        <TableCell>{chalan.clientName}</TableCell>
+                        <TableCell>{chalan.clientPhone}</TableCell>
+                        <TableCell>{format(new Date(chalan.date), 'dd MMM yyyy')}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                              onClick={() => generateBillPDF(chalan, settings, 'print')}
+                              title="Print Challan"
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setSelectedChalan(chalan)}>
+                                  <Eye className="mr-2 h-4 w-4" /> View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setEditingChalan(chalan);
+                                    setClientName(chalan.clientName);
+                                    setClientPhone(chalan.clientPhone);
+                                    setClientAddress(chalan.clientAddress);
+                                    setBillItems(chalan.items);
+                                    setIsCreateOpen(true);
+                                  }}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" /> Edit Challan
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => generateBillPDF(chalan, settings, 'download')}>
+                                  <Download className="mr-2 h-4 w-4" /> Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => generateBillPDF(chalan, settings, 'print')}>
+                                  <Printer className="mr-2 h-4 w-4" /> Print PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleConvertToBill(chalan)}>
+                                  <ArrowRight className="mr-2 h-4 w-4" /> Convert to Bill
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleDeleteChalan(chalan._id)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card List */}
+              <div className="block md:hidden p-2 space-y-2.5">
+                {paginatedChalans.map((chalan) => (
+                  <MobileDataCard
+                    key={chalan._id}
+                    title={chalan.clientName}
+                    badge={<span className="font-mono text-xs text-primary font-bold">{chalan.invoiceNo}</span>}
+                  >
+                    <MobileDataRow label="Phone" value={chalan.clientPhone} />
+                    <MobileDataRow label="Date" value={format(new Date(chalan.date), 'dd MMM yyyy')} />
+                    <MobileDataRow label="Items Count" value={`${chalan.items?.length || 0} items`} />
+
+                    <div className="flex items-center justify-end gap-1.5 pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs px-2 text-teal-600"
+                        onClick={() => generateBillPDF(chalan, settings, 'print')}
+                      >
+                        <Printer className="h-3 w-3 mr-1" /> Print
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs px-2"
+                        onClick={() => setSelectedChalan(chalan)}
+                      >
+                        <Eye className="h-3 w-3 mr-1" /> View
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs px-2 bg-primary text-primary-foreground font-bold"
+                        onClick={() => handleConvertToBill(chalan)}
+                      >
+                        <ArrowRight className="h-3 w-3 mr-1" /> Bill
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setEditingChalan(chalan);
+                              setClientName(chalan.clientName);
+                              setClientPhone(chalan.clientPhone);
+                              setClientAddress(chalan.clientAddress);
+                              setBillItems(chalan.items);
+                              setIsCreateOpen(true);
+                            }}
+                          >
+                            <Edit className="mr-2 h-4 w-4" /> Edit Challan
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => generateBillPDF(chalan, settings, 'download')}>
+                            <Download className="mr-2 h-4 w-4" /> Download PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => handleDeleteChalan(chalan._id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </MobileDataCard>
+                ))}
+              </div>
+            </>
           )}
           {totalPages > 1 && (
-            <div className="py-4 border-t bg-background px-6 mt-4">
+            <div className="py-3 border-t bg-background px-3">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -542,21 +616,22 @@ function ClientChalansContent() {
           <DialogHeader>
             <DialogTitle>{editingChalan ? 'Edit' : 'Create New'} Delivery Challan</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             {/* Client Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cName">Client Name *</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="cName" className="text-xs">Client Name *</Label>
                 <Input
                   id="cName"
                   placeholder="e.g. Rahim & Bros"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   required
+                  className="h-8 text-xs"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cPhone">Client Phone *</Label>
+              <div className="space-y-1">
+                <Label htmlFor="cPhone" className="text-xs">Client Phone *</Label>
                 <Input
                   id="cPhone"
                   placeholder="e.g. 017XXXXXXXX"
@@ -566,52 +641,56 @@ function ClientChalansContent() {
                     if (e.target.value) validatePhone(e.target.value);
                   }}
                   required
+                  className="h-8 text-xs"
                 />
-                {phoneError && <p className="text-xs text-destructive">{phoneError}</p>}
+                {phoneError && <p className="text-[10px] text-destructive">{phoneError}</p>}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="cAddr">Client Address *</Label>
+              <div className="space-y-1">
+                <Label htmlFor="cAddr" className="text-xs">Client Address *</Label>
                 <Input
                   id="cAddr"
                   placeholder="e.g. Banani, Dhaka"
                   value={clientAddress}
                   onChange={(e) => setClientAddress(e.target.value)}
                   required
+                  className="h-8 text-xs"
                 />
               </div>
             </div>
 
             {/* Product Picker */}
             <div className="flex items-center justify-between">
-              <Label className="text-lg font-semibold">Items List</Label>
+              <Label className="text-sm font-bold">Items List</Label>
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setProductPickerOpen(true)}
+                  className="h-7 text-xs px-2"
                 >
-                  <Plus className="mr-1 h-3.5 w-3.5" /> Select Products
+                  <Plus className="mr-1 h-3 w-3" /> Select Products
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={handleAddItemRow} className="font-bold">
-                  <Plus className="h-3 w-3 mr-1" /> Add Custom Item
+                <Button type="button" variant="outline" size="sm" onClick={handleAddItemRow} className="font-bold h-7 text-xs px-2">
+                  <Plus className="h-3 w-3 mr-1" /> Add Custom
                 </Button>
               </div>
             </div>
 
             {/* Manual item entries */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               {billItems.map((item, index) => (
-                <div key={index} className="flex items-center gap-3">
+                <div key={index} className="flex items-center gap-2">
                   <div className="flex-1">
                     <Input
                       placeholder="Item name / Description"
                       value={item.name}
                       onChange={(e) => handleItemChange(index, 'name', e.target.value)}
                       required
+                      className="h-8 text-xs"
                     />
                   </div>
-                  <div className="w-32">
+                  <div className="w-20">
                     <Input
                       type="number"
                       placeholder="Qty"
@@ -619,6 +698,7 @@ function ClientChalansContent() {
                       value={item.quantity}
                       onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
                       required
+                      className="h-8 text-xs text-center"
                     />
                   </div>
                   <Button
@@ -626,20 +706,20 @@ function ClientChalansContent() {
                     variant="ghost"
                     size="icon"
                     onClick={() => handleRemoveItemRow(index)}
-                    className="text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:bg-destructive/10 h-8 w-8"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               ))}
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={formLoading} className="bg-primary text-primary-foreground">
-                {formLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" size="sm" disabled={formLoading} className="bg-primary text-primary-foreground font-bold">
+                {formLoading && <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />}
                 {editingChalan ? 'Update Challan' : 'Generate Challan'}
               </Button>
             </DialogFooter>
@@ -653,12 +733,12 @@ function ClientChalansContent() {
           <DialogHeader>
             <DialogTitle>Select Products</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-3 text-xs">
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 placeholder="Search products..."
-                className="pl-8"
+                className="pl-8 h-8 text-xs"
                 value={productSearchTerm}
                 onChange={(e) => setProductSearchTerm(e.target.value)}
               />
@@ -667,9 +747,9 @@ function ClientChalansContent() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12">Select</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Options / Variants</TableHead>
+                    <TableHead className="w-10 text-xs">Select</TableHead>
+                    <TableHead className="text-xs">Product</TableHead>
+                    <TableHead className="text-xs">Options / Variants</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -687,10 +767,10 @@ function ClientChalansContent() {
                               />
                             )}
                           </TableCell>
-                          <TableCell className="font-medium">{prod.name}</TableCell>
+                          <TableCell className="font-medium text-xs">{prod.name}</TableCell>
                           <TableCell>
                             {hasVariants ? (
-                              <div className="flex flex-wrap gap-2 py-1">
+                              <div className="flex flex-wrap gap-1.5 py-1">
                                 {prod.variants.map((v: any) => {
                                   const label = [v.color, v.size].filter(Boolean).join(' / ');
                                   const isSelected = selectedProductVariants[prod._id] === v._id;
@@ -701,7 +781,7 @@ function ClientChalansContent() {
                                       variant={isSelected ? 'default' : 'outline'}
                                       size="sm"
                                       onClick={() => toggleProductVariant(prod._id, v._id)}
-                                      className="text-xs py-0.5 px-2 h-7"
+                                      className="text-[10px] py-0.5 px-2 h-6"
                                     >
                                       {label}
                                     </Button>
@@ -709,7 +789,7 @@ function ClientChalansContent() {
                                 })}
                               </div>
                             ) : (
-                              <span className="text-xs text-muted-foreground">Standard Item</span>
+                              <span className="text-[10px] text-muted-foreground">Standard Item</span>
                             )}
                           </TableCell>
                         </TableRow>
@@ -718,11 +798,11 @@ function ClientChalansContent() {
                 </TableBody>
               </Table>
             </div>
-            <div className="flex items-center justify-between border-t pt-4">
-              <span className="text-sm text-muted-foreground">{selectedCount} items selected</span>
+            <div className="flex items-center justify-between border-t pt-3">
+              <span className="text-xs text-muted-foreground">{selectedCount} items selected</span>
               <div className="space-x-2">
                 <Button variant="outline" size="sm" onClick={() => setProductPickerOpen(false)}>Cancel</Button>
-                <Button size="sm" onClick={handleAddSelectedProducts} className="bg-primary text-primary-foreground">Add Selected</Button>
+                <Button size="sm" onClick={handleAddSelectedProducts} className="bg-primary text-primary-foreground font-bold">Add Selected</Button>
               </div>
             </div>
           </div>
@@ -736,18 +816,18 @@ function ClientChalansContent() {
             <DialogTitle>Delivery Challan Details — {selectedChalan?.invoiceNo}</DialogTitle>
           </DialogHeader>
           {selectedChalan && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-4 text-xs mt-2">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-xs">Deliver To</h4>
-                  <p className="font-medium text-base">{selectedChalan.clientName}</p>
-                  <p className="flex items-center gap-1.5 mt-1 text-muted-foreground"><Phone className="h-3.5 w-3.5" /> {selectedChalan.clientPhone}</p>
-                  <p className="flex items-center gap-1.5 mt-1 text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {selectedChalan.clientAddress}</p>
+                  <h4 className="font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-[10px]">Deliver To</h4>
+                  <p className="font-bold text-sm">{selectedChalan.clientName}</p>
+                  <p className="flex items-center gap-1.5 mt-0.5 text-muted-foreground"><Phone className="h-3 w-3" /> {selectedChalan.clientPhone}</p>
+                  <p className="flex items-center gap-1.5 mt-0.5 text-muted-foreground"><MapPin className="h-3 w-3" /> {selectedChalan.clientAddress}</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-xs">Document Info</h4>
-                  <p className="flex items-center gap-1.5 font-medium"><Hash className="h-3.5 w-3.5 text-primary" /> {selectedChalan.invoiceNo}</p>
-                  <p className="flex items-center gap-1.5 mt-1 text-muted-foreground"><CalendarDays className="h-3.5 w-3.5" /> {format(new Date(selectedChalan.date), 'dd MMM yyyy')}</p>
+                  <h4 className="font-semibold text-muted-foreground mb-1 uppercase tracking-wider text-[10px]">Document Info</h4>
+                  <p className="flex items-center gap-1.5 font-bold font-mono"><Hash className="h-3 w-3 text-primary" /> {selectedChalan.invoiceNo}</p>
+                  <p className="flex items-center gap-1.5 mt-0.5 text-muted-foreground"><CalendarDays className="h-3 w-3" /> {format(new Date(selectedChalan.date), 'dd MMM yyyy')}</p>
                 </div>
               </div>
 
@@ -755,37 +835,39 @@ function ClientChalansContent() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted hover:bg-muted">
-                      <TableHead>Description</TableHead>
-                      <TableHead className="text-center w-24">Quantity Delivered</TableHead>
+                      <TableHead className="text-xs">Description</TableHead>
+                      <TableHead className="text-center w-24 text-xs">Quantity Delivered</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {selectedChalan.items.map((item: any, i: number) => (
                       <TableRow key={i}>
-                        <TableCell className="font-medium">{item.name}</TableCell>
-                        <TableCell className="text-center font-medium">{item.quantity}</TableCell>
+                        <TableCell className="font-medium text-xs">{item.name}</TableCell>
+                        <TableCell className="text-center font-medium text-xs">{item.quantity}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
 
-              <DialogFooter className="gap-2">
+              <DialogFooter className="gap-2 pt-2">
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => generateBillPDF(selectedChalan, settings, 'print')}
                 >
-                  <Printer className="mr-2 h-4 w-4" /> Print Challan
+                  <Printer className="mr-1.5 h-3.5 w-3.5" /> Print Challan
                 </Button>
                 <Button
-                  className="bg-primary text-primary-foreground"
+                  size="sm"
+                  className="bg-primary text-primary-foreground font-bold"
                   onClick={() => {
                     const ch = selectedChalan;
                     setSelectedChalan(null);
                     handleConvertToBill(ch);
                   }}
                 >
-                  <ArrowRight className="mr-2 h-4 w-4" /> Convert to Final Bill
+                  <ArrowRight className="mr-1.5 h-3.5 w-3.5" /> Convert to Final Bill
                 </Button>
               </DialogFooter>
             </div>

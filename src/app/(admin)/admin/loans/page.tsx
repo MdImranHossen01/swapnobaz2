@@ -30,6 +30,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
 export default function LoansPage() {
   const [data, setData] = useState<any>(null);
@@ -132,27 +133,27 @@ export default function LoansPage() {
   const summary = data?.summary || { totalPrincipal: 0, totalPaid: 0, totalDue: 0, activeLoansCount: 0 };
 
   return (
-    <div className="flex-1 space-y-6 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-4 md:space-y-6 px-0 py-2 md:p-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Business Loans & Capital</h1>
-          <p className="text-muted-foreground text-xs md:text-sm mt-1">
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight">Business Loans & Capital</h1>
+          <p className="text-muted-foreground text-xs md:text-sm mt-0.5">
             Track business capital loans, loan providers, total borrowed funds and repayments.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Link href="/admin/loans/providers">
-            <Button variant="outline" size="sm" className="gap-1.5 font-semibold">
-              <Building className="h-4 w-4 text-primary" />
-              <span>Loan Providers ({providers.length})</span>
+            <Button variant="outline" size="sm" className="gap-1.5 font-semibold h-9 text-xs">
+              <Building className="h-3.5 w-3.5 text-primary" />
+              <span>Providers ({providers.length})</span>
             </Button>
           </Link>
 
-          <Button size="sm" onClick={() => setNewLoanOpen(true)} className="gap-1.5 font-bold">
-            <Plus className="h-4 w-4" />
-            <span>+ Record New Loan</span>
+          <Button size="sm" onClick={() => setNewLoanOpen(true)} className="gap-1.5 font-bold h-9 text-xs">
+            <Plus className="h-3.5 w-3.5" />
+            <span>+ Record Loan</span>
           </Button>
 
           <Button variant="outline" size="icon" onClick={fetchLoans} disabled={loading} className="h-9 w-9">
@@ -162,45 +163,45 @@ export default function LoansPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-4">
         <Card className="shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
+          <CardContent className="p-3 md:p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Total Borrowed Capital</p>
-              <p className="text-xl md:text-2xl font-bold text-foreground mt-1">
+              <p className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase">Borrowed Capital</p>
+              <p className="text-lg md:text-2xl font-bold text-foreground mt-0.5 md:mt-1">
                 ৳{Math.round(summary.totalPrincipal).toLocaleString()}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600">
-              <HandCoins className="h-5 w-5" />
+            <div className="p-2 md:p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600">
+              <HandCoins className="h-4 w-4 md:h-5 md:w-5" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
+          <CardContent className="p-3 md:p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Total Repaid</p>
-              <p className="text-xl md:text-2xl font-bold text-emerald-600 mt-1">
+              <p className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase">Total Repaid</p>
+              <p className="text-lg md:text-2xl font-bold text-emerald-600 mt-0.5 md:mt-1">
                 ৳{Math.round(summary.totalPaid).toLocaleString()}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600">
-              <CheckCircle2 className="h-5 w-5" />
+            <div className="p-2 md:p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600">
+              <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-rose-500/5 border-rose-500/20 shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
+          <CardContent className="p-3 md:p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-rose-600 uppercase">Outstanding Loan Balance</p>
-              <p className="text-xl md:text-2xl font-black text-rose-700 dark:text-rose-400 mt-1">
+              <p className="text-[10px] md:text-xs font-semibold text-rose-600 uppercase">Outstanding Balance</p>
+              <p className="text-lg md:text-2xl font-black text-rose-700 dark:text-rose-400 mt-0.5 md:mt-1">
                 ৳{Math.round(summary.totalDue).toLocaleString()}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600">
-              <DollarSign className="h-5 w-5" />
+            <div className="p-2 md:p-2.5 rounded-xl bg-rose-500/10 text-rose-600">
+              <DollarSign className="h-4 w-4 md:h-5 md:w-5" />
             </div>
           </CardContent>
         </Card>
@@ -208,14 +209,15 @@ export default function LoansPage() {
 
       {/* Loans Table Card */}
       <Card className="shadow-xs overflow-hidden">
-        <CardHeader className="bg-muted/30 py-3 px-4 border-b flex flex-row items-center justify-between">
+        <CardHeader className="bg-muted/30 py-2.5 px-3 md:py-3 md:px-4 border-b flex flex-row items-center justify-between">
           <CardTitle className="text-sm md:text-base font-bold flex items-center gap-2">
-            <HandCoins className="h-4 w-4 text-primary" /> Active & Completed Business Loans
+            <HandCoins className="h-4 w-4 text-primary" /> Active & Completed Loans
           </CardTitle>
           <Badge variant="outline" className="text-xs font-mono">{loans.length} Loans</Badge>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-xs md:text-sm text-center border-collapse">
               <thead>
                 <tr className="bg-muted/20 border-b text-muted-foreground font-semibold">
@@ -276,6 +278,45 @@ export default function LoansPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card List */}
+          <div className="block md:hidden p-2 space-y-2.5">
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+                <span>Loading loans...</span>
+              </div>
+            ) : loans.length > 0 ? (
+              loans.map((loan: any) => (
+                <MobileDataCard
+                  key={loan._id}
+                  title={loan.lenderName || 'Loan'}
+                  badge={
+                    <Badge variant={loan.status === 'Paid' ? 'secondary' : 'default'} className="text-[10px]">
+                      {loan.status}
+                    </Badge>
+                  }
+                  footer={
+                    <div className="flex items-center justify-between w-full font-bold text-xs">
+                      <span className="text-muted-foreground">Outstanding Due:</span>
+                      <span className="text-rose-600 text-sm font-black">৳{Math.round(loan.dueAmount || 0).toLocaleString()}</span>
+                    </div>
+                  }
+                >
+                  <MobileDataRow label="Loan ID" value={<span className="font-mono text-xs">{loan.loanId}</span>} />
+                  <MobileDataRow label="Disbursement Date" value={new Date(loan.date).toLocaleDateString()} />
+                  <MobileDataRow label="Principal Amount" value={<span className="font-bold">৳{Math.round(loan.amount).toLocaleString()}</span>} />
+                  <MobileDataRow label="Paid So Far" value={<span className="text-emerald-600 font-semibold">৳{Math.round(loan.paidAmount || 0).toLocaleString()}</span>} />
+                  {loan.receivingAccountId?.name && <MobileDataRow label="Account" value={loan.receivingAccountId.name} />}
+                  {loan.expectedRepaymentDate && <MobileDataRow label="Repayment Date" value={new Date(loan.expectedRepaymentDate).toLocaleDateString()} />}
+                </MobileDataCard>
+              ))
+            ) : (
+              <div className="p-6 text-center text-muted-foreground text-xs">
+                No business loans recorded.
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

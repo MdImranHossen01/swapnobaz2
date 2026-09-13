@@ -30,8 +30,6 @@ import {
   CreditCard,
   FileText,
   Package,
-  ChevronDown,
-  X,
   Eye,
   MapPin,
   Phone,
@@ -52,6 +50,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Pagination } from '@/components/ui/pagination';
+import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
 interface BillItemInput {
   name: string;
@@ -126,7 +125,6 @@ function ClientBillsContent() {
 
   // Product multi-select state
   const [productSearchTerm, setProductSearchTerm] = useState('');
-  // Map of productId → variantId (null = base product, string = variant _id)
   const [selectedProductVariants, setSelectedProductVariants] = useState<Record<string, string | null>>({});
   const [productPickerOpen, setProductPickerOpen] = useState(false);
 
@@ -204,7 +202,6 @@ function ClientBillsContent() {
   const toggleProductVariant = (productId: string, variantId: string | null) => {
     setSelectedProductVariants(prev => {
       const current = prev[productId];
-      // Clicking the same selection again → deselect
       if (current === variantId) {
         const next = { ...prev };
         delete next[productId];
@@ -224,10 +221,8 @@ function ClientBillsContent() {
       if (!prod) return;
 
       if (variantId === null) {
-        // Base product (no variant chosen)
         newItems.push({ name: prod.name, price: prod.salePrice || prod.price || 0, quantity: 1 });
       } else {
-        // Specific variant
         const variant = (prod.variants || []).find((v: any) => v._id === variantId);
         if (!variant) return;
         const label = [prod.name, variant.color, variant.size].filter(Boolean).join(' — ');
@@ -330,7 +325,6 @@ function ClientBillsContent() {
         throw new Error(errorData.message || `Failed to ${editingBill ? 'update' : 'create'} bill`);
       }
 
-      const createdBill = await res.json();
       toast.success(editingBill ? 'Bill updated successfully!' : 'Bill generated successfully!');
 
       setIsCreateOpen(false);
@@ -464,87 +458,88 @@ function ClientBillsContent() {
   const accountsReceivable = bills.reduce((sum, b) => sum + (b.currentBillDue || 0), 0);
 
   return (
-    <div className="flex-1 space-y-6 px-0 py-4 md:p-8">
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div className="flex-1 space-y-4 md:space-y-6 px-0 py-2 md:p-8">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Client Billing Manager</h2>
-          <p className="text-muted-foreground text-sm">Create bills, offer discounts, manage collections & track receivables.</p>
+          <h2 className="text-xl md:text-3xl font-bold tracking-tight">Client Billing Manager</h2>
+          <p className="text-muted-foreground text-xs md:text-sm mt-0.5">Create bills, offer discounts, manage collections & track receivables.</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="w-full md:w-auto font-bold bg-primary text-primary-foreground">
-          <Plus className="mr-2 h-4 w-4" /> Create Bill
+        <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto font-bold bg-primary text-primary-foreground h-9 text-xs">
+          <Plus className="mr-1.5 h-4 w-4" /> Create Bill
         </Button>
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-primary/5 border-primary/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Billed</CardTitle>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-4">
+        <Card className="bg-primary/5 border-primary/20 shadow-xs">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-3 md:p-4">
+            <CardTitle className="text-xs font-semibold">Total Billed</CardTitle>
             <FileText className="h-4 w-4 text-primary" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">৳{totalBilled.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Cumulative client invoicing</p>
+          <CardContent className="p-3 md:p-4 pt-0">
+            <div className="text-xl md:text-2xl font-bold">৳{totalBilled.toLocaleString()}</div>
+            <p className="text-[10px] text-muted-foreground">Cumulative client invoicing</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-500/5 border-green-500/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Collected (Cash-in)</CardTitle>
+        <Card className="bg-green-500/5 border-green-500/20 shadow-xs">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-3 md:p-4">
+            <CardTitle className="text-xs font-semibold">Total Collected (Cash-in)</CardTitle>
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">৳{totalCollected.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Payments received</p>
+          <CardContent className="p-3 md:p-4 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-green-700">৳{totalCollected.toLocaleString()}</div>
+            <p className="text-[10px] text-muted-foreground">Payments received</p>
           </CardContent>
         </Card>
-        <Card className="bg-orange-500/5 border-orange-500/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Accounts Receivable</CardTitle>
+        <Card className="bg-orange-500/5 border-orange-500/20 shadow-xs">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-3 md:p-4">
+            <CardTitle className="text-xs font-semibold">Accounts Receivable</CardTitle>
             <Users className="h-4 w-4 text-orange-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-700">৳{accountsReceivable.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Outstanding due balances</p>
+          <CardContent className="p-3 md:p-4 pt-0">
+            <div className="text-xl md:text-2xl font-bold text-orange-700">৳{accountsReceivable.toLocaleString()}</div>
+            <p className="text-[10px] text-muted-foreground">Outstanding due balances</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filter and Search */}
-      <div className="flex flex-col md:flex-row items-center gap-4">
-        <div className="relative w-full md:w-72">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search name, phone or bill no..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-8 w-full"
+            className="pl-8 h-9 text-xs"
           />
         </div>
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-1">
             {['all', 'paid', 'due'].map((filter) => (
               <Button
                 key={filter}
+                size="sm"
                 variant={statusFilter === filter ? 'default' : 'outline'}
                 onClick={() => setStatusFilter(filter)}
-                className="capitalize font-bold"
+                className="capitalize font-bold h-8 text-xs px-2.5"
               >
                 {filter}
               </Button>
             ))}
           </div>
 
-          <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-md border text-sm w-full sm:w-auto">
+          <div className="flex items-center gap-1 bg-muted/50 p-0.5 rounded-md border text-xs">
             <Input
               type="date"
-              className="h-8 w-32 border-none bg-transparent focus-visible:ring-0"
+              className="h-7 w-28 border-none bg-transparent focus-visible:ring-0 text-xs px-1"
               value={dateFilter.from}
               onChange={(e) => setDateFilter(prev => ({ ...prev, from: e.target.value }))}
             />
-            <span className="text-muted-foreground text-xs">to</span>
+            <span className="text-muted-foreground text-[10px]">to</span>
             <Input
               type="date"
-              className="h-8 w-32 border-none bg-transparent focus-visible:ring-0"
+              className="h-7 w-28 border-none bg-transparent focus-visible:ring-0 text-xs px-1"
               value={dateFilter.to}
               onChange={(e) => setDateFilter(prev => ({ ...prev, to: e.target.value }))}
             />
@@ -555,160 +550,268 @@ function ClientBillsContent() {
               variant="ghost"
               size="sm"
               onClick={() => setDateFilter({ from: '', to: '' })}
-              className="text-xs text-muted-foreground hover:text-primary"
+              className="text-xs text-muted-foreground hover:text-primary h-7 px-2"
             >
-              Clear Date
+              Clear
             </Button>
           )}
         </div>
       </div>
 
-      {/* Bill List Table */}
-      <div className="rounded-md border bg-background overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Bill No</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Client Details</TableHead>
-              <TableHead className="text-right">Grand Total</TableHead>
-              <TableHead className="text-right">Paid (Cash-in)</TableHead>
-              <TableHead className="text-right">Due</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-center">Expected Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      {/* Bill List Table Card */}
+      <Card className="shadow-xs overflow-hidden">
+        <CardContent className="p-0">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bill No</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Client Details</TableHead>
+                  <TableHead className="text-right">Grand Total</TableHead>
+                  <TableHead className="text-right">Paid (Cash-in)</TableHead>
+                  <TableHead className="text-right">Due</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="text-center">Expected Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredBills.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      No bills found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedBills.map((bill) => (
+                    <TableRow key={bill._id}>
+                      <TableCell>
+                        <button
+                          onClick={() => setSelectedBill(bill)}
+                          className="font-bold text-primary hover:underline underline-offset-2 flex items-center gap-1 font-mono text-xs"
+                          title="View Bill Details"
+                        >
+                          <Hash className="h-3 w-3" />
+                          {bill.invoiceNo}
+                        </button>
+                      </TableCell>
+                      <TableCell>{format(new Date(bill.date), 'dd MMM yyyy')}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{bill.clientName}</div>
+                        <div className="text-xs text-muted-foreground">{bill.clientPhone}</div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">৳{bill.gTotal}</TableCell>
+                      <TableCell className="text-right text-green-600">৳{bill.cashIn}</TableCell>
+                      <TableCell className="text-right text-orange-600 font-semibold">৳{bill.currentBillDue}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={bill.status === 'Paid' ? 'default' : 'destructive'} className={bill.status === 'Paid' ? 'bg-green-600 text-white border-none' : ''}>
+                          {bill.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center text-xs text-muted-foreground">
+                        {bill.expectedReceivableDate ? format(new Date(bill.expectedReceivableDate), 'dd MMM yyyy') : '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                            onClick={() => generateBillPDF(bill, settings, 'print')}
+                            title="Print Bill"
+                          >
+                            <Printer className="h-4 w-4" />
+                          </Button>
+                          {bill.status === 'Due' && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                              onClick={() => handleUpdateStatus(bill._id, bill.currentBillDue)}
+                              title="Collect Cash"
+                            >
+                              <CreditCard className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSelectedBill(bill)}>
+                                <Eye className="mr-2 h-4 w-4" /> View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingBill(bill);
+                                  setClientName(bill.clientName);
+                                  setClientPhone(bill.clientPhone);
+                                  setClientAddress(bill.clientAddress);
+                                  setBillItems(bill.items);
+                                  setDeliveryCharge(bill.deliveryCharge);
+                                  setServiceFee(bill.serviceFee || 0);
+                                  setDiscountType(bill.discountType || 'fixed');
+                                  setDiscountValue(bill.discountValue || 0);
+                                  setPrevDue(bill.prevDue || 0);
+                                  setCashIn(bill.cashIn || 0);
+                                  setExpectedReceivableDate(bill.expectedReceivableDate ? format(new Date(bill.expectedReceivableDate), 'yyyy-MM-dd') : '');
+                                  setIsCreateOpen(true);
+                                }}
+                              >
+                                <Edit className="mr-2 h-4 w-4" /> Edit Bill
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => generateBillPDF(bill, settings, 'download')}>
+                                <Download className="mr-2 h-4 w-4 text-blue-600" /> Download PDF
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => generateBillPDF(bill, settings, 'print')}>
+                                <Printer className="mr-2 h-4 w-4 text-teal-600" /> Print Bill
+                              </DropdownMenuItem>
+                              {bill.status === 'Due' && (
+                                <DropdownMenuItem onClick={() => handleUpdateStatus(bill._id, bill.currentBillDue)}>
+                                  <CreditCard className="mr-2 h-4 w-4 text-green-600" /> Collect Cash
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => handleDeleteBill(bill._id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Card List View */}
+          <div className="block md:hidden p-2 space-y-2.5">
             {loading ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                </TableCell>
-              </TableRow>
+              <div className="p-8 text-center text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+                <span>Loading bills...</span>
+              </div>
             ) : filteredBills.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                  No bills found.
-                </TableCell>
-              </TableRow>
+              <div className="p-6 text-center text-muted-foreground text-xs">
+                No bills found.
+              </div>
             ) : (
               paginatedBills.map((bill) => (
-                <TableRow key={bill._id}>
-                  <TableCell>
-                    <button
-                      onClick={() => setSelectedBill(bill)}
-                      className="font-bold text-primary hover:underline underline-offset-2 flex items-center gap-1 group transition-colors"
-                      title="View Bill Details"
-                    >
-                      <Hash className="h-3 w-3" />
-                      {bill.invoiceNo}
-                      <Eye className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  </TableCell>
-                  <TableCell>{format(new Date(bill.date), 'dd MMM yyyy')}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{bill.clientName}</div>
-                    <div className="text-xs text-muted-foreground">{bill.clientPhone}</div>
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">৳{bill.gTotal}</TableCell>
-                  <TableCell className="text-right text-green-600">৳{bill.cashIn}</TableCell>
-                  <TableCell className="text-right text-orange-600 font-semibold">৳{bill.currentBillDue}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant={bill.status === 'Paid' ? 'default' : 'destructive'} className={bill.status === 'Paid' ? 'bg-green-600 text-white border-none' : ''}>
+                <MobileDataCard
+                  key={bill._id}
+                  title={bill.clientName}
+                  badge={
+                    <Badge variant={bill.status === 'Paid' ? 'default' : 'destructive'} className={`text-[10px] ${bill.status === 'Paid' ? 'bg-green-600 text-white border-none' : ''}`}>
                       {bill.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell className="text-center text-xs text-muted-foreground">
-                    {bill.expectedReceivableDate ? format(new Date(bill.expectedReceivableDate), 'dd MMM yyyy') : '—'}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
-                        onClick={() => generateBillPDF(bill, settings, 'print')}
-                        title="Print Bill"
-                      >
-                        <Printer className="h-4 w-4" />
-                      </Button>
-                      {bill.status === 'Due' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                          onClick={() => handleUpdateStatus(bill._id, bill.currentBillDue)}
-                          title="Collect Cash"
-                        >
-                          <CreditCard className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelectedBill(bill)}>
-                            <Eye className="mr-2 h-4 w-4" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setEditingBill(bill);
-                              setClientName(bill.clientName);
-                              setClientPhone(bill.clientPhone);
-                              setClientAddress(bill.clientAddress);
-                              setBillItems(bill.items);
-                              setDeliveryCharge(bill.deliveryCharge);
-                              setServiceFee(bill.serviceFee || 0);
-                              setDiscountType(bill.discountType || 'fixed');
-                              setDiscountValue(bill.discountValue || 0);
-                              setPrevDue(bill.prevDue || 0);
-                              setCashIn(bill.cashIn || 0);
-                              setExpectedReceivableDate(bill.expectedReceivableDate ? format(new Date(bill.expectedReceivableDate), 'yyyy-MM-dd') : '');
-                              setIsCreateOpen(true);
-                            }}
-                          >
-                            <Edit className="mr-2 h-4 w-4" /> Edit Bill
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateBillPDF(bill, settings, 'download')}>
-                            <Download className="mr-2 h-4 w-4 text-blue-600" /> Download PDF
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateBillPDF(bill, settings, 'print')}>
-                            <Printer className="mr-2 h-4 w-4 text-teal-600" /> Print Bill
-                          </DropdownMenuItem>
-                          {bill.status === 'Due' && (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(bill._id, bill.currentBillDue)}>
-                              <CreditCard className="mr-2 h-4 w-4 text-green-600" /> Collect Cash
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => handleDeleteBill(bill._id)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                  }
+                  footer={
+                    <div className="flex items-center justify-between w-full font-bold text-xs">
+                      <span className="text-muted-foreground">Remaining Due:</span>
+                      <span className="text-orange-600 text-sm font-black">৳{bill.currentBillDue.toLocaleString()}</span>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  }
+                >
+                  <MobileDataRow label="Invoice No" value={<span className="font-mono text-xs text-primary font-bold">{bill.invoiceNo}</span>} />
+                  <MobileDataRow label="Phone" value={bill.clientPhone} />
+                  <MobileDataRow label="Date" value={format(new Date(bill.date), 'dd MMM yyyy')} />
+                  <MobileDataRow label="Grand Total" value={<span className="font-bold">৳{bill.gTotal.toLocaleString()}</span>} />
+                  <MobileDataRow label="Paid (Cash-in)" value={<span className="text-green-600 font-semibold">৳{bill.cashIn.toLocaleString()}</span>} />
+
+                  <div className="flex items-center justify-end gap-1.5 pt-2 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2 text-teal-600"
+                      onClick={() => generateBillPDF(bill, settings, 'print')}
+                    >
+                      <Printer className="h-3 w-3 mr-1" /> Print
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs px-2"
+                      onClick={() => setSelectedBill(bill)}
+                    >
+                      <Eye className="h-3 w-3 mr-1" /> View
+                    </Button>
+                    {bill.status === 'Due' && (
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs px-2 bg-green-600 hover:bg-green-700 text-white font-bold"
+                        onClick={() => handleUpdateStatus(bill._id, bill.currentBillDue)}
+                      >
+                        <CreditCard className="h-3 w-3 mr-1" /> Pay
+                      </Button>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditingBill(bill);
+                            setClientName(bill.clientName);
+                            setClientPhone(bill.clientPhone);
+                            setClientAddress(bill.clientAddress);
+                            setBillItems(bill.items);
+                            setDeliveryCharge(bill.deliveryCharge);
+                            setServiceFee(bill.serviceFee || 0);
+                            setDiscountType(bill.discountType || 'fixed');
+                            setDiscountValue(bill.discountValue || 0);
+                            setPrevDue(bill.prevDue || 0);
+                            setCashIn(bill.cashIn || 0);
+                            setExpectedReceivableDate(bill.expectedReceivableDate ? format(new Date(bill.expectedReceivableDate), 'yyyy-MM-dd') : '');
+                            setIsCreateOpen(true);
+                          }}
+                        >
+                          <Edit className="mr-2 h-4 w-4" /> Edit Bill
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => generateBillPDF(bill, settings, 'download')}>
+                          <Download className="mr-2 h-4 w-4 text-blue-600" /> Download PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => handleDeleteBill(bill._id)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </MobileDataCard>
               ))
             )}
-          </TableBody>
-        </Table>
-        {totalPages > 1 && (
-          <div className="py-4 border-t bg-background px-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={(page) => setCurrentPage(page)}
-            />
           </div>
-        )}
-      </div>
+
+          {totalPages > 1 && (
+            <div className="py-3 border-t bg-background px-3">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Create Bill Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -716,22 +819,22 @@ function ClientBillsContent() {
           <DialogHeader>
             <DialogTitle>{editingBill ? 'Edit' : 'Generate'} Client Bill</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             {/* Client Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div className="space-y-2">
-                <Label htmlFor="clientName" className="text-sm font-semibold">Client Name *</Label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="clientName" className="text-xs">Client Name *</Label>
                 <Input
                   id="clientName"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="e.g. Rahim Khan"
-                  className="h-11 text-base"
+                  className="h-8 text-xs"
                   required
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="clientPhone" className="text-sm font-semibold">Client Phone *</Label>
+              <div className="space-y-1">
+                <Label htmlFor="clientPhone" className="text-xs">Client Phone *</Label>
                 <Input
                   id="clientPhone"
                   value={clientPhone}
@@ -741,51 +844,51 @@ function ClientBillsContent() {
                   }}
                   onBlur={(e) => validatePhone(e.target.value)}
                   placeholder="e.g. 01712345678"
-                  className={`h-11 text-base ${phoneError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  className={`h-8 text-xs ${phoneError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                   required
                 />
-                {phoneError && <p className="text-xs text-destructive mt-1">{phoneError}</p>}
+                {phoneError && <p className="text-[10px] text-destructive">{phoneError}</p>}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="clientAddress" className="text-sm font-semibold">Client Address *</Label>
+              <div className="space-y-1">
+                <Label htmlFor="clientAddress" className="text-xs">Client Address *</Label>
                 <Input
                   id="clientAddress"
                   value={clientAddress}
                   onChange={(e) => setClientAddress(e.target.value)}
                   placeholder="e.g. Nawabpur, Dhaka"
-                  className="h-11 text-base"
+                  className="h-8 text-xs"
                   required
                 />
               </div>
             </div>
 
-            {/* Bill Items header with Product Selection Button */}
-            <div className="space-y-4">
+            {/* Bill Items header */}
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <h4 className="font-bold text-sm">Bill Items</h4>
+                <h4 className="font-bold text-xs">Bill Items</h4>
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setProductPickerOpen(true)}
-                    className="font-bold"
+                    className="font-bold h-7 text-xs px-2"
                   >
-                    <Plus className="mr-1 h-3.5 w-3.5" /> Select Products
+                    <Plus className="mr-1 h-3 w-3" /> Select Products
                   </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={handleAddItemRow} className="font-bold">
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddItemRow} className="font-bold h-7 text-xs px-2">
                     <Plus className="h-3 w-3 mr-1" /> Add Custom Item
                   </Button>
                 </div>
               </div>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+              <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
                 {billItems.map((item, index) => (
-                  <div key={index} className="flex gap-2 items-center">
+                  <div key={index} className="flex gap-1.5 items-center">
                     <Input
                       placeholder="Item Description"
                       value={item.name}
                       onChange={(e) => handleItemChange(index, 'name', e.target.value)}
-                      className="flex-1"
+                      className="flex-1 h-8 text-xs"
                       required
                     />
                     <Input
@@ -793,7 +896,7 @@ function ClientBillsContent() {
                       placeholder="Qty"
                       value={item.quantity}
                       onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
-                      className="w-20"
+                      className="w-16 h-8 text-xs text-center"
                       min="1"
                       required
                     />
@@ -802,7 +905,7 @@ function ClientBillsContent() {
                       placeholder="Rate"
                       value={item.price || ''}
                       onChange={(e) => handleItemChange(index, 'price', e.target.value)}
-                      className="w-28"
+                      className="w-24 h-8 text-xs text-right"
                       min="0"
                       required
                     />
@@ -811,9 +914,9 @@ function ClientBillsContent() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemoveItemRow(index)}
-                      className="text-destructive hover:bg-destructive/10 shrink-0 h-10 w-10"
+                      className="text-destructive hover:bg-destructive/10 shrink-0 h-8 w-8"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 ))}
@@ -821,77 +924,82 @@ function ClientBillsContent() {
             </div>
 
             {/* Totals & Adjustments */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="deliveryCharge">Delivery Charge (৳)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t">
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="deliveryCharge" className="text-xs">Delivery Charge (৳)</Label>
                     <Input
                       id="deliveryCharge"
                       type="number"
                       value={deliveryCharge || ''}
                       onChange={(e) => setDeliveryCharge(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="h-8 text-xs"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="prevDue">Previous Due (৳)</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="prevDue" className="text-xs">Previous Due (৳)</Label>
                     <Input
                       id="prevDue"
                       type="number"
                       value={prevDue || ''}
                       onChange={(e) => setPrevDue(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="h-8 text-xs"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="serviceFee">Service Fee (৳) <span className="text-muted-foreground font-normal text-xs">— Optional</span></Label>
+                <div className="space-y-1">
+                  <Label htmlFor="serviceFee" className="text-xs">Service Fee (৳) <span className="text-muted-foreground font-normal text-[10px]">— Optional</span></Label>
                   <Input
                     id="serviceFee"
                     type="number"
                     value={serviceFee || ''}
                     placeholder="0"
                     onChange={(e) => setServiceFee(Math.max(0, parseFloat(e.target.value) || 0))}
+                    className="h-8 text-xs"
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 items-end">
-                  <div className="space-y-2 col-span-1">
-                    <Label>Discount Type</Label>
+                  <div className="space-y-1 col-span-1">
+                    <Label className="text-xs">Discount Type</Label>
                     <Select value={discountType} onValueChange={(val: any) => { setDiscountType(val); setDiscountValue(0); }}>
-                      <SelectTrigger>
+                      <SelectTrigger className="h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="fixed">Fixed (৳)</SelectItem>
-                        <SelectItem value="percentage">Percent (%)</SelectItem>
+                        <SelectItem value="fixed" className="text-xs">Fixed (৳)</SelectItem>
+                        <SelectItem value="percentage" className="text-xs">Percent (%)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2 col-span-2">
-                    <Label>Discount Value</Label>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Discount Value</Label>
                     <Input
                       type="number"
                       value={discountValue || ''}
                       onChange={(e) => setDiscountValue(Math.max(0, parseFloat(e.target.value) || 0))}
                       placeholder={discountType === 'percentage' ? '%' : '৳'}
+                      className="h-8 text-xs text-right"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cashIn">Cash-in (Paid) (৳)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="cashIn" className="text-xs">Cash-in (Paid) (৳)</Label>
                     <Input
                       id="cashIn"
                       type="number"
                       value={cashIn || ''}
                       onChange={(e) => setCashIn(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="h-8 text-xs font-semibold text-emerald-600"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <div className="pt-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Status</Label>
+                    <div className="pt-1">
                       <Badge variant={calculatedStatus === 'Paid' ? 'default' : 'destructive'} className={calculatedStatus === 'Paid' ? 'bg-green-600 text-white border-none' : ''}>
                         {calculatedStatus}
                       </Badge>
@@ -900,22 +1008,23 @@ function ClientBillsContent() {
                 </div>
 
                 {calculatedStatus === 'Due' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="expectedReceivableDate">Expected Date of Receivable *</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="expectedReceivableDate" className="text-xs">Expected Receivable Date *</Label>
                     <Input
                       id="expectedReceivableDate"
                       type="date"
                       value={expectedReceivableDate}
                       onChange={(e) => setExpectedReceivableDate(e.target.value)}
                       required
+                      className="h-8 text-xs"
                     />
                   </div>
                 )}
               </div>
 
               {/* Summary calculations view */}
-              <div className="bg-muted/40 p-4 rounded-lg space-y-3 border h-fit text-sm">
-                <h4 className="font-bold border-b pb-2 mb-2 text-base">Bill Summary</h4>
+              <div className="bg-muted/40 p-3 rounded-lg space-y-2 border h-fit text-xs">
+                <h4 className="font-bold border-b pb-1 mb-1 text-sm">Bill Summary</h4>
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
                   <span className="font-semibold">৳{subtotal.toLocaleString()}</span>
@@ -938,7 +1047,7 @@ function ClientBillsContent() {
                     <span>- ৳{discount.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between border-t pt-2 font-bold text-base">
+                <div className="flex justify-between border-t pt-1 font-bold">
                   <span>Total Bill:</span>
                   <span>৳{total.toLocaleString()}</span>
                 </div>
@@ -948,25 +1057,25 @@ function ClientBillsContent() {
                     <span>+ ৳{prevDue.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between border-t pt-2 font-bold text-lg text-primary">
+                <div className="flex justify-between border-t pt-1 font-bold text-sm text-primary">
                   <span>Grand Total:</span>
                   <span>৳{gTotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-green-700 border-t pt-2">
+                <div className="flex justify-between text-green-700 border-t pt-1">
                   <span>Cash-in:</span>
                   <span>৳{cashIn.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between border-t pt-2 font-bold text-base text-destructive">
+                <div className="flex justify-between border-t pt-1 font-bold text-sm text-destructive">
                   <span>Remaining Due:</span>
                   <span>৳{currentBillDue.toLocaleString()}</span>
                 </div>
               </div>
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={formLoading} className="font-bold">
-                {formLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (editingBill ? 'Update Bill' : 'Generate Bill')}
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+              <Button type="submit" size="sm" disabled={formLoading} className="font-bold">
+                {formLoading ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : (editingBill ? 'Update Bill' : 'Generate Bill')}
               </Button>
             </DialogFooter>
           </form>
@@ -979,12 +1088,12 @@ function ClientBillsContent() {
           <DialogHeader>
             <DialogTitle>Select Products</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-3 text-xs">
             <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 placeholder="Search products..."
-                className="pl-8"
+                className="pl-8 h-8 text-xs"
                 value={productSearchTerm}
                 onChange={(e) => setProductSearchTerm(e.target.value)}
               />
@@ -993,10 +1102,10 @@ function ClientBillsContent() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12">Select</TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Options / Variants</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="w-10 text-xs">Select</TableHead>
+                    <TableHead className="text-xs">Product</TableHead>
+                    <TableHead className="text-xs">Options / Variants</TableHead>
+                    <TableHead className="text-right text-xs">Price</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1014,10 +1123,10 @@ function ClientBillsContent() {
                               />
                             )}
                           </TableCell>
-                          <TableCell className="font-medium">{prod.name}</TableCell>
+                          <TableCell className="font-medium text-xs">{prod.name}</TableCell>
                           <TableCell>
                             {hasVariants ? (
-                              <div className="flex flex-wrap gap-2 py-1">
+                              <div className="flex flex-wrap gap-1.5 py-1">
                                 {prod.variants.map((v: any) => {
                                   const label = [v.color, v.size].filter(Boolean).join(' / ');
                                   const isSelected = selectedProductVariants[prod._id] === v._id;
@@ -1028,7 +1137,7 @@ function ClientBillsContent() {
                                       variant={isSelected ? 'default' : 'outline'}
                                       size="sm"
                                       onClick={() => toggleProductVariant(prod._id, v._id)}
-                                      className="text-xs py-0.5 px-2 h-7"
+                                      className="text-[10px] py-0.5 px-2 h-6"
                                     >
                                       {label} (৳{v.salePrice || v.price})
                                     </Button>
@@ -1036,10 +1145,10 @@ function ClientBillsContent() {
                                 })}
                               </div>
                             ) : (
-                              <span className="text-xs text-muted-foreground">Standard Item</span>
+                              <span className="text-[10px] text-muted-foreground">Standard Item</span>
                             )}
                           </TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right text-xs font-semibold">
                             {!hasVariants && `৳${prod.salePrice || prod.price}`}
                           </TableCell>
                         </TableRow>
@@ -1048,11 +1157,11 @@ function ClientBillsContent() {
                 </TableBody>
               </Table>
             </div>
-            <div className="flex items-center justify-between border-t pt-4">
-              <span className="text-sm text-muted-foreground">{selectedCount} items selected</span>
+            <div className="flex items-center justify-between border-t pt-3">
+              <span className="text-xs text-muted-foreground">{selectedCount} items selected</span>
               <div className="space-x-2">
                 <Button variant="outline" size="sm" onClick={() => setProductPickerOpen(false)}>Cancel</Button>
-                <Button size="sm" onClick={handleAddSelectedProducts} className="bg-primary text-primary-foreground">Add Selected</Button>
+                <Button size="sm" onClick={handleAddSelectedProducts} className="bg-primary text-primary-foreground font-bold">Add Selected</Button>
               </div>
             </div>
           </div>
@@ -1065,50 +1174,50 @@ function ClientBillsContent() {
           {selectedBill && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2 text-xl">
+                <DialogTitle className="flex items-center gap-2 text-lg">
                   <FileText className="h-5 w-5 text-primary" />
                   Bill Invoice
-                  <span className="text-primary font-black">#{selectedBill.invoiceNo}</span>
+                  <span className="text-primary font-black font-mono">#{selectedBill.invoiceNo}</span>
                   <Badge
                     variant={selectedBill.status === 'Paid' ? 'default' : 'destructive'}
-                    className={`ml-auto text-xs ${selectedBill.status === 'Paid' ? 'bg-green-600 text-white border-none' : ''}`}
+                    className={`ml-auto text-[10px] ${selectedBill.status === 'Paid' ? 'bg-green-600 text-white border-none' : ''}`}
                   >
                     {selectedBill.status}
                   </Badge>
                 </DialogTitle>
               </DialogHeader>
 
-              <div className="space-y-5 pt-2">
+              <div className="space-y-4 pt-2 text-xs">
                 {/* Client + Bill Meta */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-muted/40 rounded-lg p-4 space-y-2.5 border">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Client Details</p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-primary shrink-0" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="bg-muted/40 rounded-lg p-3 space-y-1.5 border">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Client Details</p>
+                    <div className="flex items-center gap-2">
+                      <User className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span className="font-semibold">{selectedBill.clientName}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-primary shrink-0" />
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span>{selectedBill.clientPhone}</span>
                     </div>
-                    <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                       <span className="text-muted-foreground">{selectedBill.clientAddress}</span>
                     </div>
                   </div>
-                  <div className="bg-muted/40 rounded-lg p-4 space-y-2.5 border">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Bill Info</p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Hash className="h-4 w-4 text-primary shrink-0" />
+                  <div className="bg-muted/40 rounded-lg p-3 space-y-1.5 border">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Bill Info</p>
+                    <div className="flex items-center gap-2">
+                      <Hash className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span className="font-mono font-bold">{selectedBill.invoiceNo}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <CalendarDays className="h-4 w-4 text-primary shrink-0" />
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-3.5 w-3.5 text-primary shrink-0" />
                       <span>{format(new Date(selectedBill.date), 'dd MMM yyyy, hh:mm a')}</span>
                     </div>
                     {selectedBill.expectedReceivableDate && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CalendarDays className="h-4 w-4 text-orange-500 shrink-0" />
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-3.5 w-3.5 text-orange-500 shrink-0" />
                         <span className="text-orange-600">Due by: {format(new Date(selectedBill.expectedReceivableDate), 'dd MMM yyyy')}</span>
                       </div>
                     )}
@@ -1117,28 +1226,28 @@ function ClientBillsContent() {
 
                 {/* Product / Order Items Table */}
                 <div className="border rounded-lg overflow-hidden">
-                  <div className="bg-primary px-4 py-2.5 flex items-center gap-2">
-                    <Package className="h-4 w-4 text-primary-foreground" />
-                    <span className="text-sm font-bold text-primary-foreground">Order Items</span>
+                  <div className="bg-primary px-3 py-2 flex items-center gap-2">
+                    <Package className="h-3.5 w-3.5 text-primary-foreground" />
+                    <span className="text-xs font-bold text-primary-foreground">Order Items</span>
                   </div>
-                  <table className="w-full text-sm">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr className="bg-muted/60 border-b">
-                        <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">#</th>
-                        <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground">Product / Description</th>
-                        <th className="text-center px-4 py-2.5 font-semibold text-muted-foreground">Qty</th>
-                        <th className="text-right px-4 py-2.5 font-semibold text-muted-foreground">Rate (৳)</th>
-                        <th className="text-right px-4 py-2.5 font-semibold text-muted-foreground">Amount (৳)</th>
+                        <th className="text-left px-3 py-1.5 font-semibold text-muted-foreground">#</th>
+                        <th className="text-left px-3 py-1.5 font-semibold text-muted-foreground">Product</th>
+                        <th className="text-center px-3 py-1.5 font-semibold text-muted-foreground">Qty</th>
+                        <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground">Rate (৳)</th>
+                        <th className="text-right px-3 py-1.5 font-semibold text-muted-foreground">Amount (৳)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
                       {(selectedBill.items || []).map((item: any, idx: number) => (
                         <tr key={idx} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
-                          <td className="px-4 py-2.5 text-muted-foreground">{idx + 1}</td>
-                          <td className="px-4 py-2.5 font-medium">{item.name}</td>
-                          <td className="px-4 py-2.5 text-center">{item.quantity}</td>
-                          <td className="px-4 py-2.5 text-right">{Math.round(item.price).toLocaleString()}</td>
-                          <td className="px-4 py-2.5 text-right font-semibold">{Math.round(item.price * item.quantity).toLocaleString()}</td>
+                          <td className="px-3 py-1.5 text-muted-foreground">{idx + 1}</td>
+                          <td className="px-3 py-1.5 font-medium">{item.name}</td>
+                          <td className="px-3 py-1.5 text-center">{item.quantity}</td>
+                          <td className="px-3 py-1.5 text-right">{Math.round(item.price).toLocaleString()}</td>
+                          <td className="px-3 py-1.5 text-right font-semibold">{Math.round(item.price * item.quantity).toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1146,8 +1255,8 @@ function ClientBillsContent() {
                 </div>
 
                 {/* Financial Summary */}
-                <div className="bg-muted/30 border rounded-lg p-4 space-y-2 text-sm">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Financial Summary</p>
+                <div className="bg-muted/30 border rounded-lg p-3 space-y-1.5 text-xs">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-1.5">Financial Summary</p>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>৳{Math.round(selectedBill.subtotal || 0).toLocaleString()}</span>
@@ -1175,7 +1284,7 @@ function ClientBillsContent() {
                       <span>- ৳{Math.round(selectedBill.discount).toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between border-t pt-2">
+                  <div className="flex justify-between border-t pt-1">
                     <span className="font-semibold">Total Bill</span>
                     <span className="font-semibold">৳{Math.round(selectedBill.total || 0).toLocaleString()}</span>
                   </div>
@@ -1185,15 +1294,15 @@ function ClientBillsContent() {
                       <span>+ ৳{Math.round(selectedBill.prevDue).toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between border-t pt-2">
-                    <span className="font-bold text-base">Grand Total</span>
-                    <span className="font-bold text-base text-primary">৳{Math.round(selectedBill.gTotal || 0).toLocaleString()}</span>
+                  <div className="flex justify-between border-t pt-1">
+                    <span className="font-bold text-sm">Grand Total</span>
+                    <span className="font-bold text-sm text-primary">৳{Math.round(selectedBill.gTotal || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-green-700">
                     <span>Cash Received</span>
                     <span className="font-semibold">৳{Math.round(selectedBill.cashIn || 0).toLocaleString()}</span>
                   </div>
-                  <div className={`flex justify-between border-t pt-2 font-bold text-base ${
+                  <div className={`flex justify-between border-t pt-1 font-bold text-sm ${
                     selectedBill.currentBillDue > 0 ? 'text-destructive' : 'text-green-600'
                   }`}>
                     <span>Remaining Due</span>
@@ -1204,17 +1313,17 @@ function ClientBillsContent() {
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-1">
                   <Button
-                    className="flex-1 font-bold"
+                    className="flex-1 font-bold h-8 text-xs"
                     onClick={() => generateBillPDF(selectedBill, settings, 'download')}
                   >
-                    <Download className="h-4 w-4 mr-2" /> Download PDF
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> Download PDF
                   </Button>
                   <Button
                     variant="outline"
-                    className="flex-1 font-bold"
+                    className="flex-1 font-bold h-8 text-xs"
                     onClick={() => generateBillPDF(selectedBill, settings, 'print')}
                   >
-                    <Printer className="h-4 w-4 mr-2" /> Print
+                    <Printer className="h-3.5 w-3.5 mr-1.5" /> Print
                   </Button>
                 </div>
               </div>

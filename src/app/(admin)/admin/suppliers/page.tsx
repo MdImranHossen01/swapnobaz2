@@ -252,84 +252,136 @@ function SuppliersContent() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Suppliers / Vendors</h1>
-          <p className="text-muted-foreground text-sm">Manage product suppliers and outstanding payable balances.</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Suppliers / Vendors</h1>
+          <p className="text-xs md:text-sm text-muted-foreground">Manage product suppliers and outstanding payable balances.</p>
         </div>
-        <Button onClick={openAddDialog}>
-          <Plus className="mr-2 h-4 w-4" /> Add Supplier
+        <Button onClick={openAddDialog} size="sm" className="h-9 self-start sm:self-auto">
+          <Plus className="mr-1.5 h-4 w-4" /> Add Supplier
         </Button>
       </div>
 
-      <div className="flex items-center gap-2 max-w-sm">
+      <div className="flex items-center gap-2 max-w-sm px-1 md:px-0">
         <Search className="h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search by name, company or phone..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full"
+          className="w-full h-9 text-xs md:text-sm"
         />
       </div>
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name / Company</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead className="text-right">Outstanding Payable</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                    Loading suppliers...
-                  </TableCell>
+                  <TableHead>Name / Company</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead className="text-right">Outstanding Payable</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : filteredSuppliers.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                    No suppliers found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedSuppliers.map((supplier) => (
-                  <TableRow key={supplier._id}>
-                    <TableCell>
-                      <div className="font-medium text-foreground">{supplier.name}</div>
-                      {supplier.companyName && (
-                        <div className="text-xs text-muted-foreground">{supplier.companyName}</div>
-                      )}
-                    </TableCell>
-                    <TableCell>{supplier.phone}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{supplier.address}</TableCell>
-                    <TableCell className="text-right font-semibold text-rose-600">
-                      ৳{supplier.currentBalance.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button variant="ghost" size="icon" onClick={() => viewSupplierDetails(supplier)}>
-                        <Eye className="h-4 w-4 text-sky-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(supplier)}>
-                        <Edit className="h-4 w-4 text-indigo-600" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(supplier._id)}>
-                        <Trash2 className="h-4 w-4 text-rose-600" />
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                      Loading suppliers...
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : filteredSuppliers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                      No suppliers found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedSuppliers.map((supplier) => (
+                    <TableRow key={supplier._id}>
+                      <TableCell>
+                        <div className="font-medium text-foreground">{supplier.name}</div>
+                        {supplier.companyName && (
+                          <div className="text-xs text-muted-foreground">{supplier.companyName}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>{supplier.phone}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{supplier.address}</TableCell>
+                      <TableCell className="text-right font-semibold text-rose-600">
+                        ৳{supplier.currentBalance.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button variant="ghost" size="icon" onClick={() => viewSupplierDetails(supplier)}>
+                          <Eye className="h-4 w-4 text-sky-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(supplier)}>
+                          <Edit className="h-4 w-4 text-indigo-600" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(supplier._id)}>
+                          <Trash2 className="h-4 w-4 text-rose-600" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="block md:hidden p-2 space-y-2.5">
+            {loading ? (
+              <div className="text-center py-10 text-muted-foreground text-sm">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+                Loading suppliers...
+              </div>
+            ) : filteredSuppliers.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground text-sm">
+                No suppliers found.
+              </div>
+            ) : (
+              paginatedSuppliers.map((supplier) => (
+                <div key={supplier._id} className="p-3 bg-card border rounded-lg shadow-sm space-y-2">
+                  <div className="flex items-start justify-between gap-2 border-b pb-2">
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground">{supplier.name}</h4>
+                      {supplier.companyName && (
+                        <p className="text-[11px] text-muted-foreground">{supplier.companyName}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-muted-foreground block">Payable</span>
+                      <span className="font-bold text-xs text-rose-600">৳{supplier.currentBalance.toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-xs space-y-1 text-muted-foreground">
+                    <div>📞 <span className="text-foreground">{supplier.phone}</span></div>
+                    {supplier.address && <div className="truncate">📍 {supplier.address}</div>}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-1 pt-1 border-t">
+                    <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={() => viewSupplierDetails(supplier)}>
+                      <Eye className="h-3 w-3 mr-1 text-sky-600" /> Statement
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={() => openEditDialog(supplier)}>
+                      <Edit className="h-3 w-3 mr-1 text-indigo-600" /> Edit
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-7 text-xs px-2 text-rose-600 hover:text-rose-700" onClick={() => handleDelete(supplier._id)}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
           {totalPages > 1 && (
-            <div className="py-4 border-t bg-background px-6">
+            <div className="py-3 border-t bg-background px-3 md:px-6">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

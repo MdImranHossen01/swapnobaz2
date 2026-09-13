@@ -90,11 +90,11 @@ export default function ResellerSettingsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Store Settings</h2>
-          <p className="text-muted-foreground">Configure your store branding, contact details, domain, and account security</p>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight">Store Settings</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">Configure your store branding, contact details, domain, and account security</p>
         </div>
       </div>
 

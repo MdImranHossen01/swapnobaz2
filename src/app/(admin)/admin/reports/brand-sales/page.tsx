@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Printer, RefreshCw, ArrowLeft, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { ReportCard, ReportRow } from '@/components/admin/reports/ReportCard';
+import { fmt } from '@/components/admin/reports/utils';
 
 export default function BrandSalesReportPage() {
   const currentDate = new Date();
@@ -65,25 +67,25 @@ export default function BrandSalesReportPage() {
   const years = Array.from({ length: 5 }, (_, i) => (currentDate.getFullYear() - i).toString());
 
   return (
-    <div className="flex-1 space-y-6 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-4 md:space-y-6 px-0 py-2 md:p-8">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4 print:hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3 print:hidden">
         <div>
           <div className="flex items-center gap-2">
             <Link href="/admin/dashboard" className="text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Brand Wise Sales Report</h1>
+            <h1 className="text-xl md:text-3xl font-bold tracking-tight">Brand Wise Sales Report</h1>
           </div>
           <p className="text-muted-foreground text-xs md:text-sm mt-1">
             Monthly product units sold and total sales volume categorized by brand.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <Select value={selectedMonth} onValueChange={(val) => val && setSelectedMonth(val)}>
-            <SelectTrigger className="w-[130px] h-9 text-xs">
-              <SelectValue placeholder="Select Month" />
+            <SelectTrigger className="w-[110px] sm:w-[130px] h-9 text-xs">
+              <SelectValue placeholder="Month" />
             </SelectTrigger>
             <SelectContent>
               {months.map((m) => (
@@ -95,8 +97,8 @@ export default function BrandSalesReportPage() {
           </Select>
 
           <Select value={selectedYear} onValueChange={(val) => val && setSelectedYear(val)}>
-            <SelectTrigger className="w-[100px] h-9 text-xs">
-              <SelectValue placeholder="Select Year" />
+            <SelectTrigger className="w-[90px] sm:w-[100px] h-9 text-xs">
+              <SelectValue placeholder="Year" />
             </SelectTrigger>
             <SelectContent>
               {years.map((y) => (
@@ -107,11 +109,11 @@ export default function BrandSalesReportPage() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" onClick={() => fetchBrandSales()} disabled={loading} className="h-9">
+          <Button variant="outline" size="sm" onClick={() => fetchBrandSales()} disabled={loading} className="h-9 px-2.5">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
 
-          <Button variant="default" size="sm" onClick={handlePrint} className="h-9 gap-1 font-semibold">
+          <Button variant="default" size="sm" onClick={handlePrint} className="h-9 gap-1 font-semibold px-3">
             <Printer className="h-4 w-4" />
             <span>Print</span>
           </Button>
@@ -128,7 +130,8 @@ export default function BrandSalesReportPage() {
       {/* Report Table Card */}
       <Card className="shadow-xs overflow-hidden print:border-none print:shadow-none">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-xs md:text-sm text-center border-collapse">
               <thead>
                 <tr className="bg-muted/30 border-b text-muted-foreground font-semibold">
@@ -158,7 +161,7 @@ export default function BrandSalesReportPage() {
                       <td className="p-2.5 font-medium text-muted-foreground">{data.monthName} {data.year}</td>
                       <td className="p-2.5 font-bold text-foreground">{b.soldQty} pcs</td>
                       <td className="p-2.5 font-bold text-right text-primary">
-                        ৳{Math.round(b.totalSales).toLocaleString()}
+                        {fmt(b.totalSales)}
                       </td>
                     </tr>
                   ))
@@ -169,6 +172,43 @@ export default function BrandSalesReportPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card List */}
+          <div className="block md:hidden p-2 space-y-2.5">
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+                <span>Loading brand sales...</span>
+              </div>
+            ) : data?.brands?.length > 0 ? (
+              data.brands.map((b: any) => (
+                <ReportCard
+                  key={b._id}
+                  title={b.brandName || 'Unbranded'}
+                  badge={
+                    <span className="text-[11px] font-medium text-muted-foreground">
+                      {data.monthName} {data.year}
+                    </span>
+                  }
+                  footer={
+                    <div className="flex items-center justify-between w-full font-bold text-xs">
+                      <span className="text-muted-foreground">Net Sales:</span>
+                      <span className="text-primary text-sm">{fmt(b.totalSales)}</span>
+                    </div>
+                  }
+                >
+                  <ReportRow 
+                    label="Units Sold" 
+                    value={<span className="font-bold text-emerald-600">{b.soldQty} pcs</span>} 
+                  />
+                </ReportCard>
+              ))
+            ) : (
+              <div className="p-6 text-center text-muted-foreground text-xs">
+                No brand sales data recorded for this month.
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

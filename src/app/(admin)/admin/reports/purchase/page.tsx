@@ -117,7 +117,8 @@ export default function PurchaseReportPage() {
       {/* Report Table Card */}
       <Card className="shadow-xs overflow-hidden print:border-none print:shadow-none">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-xs md:text-sm text-center border-collapse">
               <thead>
                 <tr className="bg-muted/30 border-b text-muted-foreground font-semibold">
@@ -170,6 +171,59 @@ export default function PurchaseReportPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="block md:hidden p-2 space-y-2.5">
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-xs">Loading report...</span>
+              </div>
+            ) : purchases.length > 0 ? (
+              purchases.map((p: any) => (
+                <div key={p._id} className="bg-card border border-border/80 rounded-xl p-3 text-xs space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between font-bold border-b pb-1.5">
+                    <span className="text-primary font-mono">{p.invoiceNo || 'Bill'}</span>
+                    <Badge variant={p.dueAmount > 0 ? 'destructive' : 'secondary'} className="text-[10px]">
+                      {p.dueAmount > 0 ? 'Due' : 'Paid'}
+                    </Badge>
+                  </div>
+                  <div className="divide-y divide-border/40 text-[11px]">
+                    <div className="flex justify-between py-1">
+                      <span className="text-muted-foreground">Date:</span>
+                      <span className="font-medium text-foreground">{new Date(p.date).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-muted-foreground">Supplier:</span>
+                      <span className="font-bold text-foreground">{p.supplierName}</span>
+                    </div>
+                    {p.supplierPhone && (
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Phone:</span>
+                        <a href={`tel:${p.supplierPhone}`} className="text-primary font-medium">{p.supplierPhone}</a>
+                      </div>
+                    )}
+                    <div className="flex justify-between py-1">
+                      <span className="text-muted-foreground">Total Bill:</span>
+                      <span className="font-bold text-foreground">৳{Math.round(p.totalAmount).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between py-1">
+                      <span className="text-muted-foreground">Paid:</span>
+                      <span className="font-semibold text-emerald-600">৳{Math.round(p.paidAmount).toLocaleString()}</span>
+                    </div>
+                    {p.dueAmount > 0 && (
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Due:</span>
+                        <span className="font-bold text-rose-600">৳{Math.round(p.dueAmount).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-6 text-center text-xs text-muted-foreground">No purchase records found.</div>
+            )}
           </div>
         </CardContent>
       </Card>

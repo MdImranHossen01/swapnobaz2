@@ -2,24 +2,22 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Plus, 
-  ArrowRightLeft, 
-  Landmark, 
-  Wallet, 
-  Smartphone, 
-  Loader2, 
-  RefreshCw, 
-  Building2, 
+import {
+  Plus,
+  ArrowRightLeft,
+  Landmark,
+  Wallet,
+  Smartphone,
+  Loader2,
+  RefreshCw,
+  Building2,
   CreditCard,
-  Layers,
-  ArrowUpRight,
-  ArrowDownLeft
+
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +28,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
@@ -169,33 +168,33 @@ export default function AccountsPage() {
   const getAccountIcon = (category: string) => {
     switch (category) {
       case 'Cash':
-        return <Wallet className="h-5 w-5 text-emerald-600" />;
+        return <Wallet className="h-4 w-4 text-emerald-600" />;
       case 'MFS':
-        return <Smartphone className="h-5 w-5 text-sky-600" />;
+        return <Smartphone className="h-4 w-4 text-sky-600" />;
       default:
-        return <Building2 className="h-5 w-5 text-indigo-600" />;
+        return <Building2 className="h-4 w-4 text-indigo-600" />;
     }
   };
 
   return (
-    <div className="flex-1 space-y-6 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-4 md:space-y-6 px-0 py-2 md:p-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Bank, Cash & MFS Accounts</h1>
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight">Bank, Cash & MFS Accounts</h1>
           <p className="text-muted-foreground text-xs md:text-sm mt-1">
             Real-time multi-account cashflow, bank ledgers, mobile wallets and internal fund transfers.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setTransferOpen(true)} className="gap-1.5 font-bold">
-            <ArrowRightLeft className="h-4 w-4 text-primary" />
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <Button variant="outline" size="sm" onClick={() => setTransferOpen(true)} className="gap-1.5 font-bold h-9 text-xs">
+            <ArrowRightLeft className="h-3.5 w-3.5 text-primary" />
             <span>Transfer Funds</span>
           </Button>
 
-          <Button size="sm" onClick={() => setNewAccountOpen(true)} className="gap-1.5 font-bold">
-            <Plus className="h-4 w-4" />
+          <Button size="sm" onClick={() => setNewAccountOpen(true)} className="gap-1.5 font-bold h-9 text-xs">
+            <Plus className="h-3.5 w-3.5" />
             <span>+ Add Account</span>
           </Button>
 
@@ -206,59 +205,59 @@ export default function AccountsPage() {
       </div>
 
       {/* Summary Total Header Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-4">
         <Card className="bg-primary/5 border-primary/20 shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
+          <CardContent className="p-3 md:p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-primary uppercase">Total Liquid Balance</p>
-              <p className="text-xl md:text-2xl font-black text-foreground mt-1">
+              <p className="text-[10px] md:text-xs font-semibold text-primary uppercase">Liquid Balance</p>
+              <p className="text-base md:text-2xl font-black text-foreground mt-0.5 md:mt-1">
                 ৳{Math.round(totalBalance).toLocaleString()}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-primary text-primary-foreground">
-              <Landmark className="h-5 w-5" />
+            <div className="p-2 md:p-2.5 rounded-xl bg-primary text-primary-foreground">
+              <Landmark className="h-4 w-4 md:h-5 md:w-5" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
+          <CardContent className="p-3 md:p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Bank Balance</p>
-              <p className="text-lg md:text-xl font-bold text-foreground mt-1">
+              <p className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase">Bank Balance</p>
+              <p className="text-base md:text-xl font-bold text-foreground mt-0.5 md:mt-1">
                 ৳{Math.round(bankAccounts.reduce((acc, c) => acc + (c.currentBalance || 0), 0)).toLocaleString()}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600">
-              <Building2 className="h-5 w-5" />
+            <div className="p-2 md:p-2.5 rounded-xl bg-indigo-500/10 text-indigo-600">
+              <Building2 className="h-4 w-4 md:h-5 md:w-5" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
+          <CardContent className="p-3 md:p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Cash in Hand</p>
-              <p className="text-lg md:text-xl font-bold text-foreground mt-1">
+              <p className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase">Cash in Hand</p>
+              <p className="text-base md:text-xl font-bold text-foreground mt-0.5 md:mt-1">
                 ৳{Math.round(cashAccounts.reduce((acc, c) => acc + (c.currentBalance || 0), 0)).toLocaleString()}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600">
-              <Wallet className="h-5 w-5" />
+            <div className="p-2 md:p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600">
+              <Wallet className="h-4 w-4 md:h-5 md:w-5" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-xs">
-          <CardContent className="p-4 flex items-center justify-between">
+          <CardContent className="p-3 md:p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase">Mobile Wallets (MFS)</p>
-              <p className="text-lg md:text-xl font-bold text-foreground mt-1">
+              <p className="text-[10px] md:text-xs font-semibold text-muted-foreground uppercase">Mobile Wallets</p>
+              <p className="text-base md:text-xl font-bold text-foreground mt-0.5 md:mt-1">
                 ৳{Math.round(mfsAccounts.reduce((acc, c) => acc + (c.currentBalance || 0), 0)).toLocaleString()}
               </p>
             </div>
-            <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600">
-              <Smartphone className="h-5 w-5" />
+            <div className="p-2 md:p-2.5 rounded-xl bg-sky-500/10 text-sky-600">
+              <Smartphone className="h-4 w-4 md:h-5 md:w-5" />
             </div>
           </CardContent>
         </Card>
@@ -266,7 +265,7 @@ export default function AccountsPage() {
 
       {/* Accounts List Table Card */}
       <Card className="shadow-xs overflow-hidden">
-        <CardHeader className="bg-muted/30 py-3 px-4 border-b flex flex-row items-center justify-between">
+        <CardHeader className="bg-muted/30 py-2.5 px-3 md:py-3 md:px-4 border-b flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-primary" />
             <CardTitle className="text-sm md:text-base font-bold">All Connected Accounts</CardTitle>
@@ -274,7 +273,8 @@ export default function AccountsPage() {
           <Badge variant="outline" className="text-xs font-mono">{accounts.length} Accounts</Badge>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-xs md:text-sm text-center border-collapse">
               <thead>
                 <tr className="bg-muted/20 border-b text-muted-foreground font-semibold">
@@ -305,7 +305,7 @@ export default function AccountsPage() {
                           {acc.name}
                         </div>
                         {acc.description && (
-                          <div className="text-[11px] text-muted-foreground pl-7">{acc.description}</div>
+                          <div className="text-[11px] text-muted-foreground pl-6">{acc.description}</div>
                         )}
                       </td>
                       <td className="p-3">
@@ -338,6 +338,49 @@ export default function AccountsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card List View */}
+          <div className="block md:hidden p-2 space-y-2.5">
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
+                <span>Loading accounts...</span>
+              </div>
+            ) : accounts.length > 0 ? (
+              accounts.map((acc: any) => (
+                <MobileDataCard
+                  key={acc._id}
+                  title={
+                    <div className="flex items-center gap-1.5 font-bold text-sm">
+                      {getAccountIcon(acc.category)}
+                      <span>{acc.name}</span>
+                    </div>
+                  }
+                  badge={
+                    <Badge variant="secondary" className="text-[10px]">
+                      {acc.category}
+                    </Badge>
+                  }
+                  footer={
+                    <div className="flex items-center justify-between w-full font-bold text-xs">
+                      <span className="text-muted-foreground">Live Balance:</span>
+                      <span className="text-primary text-sm font-black">৳{Math.round(acc.currentBalance || 0).toLocaleString()}</span>
+                    </div>
+                  }
+                >
+                  <MobileDataRow label="Account Code" value={<span className="font-mono text-xs">{acc.code}</span>} />
+                  {acc.accountNumber && <MobileDataRow label="Account No" value={<span className="font-mono text-xs">{acc.accountNumber}</span>} />}
+                  {acc.bankName && <MobileDataRow label="Bank / Branch" value={`${acc.bankName} ${acc.branchName ? `(${acc.branchName})` : ''}`} />}
+                  <MobileDataRow label="Opening Balance" value={`৳${Math.round(acc.openingBalance || 0).toLocaleString()}`} />
+                  {acc.description && <MobileDataRow label="Note" value={<span className="text-xs text-muted-foreground">{acc.description}</span>} />}
+                </MobileDataCard>
+              ))
+            ) : (
+              <div className="p-6 text-center text-muted-foreground text-xs">
+                No accounts found. Click '+ Add Account' to create one.
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

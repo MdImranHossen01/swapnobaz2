@@ -119,27 +119,27 @@ function SourceProductsContent() {
   };
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Source B2B Products</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight">Source B2B Products</h2>
+          <p className="text-xs md:text-sm text-muted-foreground">
             Browse and source products from Mother Inventory or other resellers ({total} products available)
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSearch} className="flex gap-2">
+      <form onSubmit={handleSearch} className="flex gap-2 px-1 md:px-0 max-w-sm">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            className="pl-8"
+            className="pl-8 h-9 text-xs md:text-sm"
             placeholder="Search B2B products..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <Button type="submit" variant="outline">Search</Button>
+        <Button type="submit" variant="outline" size="sm" className="h-9 text-xs">Search</Button>
       </form>
 
       {loading ? (
@@ -147,16 +147,16 @@ function SourceProductsContent() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : products.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border border-dashed rounded-xl p-12 bg-card text-center gap-2">
-          <Package className="h-12 w-12 text-muted-foreground" />
-          <p className="font-semibold text-lg">No B2B Products Available</p>
-          <p className="text-sm text-muted-foreground max-w-sm">
+        <div className="flex flex-col items-center justify-center border border-dashed rounded-xl p-8 md:p-12 bg-card text-center gap-2 mx-1 md:mx-0">
+          <Package className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
+          <p className="font-semibold text-base md:text-lg">No B2B Products Available</p>
+          <p className="text-xs md:text-sm text-muted-foreground max-w-sm">
             There are currently no wholesale products uploaded by the Admin or shared by other resellers.
           </p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 px-1 md:px-0">
             {products.map(product => {
               const wholesalePrice = product.resellerPrice || product.purchasePrice || product.price || 0;
               const isSourced = product.isSourced;
@@ -177,39 +177,39 @@ function SourceProductsContent() {
                       )}
                       {isSourced && (
                         <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1 shadow-sm flex items-center justify-center" title="Sourced to Store">
-                          <CheckCircle2 className="h-5 w-5" />
+                          <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5" />
                         </div>
                       )}
                     </div>
-                    <CardHeader className="p-4 pb-2">
-                      <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+                    <CardHeader className="p-3 md:p-4 pb-1 md:pb-2">
+                      <p className="text-[10px] md:text-xs text-muted-foreground font-semibold uppercase tracking-wider">
                         {product.categories?.[0]?.name || 'Uncategorized'}
                       </p>
-                      <CardTitle className="text-sm font-bold line-clamp-2 mt-1">{product.name}</CardTitle>
-                      <CardDescription className="text-xs font-mono mt-1">SKU: {product.sku || '-'}</CardDescription>
+                      <CardTitle className="text-xs md:text-sm font-bold line-clamp-2 mt-0.5">{product.name}</CardTitle>
+                      <CardDescription className="text-[10px] md:text-xs font-mono mt-0.5">SKU: {product.sku || '-'}</CardDescription>
                     </CardHeader>
                   </div>
                   <div>
-                    <CardContent className="p-4 pt-0">
-                      <div className="flex justify-between items-center bg-muted/30 rounded-lg p-2.5 mt-2 border text-xs">
+                    <CardContent className="p-3 md:p-4 pt-0 md:pt-0">
+                      <div className="flex justify-between items-center bg-muted/30 rounded-lg p-2 md:p-2.5 mt-1 md:mt-2 border text-xs">
                         <div>
-                          <span className="text-muted-foreground block text-[10px] uppercase font-bold">Wholesale Cost</span>
-                          <span className="font-extrabold text-sm text-foreground">৳{wholesalePrice.toLocaleString()}</span>
+                          <span className="text-muted-foreground block text-[9px] md:text-[10px] uppercase font-bold">Wholesale Cost</span>
+                          <span className="font-extrabold text-xs md:text-sm text-foreground">৳{wholesalePrice.toLocaleString()}</span>
                         </div>
                         {isSourced && (
                           <div className="text-right">
-                            <span className="text-green-600 block text-[10px] uppercase font-bold">Your Retail Price</span>
-                            <span className="font-extrabold text-sm text-green-600">
+                            <span className="text-green-600 block text-[9px] md:text-[10px] uppercase font-bold">Your Retail Price</span>
+                            <span className="font-extrabold text-xs md:text-sm text-green-600">
                               ৳{product.sourcedDetails?.retailPrice?.toLocaleString()}
                             </span>
                           </div>
                         )}
                       </div>
                     </CardContent>
-                    <CardFooter className="p-4 pt-0">
+                    <CardFooter className="p-3 md:p-4 pt-0 md:pt-0">
                       <Button
                         variant={isSourced ? 'outline' : 'default'}
-                        className="w-full text-xs font-semibold"
+                        className="w-full text-xs font-semibold h-8 md:h-9"
                         onClick={() => openSourcingDialog(product)}
                       >
                         {isSourced ? 'Edit Retail Price' : 'Source & Add to Store'}
@@ -222,14 +222,14 @@ function SourceProductsContent() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
-                Previous
+            <div className="flex justify-center items-center gap-2 mt-4 md:mt-6 px-2">
+              <Button variant="outline" size="sm" className="h-8 text-xs px-2.5" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+                Prev
               </Button>
-              <span className="text-sm py-2 px-3 border rounded-lg">
+              <span className="text-xs py-1.5 px-2.5 border rounded-lg">
                 {page} / {totalPages}
               </span>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
+              <Button variant="outline" size="sm" className="h-8 text-xs px-2.5" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>
                 Next
               </Button>
             </div>

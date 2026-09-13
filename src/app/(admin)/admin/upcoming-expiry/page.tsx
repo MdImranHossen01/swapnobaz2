@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
 import { CalendarDays, AlertTriangle, ArrowRight, Edit } from 'lucide-react';
 import Link from 'next/link';
+import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
 interface ExpiringBatch {
   id: string;
@@ -59,20 +60,20 @@ export default function UpcomingExpiryPage() {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-full">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4 px-0 py-2 md:p-6 w-full max-w-full">
+      <div className="flex items-center justify-between border-b pb-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-orange-500" />
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-orange-500" />
             Upcoming Expiry Batches
           </h1>
-          <p className="text-sm text-muted-foreground">Monitor product inventory expiring within the next 30 days</p>
+          <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Monitor product inventory expiring within the next 30 days</p>
         </div>
       </div>
 
       {/* Desktop View */}
       <div className="hidden md:block">
-        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border bg-card shadow-xs overflow-hidden">
           <Table>
             <TableHeader className="bg-muted/40">
               <TableRow>
@@ -162,54 +163,48 @@ export default function UpcomingExpiryPage() {
       </div>
 
       {/* Mobile View */}
-      <div className="block md:hidden space-y-3">
+      <div className="block md:hidden p-1 space-y-2.5">
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="p-4 border rounded-2xl bg-card shadow-sm space-y-2">
+              <div key={i} className="p-3 border rounded-xl bg-card shadow-xs space-y-2">
                 <Skeleton className="h-4 w-3/4 rounded" />
                 <Skeleton className="h-4 w-1/2 rounded" />
               </div>
             ))}
           </div>
         ) : batches.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground bg-card rounded-2xl border">
+          <div className="p-8 text-center text-muted-foreground bg-card rounded-xl border text-xs">
             No products expiring soon.
           </div>
         ) : (
           batches.map((batch) => {
             const daysLeft = getDaysRemaining(batch.expiryDate);
             return (
-              <div key={batch.id} className="p-4 border rounded-2xl bg-card shadow-sm flex flex-col gap-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-bold text-sm">{batch.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      Batch: <span className="font-mono font-semibold">{batch.batchNumber}</span>
-                    </div>
-                  </div>
-                  {daysLeft <= 0 ? (
+              <MobileDataCard
+                key={batch.id}
+                title={batch.name}
+                badge={
+                  daysLeft <= 0 ? (
                     <Badge variant="destructive" className="text-[10px]">Expired</Badge>
                   ) : (
                     <Badge variant="secondary" className="text-[10px] bg-orange-100 text-orange-800 border-orange-200">
                       {daysLeft} days left
                     </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between text-xs border-t pt-2">
-                  <span className="text-muted-foreground">Stock: <strong className="text-foreground">{batch.stock} units</strong></span>
-                  <span className="text-muted-foreground">Expiry: <strong className="text-foreground">{format(new Date(batch.expiryDate), 'dd MMM yyyy')}</strong></span>
-                </div>
-
-                <div className="border-t pt-2 flex justify-end">
+                  )
+                }
+                footer={
                   <Link href={`/admin/products/${batch.productId}/edit`} className="w-full">
                     <Button variant="outline" size="sm" className="w-full h-8 rounded-lg text-xs gap-1">
                       <Edit className="h-3.5 w-3.5" /> Edit Product
                     </Button>
                   </Link>
-                </div>
-              </div>
+                }
+              >
+                <MobileDataRow label="Batch No" value={<span className="font-mono text-xs font-semibold">{batch.batchNumber}</span>} />
+                <MobileDataRow label="Remaining Stock" value={<span className="font-bold">{batch.stock} units</span>} />
+                <MobileDataRow label="Expiry Date" value={format(new Date(batch.expiryDate), 'dd MMM yyyy')} />
+              </MobileDataCard>
             );
           })
         )}

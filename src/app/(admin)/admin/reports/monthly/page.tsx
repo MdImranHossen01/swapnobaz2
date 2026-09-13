@@ -89,21 +89,22 @@ export default function MonthlyReportPage() {
         <p className="text-xs text-slate-500">Year: {data?.year}</p>
       </div>
 
-      {/* Report Table Card */}
+      {/* Report Content */}
       <Card className="shadow-xs overflow-hidden print:border-none print:shadow-none">
-        <CardHeader className="bg-muted/40 py-3 px-4 border-b flex flex-row items-center justify-between print:hidden">
+        <CardHeader className="bg-muted/40 py-2.5 px-3 sm:px-4 border-b flex flex-row items-center justify-between print:hidden">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm md:text-base font-bold">
+            <CardTitle className="text-xs sm:text-sm md:text-base font-bold">
               Year {data?.year} - 12 Months Financial Performance
             </CardTitle>
           </div>
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="outline" className="text-[10px] sm:text-xs">
             Annual Statement
           </Badge>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-xs md:text-sm text-center border-collapse">
               <thead>
                 <tr className="bg-muted/30 border-b text-muted-foreground font-semibold">
@@ -163,6 +164,82 @@ export default function MonthlyReportPage() {
                 </tfoot>
               )}
             </table>
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="block md:hidden p-2 space-y-2.5">
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-xs">Loading report...</span>
+              </div>
+            ) : data?.rows?.length > 0 ? (
+              <>
+                {data.rows.map((row: any) => (
+                  <div key={row.monthKey} className="bg-card border border-border/80 rounded-xl p-3 text-xs space-y-2 shadow-xs">
+                    <div className="flex items-center justify-between font-bold border-b pb-1.5">
+                      <span className="text-foreground">{row.month}</span>
+                      <span className={row.netProfit >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+                        Net Profit: ৳{Math.round(row.netProfit).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-border/40 text-[11px]">
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Net Sales:</span>
+                        <span className="font-semibold text-emerald-600">৳{Math.round(row.netSales).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Delivery Cost:</span>
+                        <span className="font-medium text-foreground">৳{Math.round(row.deliveryCost).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Total:</span>
+                        <span className="font-bold text-foreground">৳{Math.round(row.total).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Sales Profit:</span>
+                        <span className="font-semibold text-emerald-600">৳{Math.round(row.salesProfit).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Expense:</span>
+                        <span className="font-semibold text-rose-600">৳{Math.round(row.expense).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Mobile Yearly Grand Total Card */}
+                {data?.summary && (
+                  <div className="bg-primary/5 border-2 border-primary/30 rounded-xl p-3 text-xs space-y-1.5 shadow-xs mt-3">
+                    <div className="font-bold text-sm text-primary border-b pb-1">
+                      Yearly Grand Total ({data?.year})
+                    </div>
+                    <div className="divide-y divide-border/40 text-[11px] font-semibold">
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Total Sales:</span>
+                        <span className="text-foreground font-bold">৳{Math.round(data.summary.grandTotal).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Total Net Sales:</span>
+                        <span className="text-emerald-600 font-bold">৳{Math.round(data.summary.totalNetSales).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Total Expenses:</span>
+                        <span className="text-rose-600 font-bold">৳{Math.round(data.summary.totalExpense).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between py-1 text-xs">
+                        <span className="text-foreground">Net Profit:</span>
+                        <span className={data.summary.totalNetProfit >= 0 ? 'text-emerald-600 font-black' : 'text-rose-600 font-black'}>
+                          ৳{Math.round(data.summary.totalNetProfit).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-6 text-center text-xs text-muted-foreground">No data found for this year.</div>
+            )}
           </div>
         </CardContent>
       </Card>

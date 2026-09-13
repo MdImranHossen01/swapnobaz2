@@ -398,31 +398,32 @@ function ProductsContent() {
   );
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-3 sm:space-y-4 px-0 py-2 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Products</h2>
-          <p className="text-muted-foreground text-sm">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Products</h2>
+          <p className="text-muted-foreground text-xs sm:text-sm">
             Manage your product catalog, size/color variant stocks, batches, and pricing.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={exportToCSV}
             disabled={exportLoading}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5 h-8 text-xs font-semibold"
           >
             {exportLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Download className="h-4 w-4" />
+              <Download className="h-3.5 w-3.5" />
             )}
             {selectedIds.length > 0 ? `Export (${selectedIds.length})` : 'Export All'}
           </Button>
           <Link href="/admin/products/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Add Product
+            <Button size="sm" className="h-8 text-xs font-bold gap-1">
+              <Plus className="h-3.5 w-3.5" /> Add Product
             </Button>
           </Link>
         </div>
@@ -430,220 +431,383 @@ function ProductsContent() {
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search products by name or SKU..."
-            className="pl-8"
+            className="pl-8 h-9 text-xs sm:text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="rounded-md border bg-background overflow-hidden relative">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">
-                <Checkbox
-                  checked={filteredProducts.length > 0 && filteredProducts.every(p => selectedIds.includes(p._id))}
-                  onCheckedChange={toggleSelectAll}
-                />
-              </TableHead>
-              <TableHead className="w-8"></TableHead>
-              <TableHead className="w-[70px]">Image</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="min-w-[150px]">Total Stock (Cumulative)</TableHead>
-              <TableHead>Views</TableHead>
-              <TableHead>Sales</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+      <div className="rounded-xl border bg-background overflow-hidden relative shadow-xs">
+        {/* Desktop Table View */}
+        <div className="hidden md:block">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={11} className="h-24 text-center">
-                  <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
-                </TableCell>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={filteredProducts.length > 0 && filteredProducts.every(p => selectedIds.includes(p._id))}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
+                <TableHead className="w-8"></TableHead>
+                <TableHead className="w-[70px]">Image</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>SKU</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead className="min-w-[150px]">Total Stock (Cumulative)</TableHead>
+                <TableHead>Views</TableHead>
+                <TableHead>Sales</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
-            ) : filteredProducts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={11} className="h-24 text-center">
-                  No products found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredProducts.map((product) => {
-                const totalStock = calculateCumulativeStock(product);
-                const hasVariants = product.variants && product.variants.length > 0;
-                const isExpanded = expandedRow === product._id;
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="h-24 text-center">
+                    <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
+                  </TableCell>
+                </TableRow>
+              ) : filteredProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="h-24 text-center">
+                    No products found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredProducts.map((product) => {
+                  const totalStock = calculateCumulativeStock(product);
+                  const hasVariants = product.variants && product.variants.length > 0;
+                  const isExpanded = expandedRow === product._id;
 
-                return (
-                  <React.Fragment key={product._id}>
-                    <TableRow className={selectedIds.includes(product._id) ? "bg-muted/50" : ""}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedIds.includes(product._id)}
-                          onCheckedChange={() => toggleSelect(product._id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {hasVariants ? (
-                          <button
-                            onClick={() => setExpandedRow(isExpanded ? null : product._id)}
-                            className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
-                            title="Expand variants stock"
-                          >
-                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </button>
-                        ) : null}
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-12 w-12 overflow-hidden rounded-md border bg-muted">
-                          {product.images && product.images.length > 0 ? (
-                            <Image 
-                              src={product.images[0]} 
-                              alt={product.name} 
-                              width={48}
-                              height={48}
-                              className="h-full w-full object-cover" 
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center">
-                              <Plus className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium max-w-[240px]">
-                        <div className="flex flex-col gap-0.5">
-                          <Link 
-                            href={`/product/${product.slug}`} 
-                            target="_blank"
-                            className="hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate font-bold text-sm"
-                          >
-                            {product.name}
-                          </Link>
-                          {product.brand && (
-                            <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
-                              Brand: <span className="text-foreground">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">{product.sku}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className={product.salePrice ? 'text-xs line-through text-muted-foreground' : ''}>
-                            ৳{product.price ? Math.round(product.price) : '0'}
-                          </span>
-                          {product.salePrice && (
-                            <span className="font-semibold text-primary">
-                              ৳{Math.round(product.salePrice)}
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`font-bold text-sm ${totalStock <= 5 ? 'text-destructive' : 'text-foreground'}`}>
-                              {totalStock} pcs
-                            </span>
-                            {hasVariants && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/40 text-primary">
-                                {product.variants!.length} Variants
-                              </Badge>
+                  return (
+                    <React.Fragment key={product._id}>
+                      <TableRow className={selectedIds.includes(product._id) ? "bg-muted/50" : ""}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedIds.includes(product._id)}
+                            onCheckedChange={() => toggleSelect(product._id)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {hasVariants ? (
+                            <button
+                              onClick={() => setExpandedRow(isExpanded ? null : product._id)}
+                              className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+                              title="Expand variants stock"
+                            >
+                              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </button>
+                          ) : null}
+                        </TableCell>
+                        <TableCell>
+                          <div className="h-12 w-12 overflow-hidden rounded-md border bg-muted">
+                            {product.images && product.images.length > 0 ? (
+                              <Image 
+                                src={product.images[0]} 
+                                alt={product.name} 
+                                width={48}
+                                height={48}
+                                className="h-full w-full object-cover" 
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <Plus className="h-4 w-4 text-muted-foreground" />
+                              </div>
                             )}
                           </div>
-                          {/* Quick Variant badges display */}
-                          {hasVariants && (
-                            <div className="flex flex-wrap gap-1 max-w-[260px]">
-                              {product.variants!.slice(0, 3).map((v: any, idx: number) => (
-                                <span key={idx} className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
-                                  {v.color || ''}{v.color && v.size ? '/' : ''}{v.size || ''}: <b className="text-foreground">{v.stock || 0}</b>
-                                </span>
-                              ))}
-                              {product.variants!.length > 3 && (
-                                <span className="text-[10px] text-primary cursor-pointer font-medium" onClick={() => setExpandedRow(isExpanded ? null : product._id)}>
-                                  +{product.variants!.length - 3} more...
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-medium text-muted-foreground">{product.views ?? 0}</span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="font-bold text-primary">{product.totalSales ?? 0}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={product.isPublished ? 'default' : 'secondary'}>
-                          {product.isPublished ? 'Published' : 'Draft'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem onClick={() => openAddStockModal(product)} className="text-primary font-semibold gap-2">
-                              <PackagePlus className="h-4 w-4" /> Add Stock
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/admin/products/${product._id}/edit`)} className="gap-2">
-                              <Edit className="h-4 w-4" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(product._id)} className="text-destructive gap-2">
-                              <Trash className="h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Expanded Row for Variants & Batches Breakdown */}
-                    {isExpanded && hasVariants && (
-                      <TableRow className="bg-muted/30 border-y border-muted">
-                        <TableCell colSpan={11} className="p-3 pl-12">
-                          <div className="bg-background rounded-lg border p-3 space-y-2">
-                            <div className="text-xs font-bold text-foreground flex items-center gap-1.5 pb-1.5 border-b">
-                              <Layers className="h-3.5 w-3.5 text-primary" />
-                              Variants Stock Breakdown (সাইজ ও কালার অনুযায়ী স্টক)
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
-                              {product.variants!.map((v: any, vIdx: number) => (
-                                <div key={vIdx} className="p-2 border rounded-md bg-muted/20 flex flex-col justify-between gap-1">
-                                  <div className="flex justify-between items-center font-bold text-foreground">
-                                    <span>{v.color || 'No Color'} {v.size ? `(${v.size})` : ''}</span>
-                                    <Badge variant={(v.stock || 0) > 0 ? 'outline' : 'destructive'} className="text-[10px]">
-                                      {v.stock || 0} in stock
-                                    </Badge>
-                                  </div>
-                                  <div className="flex justify-between text-[11px] text-muted-foreground">
-                                    <span>Price: ৳{Math.round(v.price || product.price)}</span>
-                                    {v.sku && <span className="font-mono">{v.sku}</span>}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                        </TableCell>
+                        <TableCell className="font-medium max-w-[240px]">
+                          <div className="flex flex-col gap-0.5">
+                            <Link 
+                              href={`/product/${product.slug}`} 
+                              target="_blank"
+                              className="hover:text-primary transition-colors hover:underline decoration-primary/30 underline-offset-4 truncate font-bold text-sm"
+                            >
+                              {product.name}
+                            </Link>
+                            {product.brand && (
+                              <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
+                                Brand: <span className="text-foreground">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>
+                              </span>
+                            )}
                           </div>
                         </TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">{product.sku}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className={product.salePrice ? 'text-xs line-through text-muted-foreground' : ''}>
+                              ৳{product.price ? Math.round(product.price) : '0'}
+                            </span>
+                            {product.salePrice && (
+                              <span className="font-semibold text-primary">
+                                ৳{Math.round(product.salePrice)}
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`font-bold text-sm ${totalStock <= 5 ? 'text-destructive' : 'text-foreground'}`}>
+                                {totalStock} pcs
+                              </span>
+                              {hasVariants && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/40 text-primary">
+                                  {product.variants!.length} Variants
+                                </Badge>
+                              )}
+                            </div>
+                            {/* Quick Variant badges display */}
+                            {hasVariants && (
+                              <div className="flex flex-wrap gap-1 max-w-[260px]">
+                                {product.variants!.slice(0, 3).map((v: any, idx: number) => (
+                                  <span key={idx} className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                                    {v.color || ''}{v.color && v.size ? '/' : ''}{v.size || ''}: <b className="text-foreground">{v.stock || 0}</b>
+                                  </span>
+                                ))}
+                                {product.variants!.length > 3 && (
+                                  <span className="text-[10px] text-primary cursor-pointer font-medium" onClick={() => setExpandedRow(isExpanded ? null : product._id)}>
+                                    +{product.variants!.length - 3} more...
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-medium text-muted-foreground">{product.views ?? 0}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-bold text-primary">{product.totalSales ?? 0}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={product.isPublished ? 'default' : 'secondary'}>
+                            {product.isPublished ? 'Published' : 'Draft'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => openAddStockModal(product)} className="text-primary font-semibold gap-2">
+                                <PackagePlus className="h-4 w-4" /> Add Stock
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => router.push(`/admin/products/${product._id}/edit`)} className="gap-2">
+                                <Edit className="h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDelete(product._id)} className="text-destructive gap-2">
+                                <Trash className="h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
-                    )}
-                  </React.Fragment>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+
+                      {/* Expanded Row for Variants & Batches Breakdown */}
+                      {isExpanded && hasVariants && (
+                        <TableRow className="bg-muted/30 border-y border-muted">
+                          <TableCell colSpan={11} className="p-3 pl-12">
+                            <div className="bg-background rounded-lg border p-3 space-y-2">
+                              <div className="text-xs font-bold text-foreground flex items-center gap-1.5 pb-1.5 border-b">
+                                <Layers className="h-3.5 w-3.5 text-primary" />
+                                Variants Stock Breakdown (সাইজ ও কালার অনুযায়ী স্টক)
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 text-xs">
+                                {product.variants!.map((v: any, vIdx: number) => (
+                                  <div key={vIdx} className="p-2 border rounded-md bg-muted/20 flex flex-col justify-between gap-1">
+                                    <div className="flex justify-between items-center font-bold text-foreground">
+                                      <span>{v.color || 'No Color'} {v.size ? `(${v.size})` : ''}</span>
+                                      <Badge variant={(v.stock || 0) > 0 ? 'outline' : 'destructive'} className="text-[10px]">
+                                        {v.stock || 0} in stock
+                                      </Badge>
+                                    </div>
+                                    <div className="flex justify-between text-[11px] text-muted-foreground">
+                                      <span>Price: ৳{Math.round(v.price || product.price)}</span>
+                                      {v.sku && <span className="font-mono">{v.sku}</span>}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Mobile Products Card View */}
+        <div className="block md:hidden p-2 space-y-2.5">
+          {loading ? (
+            <div className="h-24 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="h-24 flex items-center justify-center text-xs text-muted-foreground">
+              No products found.
+            </div>
+          ) : (
+            filteredProducts.map((product) => {
+              const totalStock = calculateCumulativeStock(product);
+              const hasVariants = product.variants && product.variants.length > 0;
+              const isExpanded = expandedRow === product._id;
+
+              return (
+                <div
+                  key={product._id}
+                  className={`bg-card border border-border/90 rounded-xl p-3 text-xs space-y-2 shadow-xs transition-colors ${
+                    selectedIds.includes(product._id) ? "border-primary bg-primary/5" : ""
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <Checkbox
+                      checked={selectedIds.includes(product._id)}
+                      onCheckedChange={() => toggleSelect(product._id)}
+                      className="mt-1 shrink-0"
+                    />
+
+                    <div className="h-14 w-14 overflow-hidden rounded-lg border bg-muted shrink-0">
+                      {product.images && product.images.length > 0 ? (
+                        <Image 
+                          src={product.images[0]} 
+                          alt={product.name} 
+                          width={56}
+                          height={56}
+                          className="h-full w-full object-cover" 
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                          <Plus className="h-4 w-4" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/product/${product.slug}`}
+                        target="_blank"
+                        className="font-bold text-foreground text-xs hover:text-primary transition-colors line-clamp-2"
+                      >
+                        {product.name}
+                      </Link>
+                      <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+                        {product.sku && <span className="font-mono">{product.sku}</span>}
+                        {product.brand && (
+                          <span className="truncate">
+                            • {typeof product.brand === 'object' ? product.brand.name : product.brand}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pricing & Stock Details Row */}
+                  <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-dashed text-[11px]">
+                    <div>
+                      <span className="text-muted-foreground">Price: </span>
+                      <span className="font-bold text-foreground">
+                        ৳{Math.round(product.salePrice || product.price || 0)}
+                      </span>
+                      {product.salePrice && (
+                        <span className="text-[10px] line-through text-muted-foreground ml-1">
+                          ৳{Math.round(product.price)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className="text-muted-foreground">Stock: </span>
+                      <span className={`font-bold ${totalStock <= 5 ? 'text-destructive' : 'text-foreground'}`}>
+                        {totalStock} pcs
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Variants Summary if any */}
+                  {hasVariants && (
+                    <div className="space-y-1 pt-1 border-t border-dashed">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-muted-foreground font-medium">{product.variants!.length} Variants:</span>
+                        <button
+                          onClick={() => setExpandedRow(isExpanded ? null : product._id)}
+                          className="text-primary font-semibold flex items-center gap-0.5"
+                        >
+                          {isExpanded ? 'Hide' : 'Show All'}
+                          {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                        </button>
+                      </div>
+
+                      {isExpanded ? (
+                        <div className="grid grid-cols-2 gap-1.5 pt-1">
+                          {product.variants!.map((v: any, vIdx: number) => (
+                            <div key={vIdx} className="bg-muted/40 p-1.5 rounded border text-[10px] flex justify-between">
+                              <span>{v.color || ''} {v.size ? `(${v.size})` : ''}</span>
+                              <span className="font-bold">{v.stock || 0} pcs</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {product.variants!.slice(0, 3).map((v: any, idx: number) => (
+                            <span key={idx} className="text-[10px] bg-muted px-1.5 py-0.2 rounded text-muted-foreground">
+                              {v.color || ''}{v.color && v.size ? '/' : ''}{v.size || ''}: <b>{v.stock || 0}</b>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Card Bottom Actions */}
+                  <div className="flex items-center justify-between pt-2 border-t gap-1">
+                    <Badge variant={product.isPublished ? 'default' : 'secondary'} className="text-[10px]">
+                      {product.isPublished ? 'Published' : 'Draft'}
+                    </Badge>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-primary font-semibold"
+                        onClick={() => openAddStockModal(product)}
+                      >
+                        <PackagePlus className="h-3.5 w-3.5 mr-1" /> +Stock
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => router.push(`/admin/products/${product._id}/edit`)}
+                      >
+                        <Edit className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                        onClick={() => handleDelete(product._id)}
+                      >
+                        <Trash className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
       
       {!loading && pagination.totalPages > 1 && (

@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle, TrendingDown, Edit } from 'lucide-react';
 import Link from 'next/link';
+import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
 interface LowStockItem {
   id: string;
@@ -48,20 +49,20 @@ export default function LowStockPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-full">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4 px-0 py-2 md:p-6 w-full max-w-full">
+      <div className="flex items-center justify-between border-b pb-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <TrendingDown className="h-6 w-6 text-red-500" />
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+            <TrendingDown className="h-5 w-5 text-red-500" />
             Low Stock Inventory
           </h1>
-          <p className="text-sm text-muted-foreground">Products and variants with less than 5 units remaining in stock</p>
+          <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Products and variants with less than 5 units remaining in stock</p>
         </div>
       </div>
 
       {/* Desktop Table View */}
       <div className="hidden md:block">
-        <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
+        <div className="rounded-2xl border bg-card shadow-xs overflow-hidden">
           <Table>
             <TableHeader className="bg-muted/40">
               <TableRow>
@@ -139,47 +140,56 @@ export default function LowStockPage() {
       </div>
 
       {/* Mobile Card View */}
-      <div className="block md:hidden space-y-3">
+      <div className="block md:hidden p-1 space-y-2.5">
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="p-4 border rounded-2xl bg-card shadow-sm space-y-2">
+              <div key={i} className="p-3 border rounded-xl bg-card shadow-xs space-y-2">
                 <Skeleton className="h-4 w-3/4 rounded" />
                 <Skeleton className="h-4 w-1/2 rounded" />
               </div>
             ))}
           </div>
         ) : items.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground bg-card rounded-2xl border">
+          <div className="p-8 text-center text-muted-foreground bg-card rounded-xl border text-xs">
             All products are adequately stocked.
           </div>
         ) : (
           items.map((item) => (
-            <div key={item.id} className="p-4 border rounded-2xl bg-card shadow-sm flex flex-col gap-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="font-bold text-sm">{item.name}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {[item.color, item.size].filter(Boolean).join(' • ') || 'Base Stock'}
-                  </div>
-                </div>
-                {item.stock === 0 ? (
+            <MobileDataCard
+              key={item.id}
+              title={item.name}
+              badge={
+                item.stock === 0 ? (
                   <Badge variant="destructive" className="text-[10px]">Out of Stock</Badge>
                 ) : (
                   <Badge variant="secondary" className="text-[10px] bg-red-100 text-red-800 border-red-200">
                     Low ({item.stock})
                   </Badge>
-                )}
-              </div>
-
-              <div className="border-t pt-2 flex justify-end">
+                )
+              }
+              footer={
                 <Link href={`/admin/products/${item.productId}/edit`} className="w-full">
                   <Button variant="outline" size="sm" className="w-full h-8 rounded-lg text-xs gap-1">
-                    <Edit className="h-3.5 w-3.5" /> Restock / Edit
+                    <Edit className="h-3.5 w-3.5" /> Restock / Edit Product
                   </Button>
                 </Link>
-              </div>
-            </div>
+              }
+            >
+              <MobileDataRow 
+                label="Variant / Specs" 
+                value={[item.color, item.size].filter(Boolean).join(' • ') || 'Base Stock'} 
+              />
+              <MobileDataRow label="Scope" value={item.location} />
+              <MobileDataRow 
+                label="Remaining Stock" 
+                value={
+                  <span className={`font-bold ${item.stock === 0 ? 'text-destructive' : 'text-orange-600'}`}>
+                    {item.stock} {item.stock === 1 ? 'unit' : 'units'}
+                  </span>
+                } 
+              />
+            </MobileDataCard>
           ))
         )}
       </div>

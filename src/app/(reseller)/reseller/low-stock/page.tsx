@@ -48,14 +48,14 @@ export default function ResellerLowStockPage() {
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-6 w-full max-w-full">
-      <div className="flex items-center justify-between">
+    <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6 w-full max-w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <TrendingDown className="h-6 w-6 text-red-500" />
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+            <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-red-500" />
             My Low Stock Inventory
           </h1>
-          <p className="text-sm text-muted-foreground">Personal products and variants with less than 5 units remaining in stock</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Personal products and variants with less than 5 units remaining in stock</p>
         </div>
       </div>
 

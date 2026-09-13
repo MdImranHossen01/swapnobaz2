@@ -148,7 +148,8 @@ export default function ExpenseReportPage() {
       {/* Report Table Card */}
       <Card className="shadow-xs overflow-hidden print:border-none print:shadow-none">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-xs md:text-sm text-center border-collapse">
               <thead>
                 <tr className="bg-muted/30 border-b text-muted-foreground font-semibold">
@@ -201,6 +202,53 @@ export default function ExpenseReportPage() {
                 </tr>
               </tfoot>
             </table>
+          </div>
+
+          {/* Mobile Cards View */}
+          <div className="block md:hidden p-2 space-y-2.5">
+            {loading ? (
+              <div className="p-8 text-center text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span className="text-xs">Loading report...</span>
+              </div>
+            ) : expenses.length > 0 ? (
+              <>
+                {expenses.map((exp: any) => (
+                  <div key={exp._id} className="bg-card border border-border/80 rounded-xl p-3 text-xs space-y-2 shadow-xs">
+                    <div className="flex items-center justify-between font-bold border-b pb-1.5">
+                      <span className="text-foreground font-semibold truncate max-w-[70%]">{exp.title}</span>
+                      <Badge variant="outline" className="text-[10px]">
+                        {exp.category}
+                      </Badge>
+                    </div>
+                    <div className="divide-y divide-border/40 text-[11px]">
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Date:</span>
+                        <span className="font-medium text-foreground">{new Date(exp.date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className="font-bold text-rose-600">৳{Math.round(exp.amount).toLocaleString()}</span>
+                      </div>
+                      {exp.description && (
+                        <div className="py-1 text-muted-foreground text-[10px]">
+                          Note: {exp.description}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {totalExpense > 0 && (
+                  <div className="bg-destructive/5 border-2 border-destructive/20 rounded-xl p-3 text-xs flex justify-between items-center font-bold">
+                    <span className="text-foreground">Total Expenses:</span>
+                    <span className="text-rose-600 text-sm font-black">৳{Math.round(totalExpense).toLocaleString()}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-6 text-center text-xs text-muted-foreground">No expense entries found.</div>
+            )}
           </div>
         </CardContent>
       </Card>

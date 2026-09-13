@@ -656,16 +656,17 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* 5. Last 7 Days Daily Performance Matrix Table */}
+      {/* 5. Last 7 Days Daily Performance Matrix Table / Mobile Cards */}
       <div className="bg-card rounded-xl border shadow-xs overflow-hidden">
-        <div className="bg-muted/40 py-3 px-4 flex items-center justify-between border-b">
-          <span className="font-bold text-foreground text-sm md:text-base flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-primary" /> Last 7 Days Performance Breakdown (গত ৭ দিনের সারসংক্ষেপ)
+        <div className="bg-muted/40 py-2.5 px-3 sm:px-4 flex items-center justify-between border-b">
+          <span className="font-bold text-foreground text-xs sm:text-sm md:text-base flex items-center gap-1.5 truncate">
+            <Clock className="h-4 w-4 text-primary shrink-0" /> Last 7 Days Breakdown (গত ৭ দিন)
           </span>
-          <Badge variant="outline" className="text-xs">Live Matrix</Badge>
+          <Badge variant="outline" className="text-[10px] sm:text-xs">Live Matrix</Badge>
         </div>
 
-        <div className="overflow-x-auto p-3">
+        {/* Desktop Table View */}
+        <div className="hidden sm:block overflow-x-auto p-3">
           <table className="w-full min-w-[600px] border-collapse text-xs md:text-sm text-center">
             <thead>
               <tr className="border-b bg-muted/20 text-muted-foreground font-semibold">
@@ -698,6 +699,42 @@ export default function AdminDashboard() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards View */}
+        <div className="sm:hidden p-2 space-y-2">
+          {last7DaysStats && last7DaysStats.length > 0 ? (
+            last7DaysStats.map((day: any) => (
+              <div key={day.date} className="bg-background border border-border/80 rounded-lg p-2.5 text-xs space-y-1.5 shadow-2xs">
+                <div className="flex items-center justify-between font-bold border-b pb-1">
+                  <span className="text-foreground">{day.displayDate}</span>
+                  <span className={(day.net || 0) >= 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+                    Net: ৳{Math.round(day.net || 0).toLocaleString()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 pt-0.5 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Revenue:</span>
+                    <span className="font-semibold text-emerald-600">৳{Math.round(day.sales || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Collected:</span>
+                    <span className="font-semibold text-foreground">৳{Math.round(day.collected || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Orders:</span>
+                    <span className="font-semibold text-amber-600">{day.orders || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Expense:</span>
+                    <span className="font-semibold text-rose-600">৳{Math.round(day.expense || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-4 text-center text-muted-foreground italic text-xs">No data recorded.</div>
+          )}
         </div>
       </div>
     </div>
