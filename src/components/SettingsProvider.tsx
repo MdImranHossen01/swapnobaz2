@@ -4,6 +4,7 @@ import React, { createContext, useContext } from 'react';
 
 interface SettingsContextType {
   brandName?: string;
+  siteDescription?: string;
   logoUrl?: string;
   socialLinks?: {
     facebook?: string;

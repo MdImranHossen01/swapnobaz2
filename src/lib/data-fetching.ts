@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { unstable_cache } from 'next/cache';
+import mongoose from 'mongoose';
 import connectToDatabase from './db';
 import Product from '@/models/Product';
 import Category from '@/models/Category';
@@ -159,6 +160,65 @@ export const getCachedCategories = () => {
     },
     ['categories-list'],
     { revalidate: 31536000, tags: [CACHE_TAGS.categories] }
+  )();
+};
+
+/**
+ * Fetches all root categories (parentCategory = null) that have at least one product,
+ * along with a limited set of products for each. Used for home page category sections.
+ */
+export const getCachedRootCategoriesWithProducts = (productsPerCategory = 10) => {
+  return unstable_cache(
+    async () => {
+      await connectToDatabase();
+
+      // 1. Get all root categories
+      const rootCategories = await Category.find({ parentCategory: null, isActive: true })
+        .sort({ createdAt: 1 })
+        .lean();
+
+      // 2. Get all descendant category IDs for each root
+      const allCategories = await Category.find({ isActive: true }).lean();
+
+      const getDescendantIds = (rootId: string): string[] => {
+        const ids: string[] = [rootId];
+        const children = allCategories.filter(
+          (c: any) => c.parentCategory?.toString() === rootId
+        );
+        for (const child of children) {
+          ids.push(...getDescendantIds(child._id.toString()));
+        }
+        return ids;
+      };
+
+      // 3. For each root category, fetch products
+      const results = [];
+      for (const root of rootCategories) {
+        const allStringIds = getDescendantIds(root._id.toString());
+        // Convert to ObjectIds so MongoDB $in query matches correctly
+        const allObjectIds = allStringIds.map(id => new mongoose.Types.ObjectId(id));
+        const products = await Product.find({
+          isPublished: true,
+          categories: { $in: allObjectIds }
+        })
+          .populate('categories')
+          .populate('brand')
+          .sort({ createdAt: -1 })
+          .limit(productsPerCategory)
+          .lean();
+
+        if (products.length > 0) {
+          results.push({
+            category: root,
+            products: serialize(products),
+          });
+        }
+      }
+
+      return serialize(results);
+    },
+    ['root-categories-with-products', productsPerCategory.toString()],
+    { revalidate: 31536000, tags: [CACHE_TAGS.products, CACHE_TAGS.categories] }
   )();
 };
 

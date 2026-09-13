@@ -1,13 +1,26 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Shirt, ShieldCheck, Award, Sparkles, HeartHandshake, ArrowRight } from 'lucide-react';
+import { 
+  Store, 
+  ShieldCheck, 
+  TrendingUp, 
+  Sparkles, 
+  Truck, 
+  Wallet, 
+  Layers, 
+  ArrowRight, 
+  Cpu, 
+  Globe, 
+  CheckCircle2,
+  Users
+} from 'lucide-react';
 import connectToDatabase from '@/lib/db';
 import GlobalSettings from '@/models/GlobalSettings';
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'About Us | Swapnobaz',
-  description: 'Swapnobaz - Premium menswear brand in Bangladesh. Explore our high-quality collection of T-shirts, Polo Shirts, Casual & Formal Shirts, and Hoodies designed for modern comfort.',
+  description: 'Swapnobaz is Bangladesh\'s leading B2B + B2C Multi-Vendor Dropshipping Platform & SaaS, empowering resellers and entrepreneurs to launch branded online stores with zero inventory capital.',
 };
 
 async function getSettings() {
@@ -17,6 +30,7 @@ async function getSettings() {
     if (!settings) {
       return {
         brandName: "Swapnobaz",
+        siteDescription: "Premium B2B + B2C Multi-Vendor Dropshipping Platform & SaaS",
         contact: {
           email: "support@swapnobaz.com",
           phone: "+8801234567890",
@@ -37,207 +51,193 @@ export default async function AboutPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-primary/10 to-transparent py-20 md:py-28 border-b border-primary/10">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]" />
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary mb-4">
-            <Sparkles className="h-3 w-3" /> Premium Menswear & Streetwear
-          </span>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-foreground mb-6">
-            About <span className="text-primary">Us</span>
+      {/* ── 1. Hero Section ── */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-background py-20 md:py-28 border-b border-border/60">
+        <div className="absolute top-0 right-1/4 -mt-20 h-96 w-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="container mx-auto px-4 max-w-5xl text-center relative z-10 space-y-6">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-4 py-1.5 rounded-full text-xs font-bold tracking-wide">
+            <Sparkles className="h-4 w-4" />
+            Next-Gen E-Commerce & Dropshipping Ecosystem
+          </div>
+          
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-foreground leading-tight">
+            Powering Independent Retailers & <span className="text-primary">Entrepreneurs</span>
           </h1>
+
           <p className="text-muted-foreground text-base md:text-lg max-w-3xl mx-auto leading-relaxed">
-            Driven by a passion for modern aesthetics and ultimate fabric comfort, <strong className="text-primary">{brandName}</strong> delivers premium quality clothing designed for the contemporary lifestyle. From classic polo shirts to cozy hoodies, we redefine casual sophistication.
+            <strong className="text-foreground">{brandName}</strong> is an advanced B2B + B2C multi-tenant dropshipping and retail platform in Bangladesh. We combine a unified master inventory, automated courier pipelines, and customizable reseller storefronts to help anyone launch a profitable e-commerce brand with zero upfront capital.
           </p>
+
+          <div className="flex flex-wrap gap-4 justify-center pt-2">
+            <Button asChild size="lg" className="font-bold rounded-xl shadow-lg hover:shadow-xl">
+              <Link href="/reseller/register" className="flex items-center gap-2">
+                <Store className="h-5 w-5" />
+                Join Reseller Program
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="rounded-xl">
+              <Link href="/shop">
+                Explore Catalog
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
-      {/* Stats / Key features */}
-      <section className="py-12 bg-card/30 backdrop-blur-sm border-b">
-        <div className="container mx-auto px-4">
+      {/* ── 2. Platform Stats ── */}
+      <section className="py-12 bg-card/60 backdrop-blur-sm border-b border-border/60">
+        <div className="container mx-auto px-4 max-w-5xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <div className="p-4 space-y-1">
-              <p className="text-3xl md:text-4xl font-extrabold text-primary">100%</p>
-              <p className="text-xs md:text-sm text-muted-foreground font-medium">Premium Combed Cotton</p>
+              <p className="text-3xl md:text-4xl font-black text-primary">0 ৳</p>
+              <p className="text-xs md:text-sm text-muted-foreground font-semibold">Inventory Capital Required</p>
             </div>
             <div className="p-4 space-y-1">
-              <p className="text-3xl md:text-4xl font-extrabold text-primary">10k+</p>
-              <p className="text-xs md:text-sm text-muted-foreground font-medium">Happy Customers</p>
+              <p className="text-3xl md:text-4xl font-black text-primary">64</p>
+              <p className="text-xs md:text-sm text-muted-foreground font-semibold">Districts Courier Coverage</p>
             </div>
             <div className="p-4 space-y-1">
-              <p className="text-3xl md:text-4xl font-extrabold text-primary">100%</p>
-              <p className="text-xs md:text-sm text-muted-foreground font-medium">Quality Guaranteed</p>
+              <p className="text-3xl md:text-4xl font-black text-primary">100%</p>
+              <p className="text-xs md:text-sm text-muted-foreground font-semibold">Automated Order Routing</p>
             </div>
             <div className="p-4 space-y-1">
-              <p className="text-3xl md:text-4xl font-extrabold text-primary">24/7</p>
-              <p className="text-xs md:text-sm text-muted-foreground font-medium">Customer Support</p>
+              <p className="text-3xl md:text-4xl font-black text-primary">24/7</p>
+              <p className="text-xs md:text-sm text-muted-foreground font-semibold">Instant Wallet Settlement</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Story & Mission Section */}
+      {/* ── 3. Mission & Vision ── */}
       <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
-                Connecting Premium Quality Fabrics with Modern Trends
-              </h2>
-              <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-                At Swapnobaz, we believe that style and comfort should go hand in hand. We curate each piece of apparel—whether it is an everyday t-shirt, a smart polo, a classic shirt, or a cozy hoodie—using top-grade fabric blends that ensure durability, breathability, and a premium feel.
-              </p>
-              <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-                Our materials are ethically sourced and processed under strict quality inspections. By prioritizing advanced stitching techniques, pre-shrunk fabrics, and high-quality dye retention, we ensure you receive long-lasting fashion essentials.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                <div className="flex gap-4">
-                  <div className="h-10 w-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <Shirt className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm mb-1">Our Mission</h4>
-                    <p className="text-xs text-muted-foreground">To deliver premium, comfortable, and trendy fashion essentials that empower men to look and feel their absolute best.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <div className="h-10 w-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <HeartHandshake className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-sm mb-1">Our Vision</h4>
-                    <p className="text-xs text-muted-foreground">To become Bangladesh's leading choice for premium casual and streetwear fashion by setting standard benchmarks for clothing quality and customer satisfaction.</p>
-                  </div>
-                </div>
+              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold">
+                <TrendingUp className="h-3.5 w-3.5" />
+                Our Vision & Mission
               </div>
-            </div>
 
-            {/* Premium Decorative visual container */}
-            <div className="relative aspect-square md:aspect-video lg:aspect-square max-w-md mx-auto w-full rounded-3xl overflow-hidden bg-gradient-to-br from-primary to-primary-foreground/30 p-1 shadow-2xl">
-              <div className="w-full h-full bg-slate-900 rounded-[22px] overflow-hidden relative flex flex-col justify-end p-8 text-white">
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent z-10" />
+              <h2 className="text-3xl md:text-4xl font-black tracking-tight text-foreground leading-tight">
+                Democratizing E-Commerce for Every Dreamer
+              </h2>
 
-                {/* Embedded dynamic design background */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.2)_10%,transparent_10.1%)] bg-[length:20px_20px]" />
+              <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
+                Traditional retail requires massive upfront capital for inventory stocking, warehouse rent, packaging, and delivery partnerships. {brandName} eliminates these barriers by providing a complete end-to-end dropshipping engine.
+              </p>
 
-                <div className="relative z-20 space-y-3">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-primary px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md self-start inline-block">
-                    Our Slogan
-                  </span>
-                  <blockquote className="text-lg md:text-xl font-bold leading-relaxed italic">
-                    "Define your style with ultimate comfort and premium craftsmanship."
-                  </blockquote>
-                  <p className="text-xs text-slate-300 font-medium">
-                    — The {brandName} Family
+              <div className="space-y-4 pt-2">
+                <div className="p-5 rounded-2xl bg-card border border-border/70 space-y-2">
+                  <h4 className="font-bold text-foreground text-base flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" /> Our Mission
+                  </h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-7">
+                    To connect verified suppliers and manufacturers with ambitious digital retailers, providing cutting-edge multi-tenant storefront technology and automated logistics to build successful e-commerce businesses.
+                  </p>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-card border border-border/70 space-y-2">
+                  <h4 className="font-bold text-foreground text-base flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-primary" /> Our Vision
+                  </h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pl-7">
+                    To become the premier B2B + B2C dropshipping SaaS platform in South Asia, fostering a vibrant ecosystem of self-reliant entrepreneurs and reliable consumer shopping.
                   </p>
                 </div>
               </div>
             </div>
+
+            {/* Visual Feature Card */}
+            <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-card via-background to-primary/10 p-8 border border-border/80 shadow-xl space-y-6">
+              <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                <Cpu className="h-6 w-6" />
+              </div>
+              <h3 className="text-2xl font-black text-foreground">How Swapnobaz Works</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Our platform operates on a reverse order pipeline:
+              </p>
+              <div className="space-y-3 font-mono text-xs text-foreground/90">
+                <div className="p-3 bg-muted/40 rounded-xl border border-border/60 flex items-center gap-3">
+                  <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-[11px] shrink-0">1</span>
+                  <span><strong>Storefront:</strong> Reseller showcases products under their brand & pricing.</span>
+                </div>
+                <div className="p-3 bg-muted/40 rounded-xl border border-border/60 flex items-center gap-3">
+                  <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-[11px] shrink-0">2</span>
+                  <span><strong>Mother Hub:</strong> Orders sync automatically to the central warehouse.</span>
+                </div>
+                <div className="p-3 bg-muted/40 rounded-xl border border-border/60 flex items-center gap-3">
+                  <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-[11px] shrink-0">3</span>
+                  <span><strong>Courier API:</strong> Packaged & dispatched with reseller branding.</span>
+                </div>
+                <div className="p-3 bg-muted/40 rounded-xl border border-border/60 flex items-center gap-3">
+                  <span className="h-6 w-6 rounded-full bg-primary text-primary-foreground font-bold flex items-center justify-center text-[11px] shrink-0">4</span>
+                  <span><strong>Settlement:</strong> Delivered orders credit profit instantly to wallet.</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Core Values Section */}
-      <section className="py-16 md:py-24 bg-primary/5 border-t border-b border-primary/10">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="text-3xl font-bold tracking-tight">Why Choose Us?</h2>
-            <p className="text-muted-foreground text-sm">
-              Discover what makes our menswear collection highly durable, stylish, and comfortable.
+      {/* ── 4. Core Pillars ── */}
+      <section className="py-16 md:py-24 bg-card/40 border-y border-border/60">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
+            <h2 className="text-3xl md:text-4xl font-black text-foreground">
+              Core Platform <span className="text-primary">Architecture</span>
+            </h2>
+            <p className="text-muted-foreground text-sm sm:text-base">
+              Engineered with enterprise-grade modularity and performance in mind
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-background p-8 rounded-2xl border shadow-sm space-y-4 text-center flex flex-col items-center hover:-translate-y-1 transition-all duration-300">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <ShieldCheck className="h-6 w-6" />
+            <div className="bg-card p-8 rounded-2xl border border-border hover:border-primary/40 transition-all shadow-sm space-y-4">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <Globe className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-bold">100% Premium Quality</h3>
-              <p className="text-muted-foreground text-xs leading-relaxed max-w-[280px]">
-                We maintain rigorous quality standards, from choosing top-grade combed yarns to precise stitching.
+              <h3 className="text-xl font-bold text-foreground">Multi-Tenant SaaS</h3>
+              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
+                Dynamic subdomain generation and custom domain mapping (CNAME) with isolated tenant data scoping in MongoDB.
               </p>
             </div>
 
-            <div className="bg-background p-8 rounded-2xl border shadow-sm space-y-4 text-center flex flex-col items-center hover:-translate-y-1 transition-all duration-300">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <Shirt className="h-6 w-6" />
+            <div className="bg-card p-8 rounded-2xl border border-border hover:border-primary/40 transition-all shadow-sm space-y-4">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <Layers className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-bold">Premium Fabric Blends</h3>
-              <p className="text-muted-foreground text-xs leading-relaxed max-w-[280px]">
-                Our clothing line features high GSM fabrics, pre-shrunk cotton, and highly durable stitching for long-lasting fit.
+              <h3 className="text-xl font-bold text-foreground">Real-Time Inventory Sync</h3>
+              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
+                Master product catalog with instant multi-store stock, pricing, image, and category synchronization.
               </p>
             </div>
 
-            <div className="bg-background p-8 rounded-2xl border shadow-sm space-y-4 text-center flex flex-col items-center hover:-translate-y-1 transition-all duration-300">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <Award className="h-6 w-6" />
+            <div className="bg-card p-8 rounded-2xl border border-border hover:border-primary/40 transition-all shadow-sm space-y-4">
+              <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <Truck className="h-6 w-6" />
               </div>
-              <h3 className="text-xl font-bold">Trusted Fit & Comfort</h3>
-              <p className="text-muted-foreground text-xs leading-relaxed max-w-[280px]">
-                Thousands of satisfied fashion-conscious clients across Bangladesh trust Swapnobaz for their daily wear.
+              <h3 className="text-xl font-bold text-foreground">Integrated Logistics</h3>
+              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">
+                Direct integration with leading national couriers (Steadfast, Pathao, RedX) for automated booking and live parcel tracking.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Developer Information Section */}
-      <section className="py-16 bg-gradient-to-b from-card to-background border-y border-muted relative overflow-hidden">
-        <div className="absolute inset-0 opacity-5 bg-[radial-gradient(circle_at_center,rgba(var(--primary-rgb),0.15)_1px,transparent_1px)] bg-[length:16px_16px]" />
+      {/* ── 5. Developer & Technology Section ── */}
+      <section className="py-16 bg-gradient-to-b from-card to-background border-b border-border/60 relative overflow-hidden">
         <div className="container mx-auto px-4 max-w-3xl text-center space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase">
-            <span>Technology Partner</span>
+            <span>Engineering & Development</span>
           </div>
           <h3 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">
-            Crafted by Jia Pixel
+            Crafted with Modern Next.js Architecture
           </h3>
           <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-            This high-performance e-commerce platform is designed, built, and optimized by Jia Pixel, the{' '}
-            <a
-              href="https://www.jiapixel.com"
-              target="_blank"
-              rel="noopener"
-              className="text-primary font-semibold hover:underline transition-all"
-            >
-              Leading Digital Agency In Bangladesh
-            </a>
-            . Our team is dedicated to engineering custom digital solutions with superior speed and seamless user experiences. As a specialized{' '}
-            <a
-              href="https://www.jiapixel.com/projects/premium-fashion-web-design-agency-for-iconic-brands"
-              target="_blank"
-              rel="noopener"
-              className="text-primary font-semibold hover:underline transition-all"
-            >
-              Fashion Web Design Agency
-            </a>
-            , we merge cutting-edge aesthetics with clean, scalable code to elevate retail brands and accelerate their digital growth.
+            {brandName} is powered by a high-performance technology stack utilizing Next.js App Router, Tailwind CSS design system, MongoDB, and Redis caching. Designed for lightning-fast speeds, dynamic themes, and enterprise scalability by <a href="https://www.jiapixel.com" target="_blank" rel="noopener" className="text-primary font-semibold hover:underline">Jia Pixel</a>.
           </p>
-        </div>
-      </section>
-
-      {/* Call To Action Section */}
-      <section className="py-20 text-center relative overflow-hidden">
-        <div className="container mx-auto px-4 relative z-10 space-y-6">
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight max-w-2xl mx-auto leading-tight">
-            Upgrade Your Wardrobe with Swapnobaz Essentials
-          </h2>
-          <p className="text-muted-foreground max-w-lg mx-auto text-sm">
-            Browse our collection today and choose the perfect outfits for your everyday look.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center pt-4">
-            <Link href="/shop" passHref>
-              <Button size="lg" className="rounded-full px-8 py-6 font-black uppercase text-sm tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
-                Shop Our Collection <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/contact" passHref>
-              <Button size="lg" variant="outline" className="rounded-full px-8 py-6 font-bold text-sm transition-all hover:bg-muted/50">
-                Contact Us
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
     </div>

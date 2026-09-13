@@ -2,34 +2,31 @@
 import { Metadata } from 'next';
 import { ChevronRight } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { headers } from 'next/headers';
+import Script from 'next/script';
 
-import dynamic from 'next/dynamic';
 import { HeroSlider } from '@/components/storefront/HeroSlider';
 import { FreeDeliveryBanner } from '@/components/storefront/FreeDeliveryBanner';
-import {
-  SectionSkeleton,
-  CategoryShowcaseSkeleton,
-  BannerSkeleton,
-  BlogRecentSkeleton,
-  FAQSectionSkeleton
-} from '@/components/storefront/Skeletons';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { ResellerCTA } from '@/components/storefront/ResellerCTA';
+import {
+  StreamedCategoryShowcase,
+  StreamedFeaturedProducts,
+  StreamedFlashSale,
+  StreamedComboOffer,
+  StreamedTrending,
+  StreamedRootCategorySections,
+  StreamedBlogRecent,
+  StreamedNewArrivals,
+  StreamedNewsletter,
+} from '@/components/storefront/HomePageSections';
 
-import { headers } from 'next/headers';
 import {
   getCachedBanners,
-  getCachedCategories,
-  getCachedProducts,
-  getTrendingProducts,
-  getCachedBlogs,
-  getCachedFAQs,
   getCachedSettings,
-  getCachedActiveCoupon
+  getCachedCategories,
 } from '@/lib/data-fetching';
 import { generateOrganizationSchema } from '@/lib/seo';
-import Script from 'next/script';
 
 const sanitizeForScript = (json: any) => {
   return JSON.stringify(json).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
@@ -75,94 +72,23 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// Lazy load components below the fold
-const CategoryShowcase = dynamic(() => import('@/components/storefront/CategoryShowcase').then(mod => mod.CategoryShowcase), {
-  loading: () => <CategoryShowcaseSkeleton />
-});
-
-const ProductCarouselSection = dynamic(() => import('@/components/storefront/ProductCarouselSection').then(mod => mod.ProductCarouselSection), {
-  loading: () => <SectionSkeleton />
-});
-
-const BlogRecent = dynamic(() => import('@/components/storefront/BlogRecent').then(mod => mod.BlogRecent), {
-  loading: () => <BlogRecentSkeleton />
-});
-
-const FAQSection = dynamic(() => import('@/components/storefront/FAQSection').then(mod => mod.FAQSection), {
-  loading: () => <FAQSectionSkeleton />
-});
-
-const ComboOfferBanner = dynamic(() => import('@/components/storefront/ComboOfferBanner').then(mod => mod.ComboOfferBanner), {
-  loading: () => <BannerSkeleton />
-});
-
-const NewsletterV2 = dynamic(() => import('@/components/storefront/NewsletterV2').then(mod => mod.NewsletterV2), {
-  loading: () => <BannerSkeleton />
-});
-
-async function getHomeData() {
-  try {
-    const [
-      banners,
-      categories,
-      featuredProducts,
-      newArrivals,
-      flashSale,
-      trending,
-      blogs,
-      faqs,
-      settings,
-      activeCoupon
-    ] = await Promise.all([
-      getCachedBanners(),
-      getCachedCategories(),
-      getCachedProducts({ isFeatured: true }, 10),
-      getCachedProducts({ isNewArrival: true }, 10),
-      getCachedProducts({ salePrice: { $exists: true, $ne: null } }, 10, { salePrice: 1 }),
-      getTrendingProducts(10),
-      getCachedBlogs(1),
-      getCachedFAQs(),
-      getCachedSettings(),
-      getCachedActiveCoupon()
-    ]);
-
-    return {
-      banners,
-      categories,
-      featuredProducts,
-      newArrivals,
-      flashSale,
-      trending,
-      blogs,
-      faqs: faqs && faqs.length > 0 ? faqs : [],
-      settings,
-      activeCoupon
-    };
-  } catch (error) {
-    console.error("Error fetching home data via cache:", error);
-    return {
-      banners: [],
-      categories: [],
-      featuredProducts: [],
-      newArrivals: [],
-      flashSale: [],
-      trending: [],
-      blogs: [],
-      faqs: []
-    };
-  }
-}
-
 export default async function Home() {
-  const data = await getHomeData();
+  // Only fetch above-the-fold critical data upfront.
+  // All other sections stream in independently via Suspense.
+  const [banners, settings, categories] = await Promise.all([
+    getCachedBanners(),
+    getCachedSettings(),
+    getCachedCategories(),
+  ]);
+
   const ui = {
-    hero: data.settings?.uiTemplates?.hero || 'v1',
-    categories: data.settings?.uiTemplates?.categories || 'v1',
-    productCard: data.settings?.uiTemplates?.productCard || 'v1',
-    layout: data.settings?.uiTemplates?.layout || 'v1'
+    hero: settings?.uiTemplates?.hero || 'v1',
+    categories: settings?.uiTemplates?.categories || 'v1',
+    productCard: settings?.uiTemplates?.productCard || 'v1',
+    layout: settings?.uiTemplates?.layout || 'v1',
   };
 
-  const orgSchema = data.settings ? await generateOrganizationSchema(data.settings) : null;
+  const orgSchema = settings ? await generateOrganizationSchema(settings) : null;
   const isLayoutV3 = ui.layout === 'v3';
 
   return (
@@ -174,16 +100,17 @@ export default async function Home() {
           dangerouslySetInnerHTML={{ __html: sanitizeForScript(orgSchema) }}
         />
       )}
+
       {/* 0. Free Delivery Announcement Bar */}
-      <FreeDeliveryBanner settings={data.settings} />
+      <FreeDeliveryBanner settings={settings} />
 
       {isLayoutV3 ? (
         <>
           <div className="container mx-auto max-w-[1400px] px-0 py-0 lg:px-4 lg:py-4 flex gap-6 items-start">
-            {/* Left Sticky Sidebar */}
+            {/* Left Sticky Sidebar — uses already-fetched categories */}
             <aside className="w-64 shrink-0 hidden lg:block sticky top-14 bg-card rounded-xl border border-border/80 shadow-sm p-4 overflow-y-auto max-h-[calc(100vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="flex flex-col gap-1.5">
-                {data.categories.map((category: any) => (
+                {categories.map((category: any) => (
                   <Link
                     key={category._id}
                     href={`/shop?category=${encodeURIComponent(category.slug)}`}
@@ -213,78 +140,37 @@ export default async function Home() {
               </div>
             </aside>
 
-            {/* Right Content Area */}
+            {/* Right Content Area — streamed sections */}
             <div className="flex-1 min-w-0 flex flex-col gap-6">
-              {/* 1. Hero Section */}
-              <HeroSlider banners={data.banners} style={ui.hero} layout={ui.layout} />
+              {/* 1. Hero (above-fold, instant) */}
+              <HeroSlider banners={banners} style={ui.hero} layout={ui.layout} />
 
-              {/* 4. Categories Showcase */}
-              <CategoryShowcase categories={data.categories} style={ui.categories} />
+              {/* 2. Categories Showcase */}
+              <StreamedCategoryShowcase style={ui.categories} />
 
-              {/* 8. Featured Products */}
-              {data.featuredProducts.length > 0 && (
-                <ProductCarouselSection
-                  title="Featured Collections"
-                  description="Explore our best-selling and most popular products hand-picked just for you."
-                  products={data.featuredProducts}
-                  viewAllLink="/shop?filter=featured"
-                  bgColor="bg-background"
-                  cardStyle={ui.productCard}
-                  layout={ui.layout}
-                />
-              )}
+              {/* 3. Featured Products */}
+              <StreamedFeaturedProducts cardStyle={ui.productCard} layout={ui.layout} />
 
+              {/* 4. Flash Sale */}
+              <StreamedFlashSale cardStyle={ui.productCard} layout={ui.layout} />
 
-              {/* 3. Flash Sale (Timed) */}
-              {data.flashSale.length > 0 && (
-                <ProductCarouselSection
-                  title="Flash Sale"
-                  products={data.flashSale}
-                  viewAllLink="/shop?filter=sale"
-                  isFlashSale={true}
-                  bgColor="bg-primary/5"
-                  cardStyle={ui.productCard}
-                  layout={ui.layout}
-                />
-              )}
-
-              {/* 7. Combo Discount Promotion */}
-              <ComboOfferBanner activeCoupon={data.activeCoupon} settings={data.settings} layout={ui.layout} />
+              {/* 5. Combo Offer Banner */}
+              <StreamedComboOffer settings={settings} layout={ui.layout} />
 
               {/* 6. Trending Products */}
-              {data.trending.length > 0 && (
-                <ProductCarouselSection
-                  title="Trending Now"
-                  description="The most popular items according to our community ratings and reviews."
-                  products={data.trending}
-                  viewAllLink="/shop?filter=trending"
-                  bgColor="bg-muted/20"
-                  cardStyle={ui.productCard}
-                  layout={ui.layout}
-                />
-              )}
+              <StreamedTrending cardStyle={ui.productCard} layout={ui.layout} />
 
-              {/* 9. Recent Blogs section */}
-              <BlogRecent blogs={data.blogs} />
+              {/* 7. Root Category Sections (Women, Men, Kids, etc.) */}
+              <StreamedRootCategorySections cardStyle={ui.productCard} layout={ui.layout} />
 
-              {/* 5. New Arrivals */}
-              {data.newArrivals.length > 0 && (
-                <ProductCarouselSection
-                  title="New Arrivals"
-                  description="Discover the latest additions to our collection. Stay ahead of the curve."
-                  products={data.newArrivals}
-                  viewAllLink="/shop?filter=new"
-                  bgColor="bg-background"
-                  cardStyle={ui.productCard}
-                  layout={ui.layout}
-                />
-              )}
+              {/* 8. Recent Blogs */}
+              <StreamedBlogRecent />
 
-              {/* 11. Newsletter V2 Integration */}
-              <NewsletterV2 layout={ui.layout} />
+              {/* 9. New Arrivals */}
+              <StreamedNewArrivals cardStyle={ui.productCard} layout={ui.layout} />
 
-              {/* 10. FAQ Accordion Section */}
-              <FAQSection faqs={data.faqs} />
+              {/* 10. Newsletter */}
+              <StreamedNewsletter layout={ui.layout} />
             </div>
           </div>
 
@@ -293,76 +179,35 @@ export default async function Home() {
         </>
       ) : (
         <>
-          {/* 1. Hero Section */}
-          <HeroSlider banners={data.banners} style={ui.hero} layout={ui.layout} />
+          {/* 1. Hero (above-fold, instant) */}
+          <HeroSlider banners={banners} style={ui.hero} layout={ui.layout} />
 
-          {/* 4. Categories Showcase */}
-          <CategoryShowcase categories={data.categories} style={ui.categories} />
+          {/* 2. Categories Showcase */}
+          <StreamedCategoryShowcase style={ui.categories} />
 
-          {/* 8. Featured Products */}
-          {data.featuredProducts.length > 0 && (
-            <ProductCarouselSection
-              title="Featured Collections"
-              description="Explore our best-selling and most popular products hand-picked just for you."
-              products={data.featuredProducts}
-              viewAllLink="/shop?filter=featured"
-              bgColor="bg-background"
-              cardStyle={ui.productCard}
-              layout={ui.layout}
-            />
-          )}
+          {/* 3. Featured Products */}
+          <StreamedFeaturedProducts cardStyle={ui.productCard} layout={ui.layout} />
 
+          {/* 4. Flash Sale */}
+          <StreamedFlashSale cardStyle={ui.productCard} layout={ui.layout} />
 
-          {/* 3. Flash Sale (Timed) */}
-          {data.flashSale.length > 0 && (
-            <ProductCarouselSection
-              title="Flash Sale"
-              products={data.flashSale}
-              viewAllLink="/shop?filter=sale"
-              isFlashSale={true}
-              bgColor="bg-primary/5"
-              cardStyle={ui.productCard}
-              layout={ui.layout}
-            />
-          )}
-
-          {/* 7. Combo Discount Promotion */}
-          <ComboOfferBanner activeCoupon={data.activeCoupon} settings={data.settings} layout={ui.layout} />
+          {/* 5. Combo Offer Banner */}
+          <StreamedComboOffer settings={settings} layout={ui.layout} />
 
           {/* 6. Trending Products */}
-          {data.trending.length > 0 && (
-            <ProductCarouselSection
-              title="Trending Now"
-              description="The most popular items according to our community ratings and reviews."
-              products={data.trending}
-              viewAllLink="/shop?filter=trending"
-              bgColor="bg-muted/20"
-              cardStyle={ui.productCard}
-              layout={ui.layout}
-            />
-          )}
+          <StreamedTrending cardStyle={ui.productCard} layout={ui.layout} />
 
-          {/* 9. Recent Blogs section */}
-          <BlogRecent blogs={data.blogs} />
+          {/* 7. Root Category Sections (Women, Men, Kids, etc.) */}
+          <StreamedRootCategorySections cardStyle={ui.productCard} layout={ui.layout} />
 
-          {/* 5. New Arrivals */}
-          {data.newArrivals.length > 0 && (
-            <ProductCarouselSection
-              title="New Arrivals"
-              description="Discover the latest additions to our collection. Stay ahead of the curve."
-              products={data.newArrivals}
-              viewAllLink="/shop?filter=new"
-              bgColor="bg-background"
-              cardStyle={ui.productCard}
-              layout={ui.layout}
-            />
-          )}
+          {/* 8. Recent Blogs */}
+          <StreamedBlogRecent />
 
-          {/* 11. Newsletter V2 Integration */}
-          <NewsletterV2 layout={ui.layout} />
+          {/* 9. New Arrivals */}
+          <StreamedNewArrivals cardStyle={ui.productCard} layout={ui.layout} />
 
-          {/* 10. FAQ Accordion Section */}
-          <FAQSection faqs={data.faqs} />
+          {/* 10. Newsletter */}
+          <StreamedNewsletter layout={ui.layout} />
 
           {/* Reseller CTA */}
           <ResellerCTA />
@@ -371,4 +216,3 @@ export default async function Home() {
     </div>
   );
 }
-

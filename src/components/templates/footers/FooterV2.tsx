@@ -97,7 +97,7 @@ export default function FooterV2() {
     ? settings.footerNavigation
     : [
       { label: 'Shop All', href: '/shop' },
-      { label: 'Factory Profile', href: '/factory-profile' },
+      { label: 'Become Reseller', href: '/reseller-program' },
       { label: 'New Arrivals', href: '/shop?filter=new' },
       { label: 'Order Tracking', href: '/track-order' },
       { label: 'Contact Support', href: '/contact' }
@@ -115,7 +115,7 @@ export default function FooterV2() {
               {settings?.brandName || 'Swapnobaz'}
             </Link>
             <p className="text-muted-foreground text-sm max-w-sm leading-relaxed font-medium">
-              Pushing the boundaries of design. Born in the heart of Dhaka, engineering for the world.
+              {settings?.siteDescription || 'Your premier destination for premium fashion, quality lifestyle products, and authentic shopping delivered right to your doorstep.'}
             </p>
 
             {/* PWA Download App Button */}

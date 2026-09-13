@@ -96,7 +96,7 @@ export default function NavbarV3() {
   const NAV_LINKS = [
     { label: 'Shop', href: '/shop' },
     { label: 'Curated', href: '/categories' },
-    { label: 'Factory Profile', href: '/factory-profile' },
+    { label: 'Become Reseller', href: '/reseller-program' },
     { label: 'Journal', href: '/blog' }
   ];
 

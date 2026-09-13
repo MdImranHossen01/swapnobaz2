@@ -1,92 +1,95 @@
 const mongoose = require('mongoose');
-const fs = require('fs');
-const path = require('path');
+require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env' });
 
-// Read .env.local file to get MONGODB_URI
-const envPath = path.join(__dirname, '../.env.local');
-let mongodbUri = '';
-
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
-  const match = envContent.match(/^MONGODB_URI=(.*)$/m);
-  if (match && match[1]) {
-    mongodbUri = match[1].trim().replace(/['"]/g, '');
-  }
-}
-
-if (!mongodbUri) {
-  mongodbUri = 'mongodb+srv://Swapnobaz:xI2QuBaFZsYQ5vRD@cluster0.e5n1hnl.mongodb.net/Swapnobaz';
-}
-
-console.log('Connecting to MongoDB...');
-
-const FAQSchema = new mongoose.Schema(
+const faqsData = [
   {
-    question: { type: String, required: true },
-    answer: { type: String, required: true },
-    order: { type: Number, default: 0 },
-    isActive: { type: Boolean, default: true },
-  },
-  { timestamps: true }
-);
-
-const FAQ = mongoose.models.FAQ || mongoose.model('FAQ', FAQSchema);
-
-const faqs = [
-  {
-    question: 'What type of products does Swapnobaz offer?',
-    answer: 'Swapnobaz offers premium and comfortable menswear. Our collection includes high-quality T-shirts, Polo Shirts, Casual & Formal Shirts, Hoodies, and comfortable Pants.',
+    question: 'How do I place an order on Swapnobaz?',
+    answer: 'To place an order, browse our collection, select your preferred size or color variant, and click "Add to Cart" or "Buy Now". Proceed to the checkout page, enter your delivery address and contact number, choose your payment method (Cash on Delivery or Mobile Banking), and confirm your order.',
     order: 1,
     isActive: true,
+    resellerId: null
   },
   {
-    question: 'How is the fabric quality of your clothing?',
-    answer: 'We use premium combed cotton, high-GSM pique knit, and top-grade woven fabrics for our products. Our fabrics are pre-shrunk, meaning they will not lose their shape or fade after washing.',
+    question: 'What payment methods do you accept?',
+    answer: 'We accept Cash on Delivery (COD) nationwide throughout Bangladesh, as well as secure instant digital payments via bKash, Nagad, Rocket, and Visa/MasterCard debit/credit cards.',
     order: 2,
     isActive: true,
+    resellerId: null
   },
   {
-    question: 'What are the shipping charges and delivery times?',
-    answer: 'Delivery within Dhaka takes 24 to 48 hours with a shipping fee of 60 BDT. For locations outside Dhaka, shipping is 120 BDT and delivery takes 3 to 5 business days.',
+    question: 'How long does delivery take and what are the shipping fees?',
+    answer: 'Inside Dhaka, deliveries are completed within 24–48 hours (standard charge: ৳60). Outside Dhaka delivery takes 2–4 business days (charge: ৳120). We also offer free delivery promotions on orders meeting the minimum order threshold.',
     order: 3,
     isActive: true,
+    resellerId: null
   },
   {
-    question: 'Can I exchange a product if the size does not fit?',
-    answer: 'Yes! We offer a hassle-free 7-day exchange policy. If you have size issues, you can exchange the item as long as it is unused, unwashed, and has its original tags attached.',
+    question: 'How can I track my shipment?',
+    answer: 'You can track your order in real-time by visiting our Order Tracking page (/track-order) and entering your Order ID and phone number. You will also receive automated SMS notifications as your package is dispatched.',
     order: 4,
     isActive: true,
+    resellerId: null
   },
   {
-    question: 'How do I choose the correct size?',
-    answer: 'We provide a detailed Size Chart on every product page. We highly recommend measuring your chest and length before placing an order to find your perfect fit.',
+    question: 'What is your return and refund policy?',
+    answer: 'We offer a hassle-free 7-day return and exchange policy. If an item is damaged, defective, or incorrectly sized upon delivery, contact our support team with your order details to arrange an immediate replacement or refund.',
     order: 5,
     isActive: true,
+    resellerId: null
+  },
+  {
+    question: 'What is the Swapnobaz Reseller Program?',
+    answer: 'The Swapnobaz Reseller Program allows entrepreneurs to start their own online dropshipping business with zero capital. You get your own branded storefront and custom domain to sell quality products at your own prices, while Swapnobaz handles inventory, packaging, and courier delivery.',
+    order: 6,
+    isActive: true,
+    resellerId: null
+  },
+  {
+    question: 'How do I register as a reseller?',
+    answer: 'Joining as a reseller is 100% free with no membership fees. Simply visit /reseller/register, fill in your store name, subdomain, and contact details, and submit your registration to get started right away.',
+    order: 7,
+    isActive: true,
+    resellerId: null
+  },
+  {
+    question: 'How do resellers receive their profit payouts?',
+    answer: 'Whenever an order placed through your reseller store is successfully delivered to the customer, your profit margin is credited instantly to your Reseller Wallet. You can withdraw your earnings anytime directly to your bKash, Nagad, or Bank account.',
+    order: 8,
+    isActive: true,
+    resellerId: null
+  },
+  {
+    question: 'Are all products authentic and quality checked?',
+    answer: 'Yes! All items listed in our catalog are directly sourced from verified manufacturers and undergo comprehensive quality checks prior to shipment to ensure complete customer satisfaction.',
+    order: 9,
+    isActive: true,
+    resellerId: null
+  },
+  {
+    question: 'How can I contact customer support?',
+    answer: 'Our customer support team is available 6 days a week (9:00 AM to 10:00 PM). You can reach us via our Contact Us page (/contact), email us at support@swapnobaz.com, or call our direct customer helpline.',
+    order: 10,
+    isActive: true,
+    resellerId: null
   }
 ];
 
 async function seed() {
   try {
-    await mongoose.connect(mongodbUri);
-    console.log('Connected to MongoDB successfully.');
-
-    // Clear existing FAQs
-    const deleteResult = await FAQ.deleteMany({});
-    console.log(`Cleared ${deleteResult.deletedCount} existing FAQs.`);
-
-    // Insert new FAQs
-    const insertResult = await FAQ.insertMany(faqs);
-    console.log(`Seeded ${insertResult.length} FAQs successfully:`);
-    insertResult.forEach((f, i) => {
-      console.log(`[FAQ ${i + 1}] Question: "${f.question}"`);
-    });
-
-  } catch (error) {
-    console.error('Seeding error:', error);
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/swapnobaz';
+    await mongoose.connect(uri);
+    const db = mongoose.connection.db;
+    
+    await db.collection('faqs').deleteMany({ resellerId: null });
+    const result = await db.collection('faqs').insertMany(
+      faqsData.map(f => ({ ...f, createdAt: new Date(), updatedAt: new Date() }))
+    );
+    console.log('Successfully seeded FAQs count:', result.insertedCount);
+  } catch (err) {
+    console.error('Seed error:', err);
   } finally {
     await mongoose.disconnect();
-    console.log('Disconnected from MongoDB.');
-    process.exit(0);
   }
 }
 

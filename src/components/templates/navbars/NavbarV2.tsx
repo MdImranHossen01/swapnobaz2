@@ -52,7 +52,7 @@ import { MobileMenu } from '@/components/layout/MobileMenu';
 const navItems = [
   { href: '/', label: 'Home' },
   { href: '/shop', label: 'Shop' },
-  { href: '/factory-profile', label: 'Factory Profile' },
+  { href: '/reseller-program', label: 'Become Reseller' },
   { href: '/blog', label: 'Blogs' },
   { href: '/contact', label: 'Contact' },
 ];

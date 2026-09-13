@@ -110,7 +110,7 @@ export default function FooterV1() {
     ? settings.footerNavigation
     : [
       { label: 'Shop All', href: '/shop' },
-      { label: 'Factory Profile', href: '/factory-profile' },
+      { label: 'Become Reseller', href: '/reseller-program' },
       { label: 'New Arrivals', href: '/shop?filter=new' },
       { label: 'Order Tracking', href: '/track-order' },
       { label: 'Contact Support', href: '/contact' }
@@ -123,9 +123,8 @@ export default function FooterV1() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="flex flex-col items-center text-center md:items-start md:text-left gap-4 lg:col-span-2">
             <Logo textClassName="text-xl md:text-2xl whitespace-nowrap" />
-            <p className="text-sm text-muted-foreground w-full md:w-4/5">
-              If you can dream it, you can do it.
-              So, our dream is best clothing for our customers
+            <p className="text-sm text-muted-foreground w-full md:w-4/5 leading-relaxed">
+              {settings?.siteDescription || 'Your premier destination for premium fashion, quality lifestyle products, and authentic shopping delivered right to your doorstep.'}
             </p>
 
             {/* PWA Download App Button */}
@@ -155,6 +154,9 @@ export default function FooterV1() {
           <div className="flex flex-col items-center text-center md:items-start md:text-left md:pt-3">
             <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-foreground">Information</h2>
             <ul className="grid gap-2 text-sm text-muted-foreground">
+              <li>
+                <Link href="/faq" className="hover:text-primary transition-colors">FAQs</Link>
+              </li>
               <li>
                 <Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
               </li>
