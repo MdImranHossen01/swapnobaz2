@@ -108,7 +108,6 @@ export default function ResellerSalesReportPage() {
                   <th className="p-2.5 font-bold text-foreground">Total Orders</th>
                   <th className="p-2.5 font-bold text-emerald-600">Delivered</th>
                   <th className="p-2.5 font-bold text-primary">Sales Volume</th>
-                  <th className="p-2.5 font-bold text-muted-foreground">Avg. Profit Margin</th>
                   <th className="p-2.5 font-bold text-amber-600">Earned Commission</th>
                   <th className="p-2.5 font-bold text-foreground text-right">Wallet Balance</th>
                 </tr>
@@ -116,7 +115,7 @@ export default function ResellerSalesReportPage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin" />
                         <span>Loading reseller report...</span>
@@ -140,16 +139,13 @@ export default function ResellerSalesReportPage() {
                       <td className="p-2.5 font-bold text-foreground">{r.totalOrders}</td>
                       <td className="p-2.5 font-bold text-emerald-600">{r.deliveredOrders}</td>
                       <td className="p-2.5 font-bold text-primary">{fmt(r.totalSales)}</td>
-                      <td className="p-2.5 font-semibold text-muted-foreground">
-                        {r.avgProfitMargin > 0 ? `${r.avgProfitMargin}%` : '0%'}
-                      </td>
                       <td className="p-2.5 font-bold text-amber-600">{fmt(r.totalEarnedCommission ?? r.earnedCommission)}</td>
                       <td className="p-2.5 font-bold text-right text-foreground">{fmt(r.walletBalance)}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="p-6 text-center text-muted-foreground">No reseller records found.</td>
+                    <td colSpan={7} className="p-6 text-center text-muted-foreground">No reseller records found.</td>
                   </tr>
                 )}
               </tbody>
@@ -196,7 +192,6 @@ export default function ResellerSalesReportPage() {
                   />
                   <ReportRow label="Total Orders" value={`${r.totalOrders} (Delivered: ${r.deliveredOrders})`} />
                   <ReportRow label="Sales Volume" value={<span className="font-bold text-primary">{fmt(r.totalSales)}</span>} />
-                  <ReportRow label="Avg. Profit Margin" value={`${r.avgProfitMargin > 0 ? r.avgProfitMargin : 0}%`} />
                   <ReportRow label="Earned Commission" value={<span className="font-bold text-amber-600">{fmt(r.totalEarnedCommission ?? r.earnedCommission)}</span>} />
                 </ReportCard>
               ))

@@ -78,9 +78,6 @@ export async function GET(req: NextRequest) {
     const resellerData = resellers.map((reseller: any) => {
       const orderInfo = ordersMap.get(reseller._id.toString()) || { totalOrders: 0, totalSales: 0, deliveredOrders: 0 };
       const totalEarned = payoutsMap.get(reseller._id.toString()) || 0;
-      const avgProfitMargin = orderInfo.totalSales > 0 
-        ? Number(((totalEarned / orderInfo.totalSales) * 100).toFixed(1))
-        : 0;
 
       return {
         _id: reseller._id,
@@ -89,8 +86,6 @@ export async function GET(req: NextRequest) {
         ownerName: reseller.userId?.name || 'Unknown',
         ownerPhone: reseller.userId?.phone || '',
         status: reseller.status,
-        commissionRate: reseller.commissionRate || 10,
-        avgProfitMargin,
         walletBalance: reseller.walletBalance || 0,
         pendingBalance: reseller.pendingBalance || 0,
         totalOrders: orderInfo.totalOrders,
