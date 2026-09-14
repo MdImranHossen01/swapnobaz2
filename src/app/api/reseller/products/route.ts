@@ -3,8 +3,10 @@ import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
 import Reseller from '@/models/Reseller';
 import Product from '@/models/Product';
+import ResellerProduct from '@/models/ResellerProduct';
 import { generateUniqueSlug } from '@/lib/slugify-server';
 import { slugify } from '@/lib/slugify';
+import { addProductToReseller } from '@/lib/syncEngine';
 
 import GlobalSettings from '@/models/GlobalSettings';
 
@@ -114,6 +116,10 @@ export async function POST(request: NextRequest) {
       uploadedBy: resellerId, // Set reseller ID as the owner
     });
 
+    // Auto-link product to reseller's own storefront so it shows up in their store immediately
+    const retailPrice = parsedSalePrice && parsedSalePrice > 0 ? parsedSalePrice : parsedPrice;
+    await addProductToReseller(resellerId.toString(), newProduct._id.toString(), retailPrice);
+
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -180,6 +186,25 @@ export async function PATCH(request: NextRequest) {
     );
 
     if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+
+    // Sync the reseller's own storefront listing with updated product data
+    await ResellerProduct.updateOne(
+      { resellerId, productId: product._id },
+      {
+        $set: {
+          retailPrice: product.salePrice && product.salePrice > 0 ? product.salePrice : product.price,
+          name: product.name,
+          slug: product.slug,
+          images: product.images ?? [],
+          stock: product.stock ?? 0,
+          purchasePrice: product.purchasePrice ?? 0,
+          motherPrice: product.price ?? 0,
+          isAvailableOnMother: product.isPublished ?? true,
+          syncedAt: new Date(),
+        },
+      }
+    );
+
     return NextResponse.json({ product });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

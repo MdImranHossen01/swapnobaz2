@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { Plus, Edit, Trash, Loader2, Search, Package } from 'lucide-react';
+import { Plus, Edit, Trash, Loader2, Search, Package, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -71,6 +71,25 @@ function ProductsContent() {
     else toast.error('Failed to update');
   };
 
+  const [syncing, setSyncing] = useState(false);
+  const syncOwnProducts = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/reseller/products/sync-own', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`✅ ${data.synced} টি প্রোডাক্ট আপনার স্টোরে sync হয়েছে!`);
+        fetchProducts();
+      } else {
+        toast.error(data.error || 'Sync failed');
+      }
+    } catch {
+      toast.error('Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
@@ -78,11 +97,24 @@ function ProductsContent() {
           <h2 className="text-xl md:text-2xl font-bold tracking-tight">My Store Products</h2>
           <p className="text-xs md:text-sm text-muted-foreground">Products available in your store ({total} total)</p>
         </div>
-        <Link href="/reseller/products/new">
-          <Button size="sm" className="h-9 self-start sm:self-auto text-xs md:text-sm">
-            <Plus className="mr-1.5 h-4 w-4" /> Add Product
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-9 self-start sm:self-auto text-xs md:text-sm border-primary text-primary hover:bg-primary/10"
+            onClick={syncOwnProducts}
+            disabled={syncing}
+            title="আপনার সব প্রোডাক্ট store-এ sync করুন"
+          >
+            {syncing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-1.5 h-4 w-4" />}
+            Sync to Store
           </Button>
-        </Link>
+          <Link href="/reseller/products/new">
+            <Button size="sm" className="h-9 self-start sm:self-auto text-xs md:text-sm">
+              <Plus className="mr-1.5 h-4 w-4" /> Add Product
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <form onSubmit={handleSearch} className="flex gap-2 px-1 md:px-0 max-w-sm">
