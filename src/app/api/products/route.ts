@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import connectToDatabase from '@/lib/db';
 import Product from '@/models/Product';
 import { auth } from '@/auth';
-import { slugify } from '@/lib/slugify';
 import { generateUniqueSlug } from '@/lib/slugify-server';
 
 // GET all products
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, slug, description, sku, categories, brand, tags, images, attributes, variants, batches, isFeatured, isNewArrival, isPublished, isShared, discountRate } = body;
-    let { price, salePrice, purchasePrice, resellerPrice, stock } = body;
+    const { price, salePrice, purchasePrice, resellerPrice, stock } = body;
 
     // Numeric validation and coercion
     const rawPrice = parseFloat(price);
@@ -129,8 +129,8 @@ export async function POST(req: NextRequest) {
 
     // Validate required fields and price
     const hasVariants = variants && variants.length > 0;
-    if (!name || !slug || !description || 
-        (!hasVariants && (!sku || isNaN(parsedPrice) || parsedPrice <= 0))) {
+    if (!name || !slug || !description ||
+      (!hasVariants && (!sku || isNaN(parsedPrice) || parsedPrice <= 0))) {
       return NextResponse.json({
         message: 'Invalid or missing required fields. When not using variants, Price must be a positive number and SKU is required.'
       }, { status: 400 });

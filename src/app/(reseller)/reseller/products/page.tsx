@@ -1,4 +1,5 @@
-﻿'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client';
 
 import * as React from 'react';
 import { useState, useEffect, Suspense } from 'react';
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import {
   Plus, Edit, Trash, Loader2, Search, Package, RefreshCw,
-  MoreHorizontal, ChevronDown, ChevronRight, PackagePlus,
+  MoreHorizontal, ChevronDown, ChevronRight, PackagePlus, Store,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -254,11 +255,24 @@ function ProductsContent() {
                             >
                               {product.name}
                             </Link>
-                            {product.brand && (
-                              <span className="text-[10px] text-muted-foreground font-semibold">
-                                Brand: <span className="text-foreground">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>
-                              </span>
-                            )}
+                            <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                              {product.brand && (
+                                <span className="text-muted-foreground font-semibold flex items-center gap-0.5">
+                                  Brand: <span className="text-foreground">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>
+                                </span>
+                              )}
+                              {product.uploadedBy ? (
+                                <span
+                                  className="inline-flex items-center gap-1 font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 max-w-[120px] truncate"
+                                  title={`Reseller: ${product.uploadedBy.storeName}`}
+                                >
+                                  <Store className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="truncate">{product.uploadedBy.storeName}</span>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">Admin</span>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">{product.sku || '-'}</TableCell>
@@ -394,7 +408,22 @@ function ProductsContent() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-semibold text-xs leading-snug line-clamp-2 text-foreground">{product.name}</h4>
-                      <span className="text-[10px] text-muted-foreground font-mono block">SKU: {product.sku || '-'}</span>
+                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground mt-0.5">
+                        <span className="font-mono">SKU: {product.sku || '-'}</span>
+                        {product.brand && (
+                          <span>
+                            • {typeof product.brand === 'object' ? product.brand.name : product.brand}
+                          </span>
+                        )}
+                        {product.uploadedBy ? (
+                          <span className="inline-flex items-center gap-1 font-semibold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px]">
+                            <Store className="h-2.5 w-2.5 shrink-0" />
+                            {product.uploadedBy.storeName}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">• Admin</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {product.salePrice && product.salePrice < product.price ? (
                           <>

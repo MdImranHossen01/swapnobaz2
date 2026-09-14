@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     if (search) query.name = { $regex: search, $options: 'i' };
 
     const [products, total] = await Promise.all([
-      Product.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Product.find(query).populate('uploadedBy', 'storeName subdomain').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
       Product.countDocuments(query),
     ]);
 

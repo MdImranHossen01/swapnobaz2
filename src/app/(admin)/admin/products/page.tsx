@@ -463,7 +463,6 @@ function ProductsContent() {
                 <TableHead className="min-w-[150px]">Total Stock (Cumulative)</TableHead>
                 <TableHead>Views</TableHead>
                 <TableHead>Sales</TableHead>
-                <TableHead>Added By</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -471,13 +470,13 @@ function ProductsContent() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="h-24 text-center">
+                  <TableCell colSpan={11} className="h-24 text-center">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={12} className="h-24 text-center">
+                  <TableCell colSpan={11} className="h-24 text-center">
                     No products found.
                   </TableCell>
                 </TableRow>
@@ -533,11 +532,25 @@ function ProductsContent() {
                             >
                               {product.name}
                             </Link>
-                            {product.brand && (
-                              <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
-                                Brand: <span className="text-foreground">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>
-                              </span>
-                            )}
+                            <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+                              {product.brand && (
+                                <span className="text-muted-foreground font-semibold flex items-center gap-1">
+                                  Brand: <span className="text-foreground">{typeof product.brand === 'object' ? product.brand.name : product.brand}</span>
+                                </span>
+                              )}
+                              {product.uploadedBy ? (
+                                <Link
+                                  href={`/admin/users?search=${encodeURIComponent(product.uploadedBy.storeName)}`}
+                                  className="inline-flex items-center gap-1 font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 hover:opacity-80 transition-opacity max-w-[120px] truncate"
+                                  title={`Reseller: ${product.uploadedBy.storeName}`}
+                                >
+                                  <Store className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="truncate">{product.uploadedBy.storeName}</span>
+                                </Link>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">Admin</span>
+                              )}
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">{product.sku}</TableCell>
@@ -587,20 +600,6 @@ function ProductsContent() {
                         </TableCell>
                         <TableCell>
                           <span className="font-bold text-primary">{product.totalSales ?? 0}</span>
-                        </TableCell>
-                        <TableCell>
-                          {product.uploadedBy ? (
-                            <Link
-                              href={`/admin/users?search=${encodeURIComponent(product.uploadedBy.storeName)}`}
-                              className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 hover:opacity-80 transition-opacity max-w-[120px] truncate"
-                              title={`Reseller: ${product.uploadedBy.storeName}`}
-                            >
-                              <Store className="h-3 w-3 shrink-0" />
-                              <span className="truncate">{product.uploadedBy.storeName}</span>
-                            </Link>
-                          ) : (
-                            <span className="text-[11px] text-muted-foreground">Admin</span>
-                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={product.isPublished ? 'default' : 'secondary'}>
@@ -720,12 +719,20 @@ function ProductsContent() {
                       >
                         {product.name}
                       </Link>
-                      <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-muted-foreground">
                         {product.sku && <span className="font-mono">{product.sku}</span>}
                         {product.brand && (
                           <span className="truncate">
                             • {typeof product.brand === 'object' ? product.brand.name : product.brand}
                           </span>
+                        )}
+                        {product.uploadedBy ? (
+                          <span className="inline-flex items-center gap-1 font-semibold px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-[10px]">
+                            <Store className="h-2.5 w-2.5 shrink-0" />
+                            {product.uploadedBy.storeName}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground">• Admin</span>
                         )}
                       </div>
                     </div>
