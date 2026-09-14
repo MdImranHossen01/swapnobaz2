@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
           ownerPhone: r.userId?.phone || '',
           walletBalance: r.walletBalance || 0,
           pendingBalance: r.pendingBalance || 0,
-          commissionRate: r.commissionRate || 10,
+          commissionRate: r.commissionRate ?? 10,
           status: r.status
         })),
         pendingPayouts
