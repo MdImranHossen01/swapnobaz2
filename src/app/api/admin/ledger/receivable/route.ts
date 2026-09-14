@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
       // 3. Pending/Delivered Unpaid Orders (COD / In-transit receivables)
       Order.find({
         paymentStatus: { $ne: 'Paid' },
-        status: { $in: ['Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
+        status: { $in: ['Order Placed', 'Confirmed', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
         deletedAt: null
       })
         .select('shortId customer totalAmount status paymentMethod shippingDetails shippingAddress createdAt')
