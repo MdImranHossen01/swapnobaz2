@@ -24,7 +24,8 @@ import {
   Layers,
   ChevronDown,
   ChevronRight,
-  PackagePlus
+  PackagePlus,
+  Store
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +67,7 @@ interface AdminProduct {
   description?: string;
   categories?: any[];
   variants?: any[];
+  uploadedBy?: { _id: string; storeName: string; subdomain: string } | null;
 }
 
 function ProductsContent() {
@@ -461,6 +463,7 @@ function ProductsContent() {
                 <TableHead className="min-w-[150px]">Total Stock (Cumulative)</TableHead>
                 <TableHead>Views</TableHead>
                 <TableHead>Sales</TableHead>
+                <TableHead>Added By</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -468,13 +471,13 @@ function ProductsContent() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-24 text-center">
+                  <TableCell colSpan={12} className="h-24 text-center">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" />
                   </TableCell>
                 </TableRow>
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="h-24 text-center">
+                  <TableCell colSpan={12} className="h-24 text-center">
                     No products found.
                   </TableCell>
                 </TableRow>
@@ -584,6 +587,20 @@ function ProductsContent() {
                         </TableCell>
                         <TableCell>
                           <span className="font-bold text-primary">{product.totalSales ?? 0}</span>
+                        </TableCell>
+                        <TableCell>
+                          {product.uploadedBy ? (
+                            <Link
+                              href={`/admin/users?search=${encodeURIComponent(product.uploadedBy.storeName)}`}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 hover:opacity-80 transition-opacity max-w-[120px] truncate"
+                              title={`Reseller: ${product.uploadedBy.storeName}`}
+                            >
+                              <Store className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{product.uploadedBy.storeName}</span>
+                            </Link>
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground">Admin</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge variant={product.isPublished ? 'default' : 'secondary'}>

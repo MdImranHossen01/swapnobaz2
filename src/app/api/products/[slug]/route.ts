@@ -66,7 +66,7 @@ export async function PUT(
     const allowedFields = [
       'name', 'slug', 'description', 'price', 'salePrice', 'purchasePrice', 'resellerPrice', 'discountRate',
       'sku', 'stock', 'categories', 'brand', 'tags', 'images', 'batches',
-      'attributes', 'variants', 'isFeatured', 'isNewArrival', 'isPublished', 'isShared', 'deliveryCharge'
+      'attributes', 'variants', 'isFeatured', 'isNewArrival', 'isFlashSale', 'isPublished', 'isShared', 'deliveryCharge'
     ];
     const safeUpdate: any = {};
 
