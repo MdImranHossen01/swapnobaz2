@@ -118,7 +118,7 @@ export default function FooterV1() {
   const footerNav = rawFooterNav.filter((link: any) => link.label !== 'Contact Support');
 
   return (
-    <footer className="border-t bg-background pt-12 mt-10">
+    <footer className="border-t bg-background pt-6 md:pt-12 mt-4 md:mt-10">
       <div className="container mx-auto px-4 md:px-0">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
           <div className="flex flex-col items-center text-center md:items-start md:text-left gap-4 lg:col-span-2">
