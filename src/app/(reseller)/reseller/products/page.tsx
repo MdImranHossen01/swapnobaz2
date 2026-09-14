@@ -22,6 +22,14 @@ import Swal from 'sweetalert2';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 
 function calculateCumulativeStock(product: any): number {
   if (product.variants && product.variants.length > 0) {
@@ -42,7 +50,105 @@ function ProductsContent() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
 
+  // Add Stock Modal State
+  const [addStockModalOpen, setAddStockModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [stockToAddTopLevel, setStockToAddTopLevel] = useState<number>(0);
+  const [variantStockUpdates, setVariantStockUpdates] = useState<{ [variantId: string]: number }>({});
+  const [batchNumber, setBatchNumber] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [submittingStock, setSubmittingStock] = useState(false);
+
   const limit = 10;
+
+  // Open Add Stock Modal
+  const openAddStockModal = (product: any) => {
+    setSelectedProduct(product);
+    setStockToAddTopLevel(0);
+    const initialVariants: { [id: string]: number } = {};
+    if (product.variants && product.variants.length > 0) {
+      product.variants.forEach((v: any) => {
+        initialVariants[v._id || `${v.color}-${v.size}`] = 0;
+      });
+    }
+    setVariantStockUpdates(initialVariants);
+    setBatchNumber(`BATCH-${new Date().getFullYear()}${(new Date().getMonth()+1).toString().padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`);
+    setExpiryDate('');
+    setAddStockModalOpen(true);
+  };
+
+  // Handle Add Stock Submit
+  const handleSaveStock = async () => {
+    if (!selectedProduct) return;
+    setSubmittingStock(true);
+
+    try {
+      const hasVariants = selectedProduct.variants && selectedProduct.variants.length > 0;
+      let updatedVariants = undefined;
+      let updatedStock = selectedProduct.stock || 0;
+      const updatedBatches = Array.isArray(selectedProduct.batches) ? [...selectedProduct.batches] : [];
+
+      if (hasVariants) {
+        let totalVariantStock = 0;
+        updatedVariants = selectedProduct.variants.map((v: any) => {
+          const key = v._id || `${v.color}-${v.size}`;
+          const addAmount = Number(variantStockUpdates[key]) || 0;
+          const newVarStock = (v.stock || 0) + addAmount;
+          totalVariantStock += newVarStock;
+
+          const varBatches = Array.isArray(v.batches) ? [...v.batches] : [];
+          if (addAmount > 0 && batchNumber) {
+            varBatches.push({
+              batchNumber,
+              expiryDate: expiryDate ? new Date(expiryDate) : undefined,
+              stock: addAmount
+            });
+          }
+
+          return {
+            ...v,
+            stock: newVarStock,
+            batches: varBatches
+          };
+        });
+
+        updatedStock = totalVariantStock;
+      } else {
+        const addAmount = Number(stockToAddTopLevel) || 0;
+        updatedStock = (selectedProduct.stock || 0) + addAmount;
+        if (addAmount > 0 && batchNumber) {
+          updatedBatches.push({
+            batchNumber,
+            expiryDate: expiryDate ? new Date(expiryDate) : undefined,
+            stock: addAmount
+          });
+        }
+      }
+
+      const res = await fetch(`/api/reseller/products?id=${selectedProduct._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stock: updatedStock,
+          ...(hasVariants && { variants: updatedVariants }),
+          ...(!hasVariants && { batches: updatedBatches })
+        })
+      });
+
+      if (res.ok) {
+        toast.success(`Stock updated successfully for ${selectedProduct.name}`);
+        setAddStockModalOpen(false);
+        fetchProducts(undefined, currentPage);
+      } else {
+        toast.error('Failed to update stock');
+      }
+    } catch (error) {
+      console.error('Error saving stock:', error);
+      toast.error('An error occurred while saving stock');
+    } finally {
+      setSubmittingStock(false);
+    }
+  };
 
   const fetchProducts = async (signal?: AbortSignal, page = currentPage) => {
     try {
@@ -335,6 +441,9 @@ function ProductsContent() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem onClick={() => openAddStockModal(product)} className="text-primary font-semibold gap-2 cursor-pointer">
+                                <PackagePlus className="h-4 w-4" /> Add Stock
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => router.push(`/reseller/products/${product._id}/edit`)} className="gap-2">
                                 <Edit className="h-4 w-4" /> Edit
                               </DropdownMenuItem>
@@ -453,6 +562,14 @@ function ProductsContent() {
                       </button>
                     </div>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs px-2 text-primary font-semibold"
+                        onClick={() => openAddStockModal(product)}
+                      >
+                        <PackagePlus className="h-3.5 w-3.5 mr-1" /> +Stock
+                      </Button>
                       <Link href={`/reseller/products/${product._id}/edit`}>
                         <Button variant="outline" size="sm" className="h-7 text-xs px-2">
                           <Edit className="h-3 w-3 mr-1" />Edit
@@ -478,6 +595,100 @@ function ProductsContent() {
           <Button variant="outline" size="sm" className="h-8 text-xs px-2.5" disabled={currentPage >= pagination.totalPages} onClick={() => handlePageChange(currentPage + 1)}>Next</Button>
         </div>
       )}
+
+      {/* Add Stock Modal */}
+      <Dialog open={addStockModalOpen} onOpenChange={setAddStockModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackagePlus className="h-5 w-5 text-primary" />
+              Add Stock: {selectedProduct?.name}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="space-y-1">
+                <Label className="text-xs">Batch Number</Label>
+                <Input
+                  value={batchNumber}
+                  onChange={(e) => setBatchNumber(e.target.value)}
+                  className="h-8 text-xs font-mono"
+                  placeholder="e.g. BATCH-2026-01"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Expiry Date (Optional)</Label>
+                <Input
+                  type="date"
+                  value={expiryDate}
+                  onChange={(e) => setExpiryDate(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+
+            {selectedProduct?.variants && selectedProduct.variants.length > 0 ? (
+              <div className="space-y-2 border-t pt-2">
+                <Label className="text-xs font-bold text-foreground">Add Quantity per Variant (কালার/সাইজ অনুযায়ী স্টক যোগ করুন)</Label>
+                <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
+                  {selectedProduct.variants.map((v: any) => {
+                    const key = v._id || `${v.color}-${v.size}`;
+                    return (
+                      <div key={key} className="flex items-center justify-between gap-2 p-2 border rounded-md bg-muted/20 text-xs">
+                        <div>
+                          <div className="font-bold text-foreground">{v.color || 'Variant'} {v.size ? `(${v.size})` : ''}</div>
+                          <div className="text-[11px] text-muted-foreground">Current Stock: {v.stock || 0} pcs</div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-bold">+</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={variantStockUpdates[key] || 0}
+                            onChange={(e) => {
+                              const val = Math.max(0, parseInt(e.target.value) || 0);
+                              setVariantStockUpdates(prev => ({ ...prev, [key]: val }));
+                            }}
+                            className="h-8 w-20 text-right text-xs"
+                          />
+                          <span className="text-[11px] text-muted-foreground">pcs</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2 border-t pt-2">
+                <Label className="text-xs font-bold">Quantity to Add (যোগ করার পরিমাণ)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="1"
+                    value={stockToAddTopLevel}
+                    onChange={(e) => setStockToAddTopLevel(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="h-9 text-xs"
+                    placeholder="Enter stock quantity to add"
+                  />
+                  <span className="text-xs text-muted-foreground">pcs</span>
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Current Stock: {selectedProduct?.stock || 0} pcs
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setAddStockModalOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleSaveStock} disabled={submittingStock} className="font-bold">
+              {submittingStock ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              Confirm & Add Stock
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -145,7 +145,7 @@ export async function PATCH(request: NextRequest) {
 
     const allowedFields = [
       'name', 'slug', 'description', 'price', 'salePrice', 'purchasePrice', 'discountRate',
-      'sku', 'stock', 'categories', 'tags', 'images',
+      'sku', 'stock', 'categories', 'tags', 'images', 'batches',
       'attributes', 'variants', 'isFeatured', 'isNewArrival', 'isPublished', 'isShared', 'deliveryCharge'
     ];
     const updateData: any = {};
