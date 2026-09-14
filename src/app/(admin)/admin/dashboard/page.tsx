@@ -503,19 +503,32 @@ export default function AdminDashboard() {
             <span className="font-bold text-emerald-700 dark:text-emerald-300 text-sm md:text-base flex items-center gap-1.5">
               <Landmark className="h-4 w-4" /> Business Assets Summary (মোট সম্পদ)
             </span>
-            <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Asset Valuation</span>
+            <Link 
+              href="/admin/ledger/receivable" 
+              className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:hover:text-emerald-400 uppercase tracking-wider hover:underline"
+            >
+              View Receivables &rarr;
+            </Link>
           </div>
           <div className="p-4 space-y-2 text-sm">
             <div className="flex justify-between items-center py-1 border-b border-muted">
-              <span className="text-muted-foreground">Current Inventory Stock Value:</span>
+              <Link href="/admin/inventory" className="text-muted-foreground hover:text-foreground transition-colors">
+                Current Inventory Stock Value:
+              </Link>
               <span className="font-medium text-foreground">৳{Math.round(stats?.totalStockValue || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-muted">
-              <span className="text-muted-foreground">Accounts Receivable / Pending Orders:</span>
-              <span className="font-medium text-foreground">৳{Math.round(stats?.totalReceivable || 0).toLocaleString()}</span>
+              <Link href="/admin/ledger/receivable" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                Accounts Receivable / Pending Orders:
+              </Link>
+              <Link href="/admin/ledger/receivable" className="font-bold text-primary hover:underline">
+                ৳{Math.round(stats?.totalReceivable || 0).toLocaleString()}
+              </Link>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-muted">
-              <span className="text-muted-foreground">Cash in Hand & Bank Balances:</span>
+              <Link href="/admin/accounts" className="text-muted-foreground hover:text-foreground transition-colors">
+                Cash in Hand & Bank Balances:
+              </Link>
               <span className="font-medium text-foreground">৳{Math.round((stats?.cashBalance || 0) + (stats?.bankBalance || 0)).toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center pt-2 font-bold text-base text-emerald-600 dark:text-emerald-400">
@@ -531,11 +544,18 @@ export default function AdminDashboard() {
             <span className="font-bold text-sky-700 dark:text-sky-300 text-sm md:text-base flex items-center gap-1.5">
               <Wallet className="h-4 w-4" /> Payables & Reseller Liabilities (দায় ও বকেয়া)
             </span>
-            <span className="text-xs font-semibold text-sky-600 uppercase tracking-wider">Obligations</span>
+            <Link 
+              href="/admin/ledger/payable" 
+              className="text-xs font-semibold text-sky-600 hover:text-sky-700 dark:hover:text-sky-400 uppercase tracking-wider hover:underline"
+            >
+              View Payables &rarr;
+            </Link>
           </div>
           <div className="p-4 space-y-2 text-sm">
             <div className="flex justify-between items-center py-1 border-b border-muted">
-              <span className="text-muted-foreground">Reseller Wallet Balances (Cleared):</span>
+              <Link href="/admin/ledger/payable" className="text-muted-foreground hover:text-foreground transition-colors">
+                Reseller Wallet Balances (Cleared):
+              </Link>
               <span className="font-medium text-foreground">৳{Math.round(stats?.resellerWalletTotal || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-muted">

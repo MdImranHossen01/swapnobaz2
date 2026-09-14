@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import {
   Building2, Save, Plus, Trash2, Edit3, ChevronDown, ChevronUp,
   Image as ImageIcon, Package, Globe, Phone, Mail, MapPin, X, GripVertical, Check
@@ -363,7 +364,7 @@ export default function AdminCatalogPage() {
                       {cat.items.map((item, itemIdx) => (
                         <div key={itemIdx} className="flex items-center gap-3 bg-muted/30 p-2.5 rounded-lg">
                           {item.image && (
-                            <img src={item.image} alt={item.name} className="h-10 w-10 object-cover rounded-lg shrink-0 border" />
+                            <Image src={item.image} alt={item.name || 'Catalog Item'} width={40} height={40} className="h-10 w-10 object-cover rounded-lg shrink-0 border" />
                           )}
                           <input
                             type="text"

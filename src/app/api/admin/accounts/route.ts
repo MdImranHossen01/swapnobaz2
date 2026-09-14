@@ -15,6 +15,20 @@ export async function GET(req: NextRequest) {
 
     await connectToDatabase();
 
+    // Ensure the default primary Cash in Hand account exists
+    const cashAccount = await LedgerAccount.findOne({ $or: [{ category: 'Cash' }, { code: 'CASH' }] });
+    if (!cashAccount) {
+      await LedgerAccount.create({
+        name: 'Cash in Hand (হাতে নগদ)',
+        code: 'CASH',
+        category: 'Cash',
+        type: 'asset',
+        openingBalance: 0,
+        currentBalance: 0,
+        description: 'Default System Primary Cash Account'
+      });
+    }
+
     const accounts = await LedgerAccount.find({}).sort({ category: 1, name: 1 }).lean();
 
     return NextResponse.json({ accounts });
@@ -43,6 +57,16 @@ export async function POST(req: NextRequest) {
     const normalizedCode = code.trim().toUpperCase();
 
     await connectToDatabase();
+
+    // Cash account rule: Only one default Cash in Hand account is permitted in the system
+    if (category === 'Cash' || normalizedCode === 'CASH') {
+      const existingCash = await LedgerAccount.findOne({ $or: [{ category: 'Cash' }, { code: 'CASH' }] });
+      if (existingCash) {
+        return NextResponse.json({ 
+          message: 'ডিফল্ট ক্যাশ অ্যাকাউন্ট ইতিমধ্যে বিদ্যমান। নতুন ক্যাশ অ্যাকাউন্ট তৈরি করা যাবে না।' 
+        }, { status: 400 });
+      }
+    }
 
     const existing = await LedgerAccount.findOne({ code: normalizedCode });
     if (existing) {

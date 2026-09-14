@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Trash, Search, User, Phone, MapPin, Calendar, Download, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -322,9 +323,11 @@ function AbandonedCartsContent() {
                             {cart.items.map((item: any, idx: number) => (
                               <div key={idx} className="flex items-center gap-2 text-sm">
                                 {item.image && (
-                                  <img
+                                  <Image
                                     src={item.image}
-                                    alt={item.name}
+                                    alt={item.name || 'Product Image'}
+                                    width={32}
+                                    height={32}
                                     className="h-8 w-8 object-cover rounded bg-muted shrink-0"
                                   />
                                 )}

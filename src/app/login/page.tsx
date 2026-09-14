@@ -90,7 +90,8 @@ export default function LoginPage() {
         toast.success('Logged in successfully!');
         const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect');
         if (callbackUrl) {
-          window.location.href = callbackUrl;
+          router.push(callbackUrl);
+          router.refresh();
         } else {
           router.replace('/admin/dashboard');
           router.refresh();

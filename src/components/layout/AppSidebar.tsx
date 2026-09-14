@@ -137,10 +137,6 @@ const data = {
           url: "/admin/accounts",
         },
         {
-          title: "Add Account",
-          url: "/admin/accounts/new",
-        },
-        {
           title: "Expenses & Incomes",
           url: "/admin/expenses-incomes",
         },
@@ -159,6 +155,10 @@ const data = {
         {
           title: "Account Payable",
           url: "/admin/ledger/payable",
+        },
+        {
+          title: "Account Receivable",
+          url: "/admin/ledger/receivable",
         },
       ],
     },

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Building2, Award, Mail, Phone, MapPin, ChevronRight,
   Globe, CheckCircle2, Send, ExternalLink, Package, Truck, Layers2
@@ -293,7 +294,13 @@ export default function CatalogPage() {
                   <div key={idx} className="bg-white dark:bg-zinc-900 rounded-[2rem] overflow-hidden border border-slate-200/60 dark:border-zinc-800 shadow-lg group hover:-translate-y-1 transition-all">
                     <div className="relative h-60 w-full bg-slate-100 dark:bg-zinc-800 overflow-hidden border-b">
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
+                        <Image
+                          src={item.image}
+                          alt={item.name || 'Catalog Item'}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground">No image</div>
                       )}

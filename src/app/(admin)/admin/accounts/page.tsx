@@ -429,9 +429,8 @@ export default function AccountsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Bank" className="text-xs">Bank Account</SelectItem>
-                    <SelectItem value="Cash" className="text-xs">Cash in Hand</SelectItem>
                     <SelectItem value="MFS" className="text-xs">Mobile Wallet (MFS)</SelectItem>
-                    <SelectItem value="Other" className="text-xs">Other</SelectItem>
+                    <SelectItem value="Other" className="text-xs">Other Account</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

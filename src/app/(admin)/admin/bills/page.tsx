@@ -464,24 +464,31 @@ function ClientBillsContent() {
           <h2 className="text-xl md:text-3xl font-bold tracking-tight">Client Billing Manager</h2>
           <p className="text-muted-foreground text-xs md:text-sm mt-0.5">Create bills, offer discounts, manage collections & track receivables.</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto font-bold bg-primary text-primary-foreground h-9 text-xs">
-          <Plus className="mr-1.5 h-4 w-4" /> Create Bill
-        </Button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Link href="/admin/ledger/receivable">
+            <Button variant="outline" className="w-full sm:w-auto font-bold h-9 text-xs">
+              <Users className="mr-1.5 h-4 w-4 text-orange-600" /> AR Ledger
+            </Button>
+          </Link>
+          <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto font-bold bg-primary text-primary-foreground h-9 text-xs">
+            <Plus className="mr-1.5 h-4 w-4" /> Create Bill
+          </Button>
+        </div>
       </div>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-4">
-        <Card className="bg-primary/5 border-primary/20 shadow-xs">
+        <Card className="shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-3 md:p-4">
-            <CardTitle className="text-xs font-semibold">Total Billed</CardTitle>
-            <FileText className="h-4 w-4 text-primary" />
+            <CardTitle className="text-xs font-semibold">Total Invoiced (Billed)</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-3 md:p-4 pt-0">
             <div className="text-xl md:text-2xl font-bold">৳{totalBilled.toLocaleString()}</div>
-            <p className="text-[10px] text-muted-foreground">Cumulative client invoicing</p>
+            <p className="text-[10px] text-muted-foreground">Cumulative billed amount</p>
           </CardContent>
         </Card>
-        <Card className="bg-green-500/5 border-green-500/20 shadow-xs">
+        <Card className="shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-3 md:p-4">
             <CardTitle className="text-xs font-semibold">Total Collected (Cash-in)</CardTitle>
             <DollarSign className="h-4 w-4 text-green-600" />
@@ -491,16 +498,18 @@ function ClientBillsContent() {
             <p className="text-[10px] text-muted-foreground">Payments received</p>
           </CardContent>
         </Card>
-        <Card className="bg-orange-500/5 border-orange-500/20 shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-3 md:p-4">
-            <CardTitle className="text-xs font-semibold">Accounts Receivable</CardTitle>
-            <Users className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent className="p-3 md:p-4 pt-0">
-            <div className="text-xl md:text-2xl font-bold text-orange-700">৳{accountsReceivable.toLocaleString()}</div>
-            <p className="text-[10px] text-muted-foreground">Outstanding due balances</p>
-          </CardContent>
-        </Card>
+        <Link href="/admin/ledger/receivable" className="block group">
+          <Card className="bg-orange-500/5 border-orange-500/20 shadow-xs group-hover:border-orange-500/50 transition-colors">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 p-3 md:p-4">
+              <CardTitle className="text-xs font-semibold group-hover:text-orange-600 transition-colors">Accounts Receivable &rarr;</CardTitle>
+              <Users className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent className="p-3 md:p-4 pt-0">
+              <div className="text-xl md:text-2xl font-bold text-orange-700">৳{accountsReceivable.toLocaleString()}</div>
+              <p className="text-[10px] text-muted-foreground">Outstanding due balances</p>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Filter and Search */}
