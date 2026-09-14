@@ -148,26 +148,26 @@ export default async function Home() {
               {/* 2. Categories Showcase */}
               <StreamedCategoryShowcase style={ui.categories} />
 
-              {/* 3. Featured Products */}
+              {/* 3. New Arrivals */}
+              <StreamedNewArrivals cardStyle={ui.productCard} layout={ui.layout} />
+
+              {/* 4. Featured Products */}
               <StreamedFeaturedProducts cardStyle={ui.productCard} layout={ui.layout} />
 
-              {/* 4. Flash Sale */}
+              {/* 5. Flash Sale */}
               <StreamedFlashSale cardStyle={ui.productCard} layout={ui.layout} />
 
-              {/* 5. Combo Offer Banner */}
+              {/* 6. Combo Offer Banner */}
               <StreamedComboOffer settings={settings} layout={ui.layout} />
 
-              {/* 6. Trending Products */}
+              {/* 7. Trending Products */}
               <StreamedTrending cardStyle={ui.productCard} layout={ui.layout} />
 
-              {/* 7. Root Category Sections (Women, Men, Kids, etc.) */}
+              {/* 8. Root Category Sections (Women, Men, Kids, etc.) */}
               <StreamedRootCategorySections cardStyle={ui.productCard} layout={ui.layout} />
 
-              {/* 8. Recent Blogs */}
+              {/* 9. Recent Blogs */}
               <StreamedBlogRecent />
-
-              {/* 9. New Arrivals */}
-              <StreamedNewArrivals cardStyle={ui.productCard} layout={ui.layout} />
 
               {/* 10. Newsletter */}
               <StreamedNewsletter layout={ui.layout} />
@@ -185,26 +185,26 @@ export default async function Home() {
           {/* 2. Categories Showcase */}
           <StreamedCategoryShowcase style={ui.categories} />
 
-          {/* 3. Featured Products */}
+          {/* 3. New Arrivals */}
+          <StreamedNewArrivals cardStyle={ui.productCard} layout={ui.layout} />
+
+          {/* 4. Featured Products */}
           <StreamedFeaturedProducts cardStyle={ui.productCard} layout={ui.layout} />
 
-          {/* 4. Flash Sale */}
+          {/* 5. Flash Sale */}
           <StreamedFlashSale cardStyle={ui.productCard} layout={ui.layout} />
 
-          {/* 5. Combo Offer Banner */}
+          {/* 6. Combo Offer Banner */}
           <StreamedComboOffer settings={settings} layout={ui.layout} />
 
-          {/* 6. Trending Products */}
+          {/* 7. Trending Products */}
           <StreamedTrending cardStyle={ui.productCard} layout={ui.layout} />
 
-          {/* 7. Root Category Sections (Women, Men, Kids, etc.) */}
+          {/* 8. Root Category Sections (Women, Men, Kids, etc.) */}
           <StreamedRootCategorySections cardStyle={ui.productCard} layout={ui.layout} />
 
-          {/* 8. Recent Blogs */}
+          {/* 9. Recent Blogs */}
           <StreamedBlogRecent />
-
-          {/* 9. New Arrivals */}
-          <StreamedNewArrivals cardStyle={ui.productCard} layout={ui.layout} />
 
           {/* 10. Newsletter */}
           <StreamedNewsletter layout={ui.layout} />

@@ -217,7 +217,20 @@ export default async function ResellerStorePage({ params }: Props) {
           </section>
         ) : (
           <div className="flex flex-col gap-2">
-            {/* 1. Featured Products Carousel */}
+            {/* 1. New Arrivals Carousel */}
+            {newArrivals.length > 0 && (
+              <ProductCarouselSection
+                title="New Arrivals"
+                description="Discover the latest additions to our collection. Stay ahead of the curve."
+                products={newArrivals}
+                viewAllLink="/shop?filter=new"
+                bgColor="bg-background"
+                cardStyle={cardStyle}
+                layout={layout}
+              />
+            )}
+
+            {/* 2. Featured Products Carousel */}
             {featuredProducts.length > 0 && (
               <ProductCarouselSection
                 title="Featured Collections"
@@ -230,7 +243,7 @@ export default async function ResellerStorePage({ params }: Props) {
               />
             )}
 
-            {/* 2. Flash Sale Carousel */}
+            {/* 3. Flash Sale Carousel */}
             {flashSaleProducts.length > 0 && (
               <ProductCarouselSection
                 title="Flash Sale"
@@ -243,7 +256,7 @@ export default async function ResellerStorePage({ params }: Props) {
               />
             )}
 
-            {/* 3. Trending Products Carousel */}
+            {/* 4. Trending Products Carousel */}
             {trendingProducts.length > 0 && (
               <ProductCarouselSection
                 title="Trending Now"
@@ -256,7 +269,7 @@ export default async function ResellerStorePage({ params }: Props) {
               />
             )}
 
-            {/* 4. Category-Wise Carousels (e.g. Women, Men, Electronics, etc.) */}
+            {/* 5. Category-Wise Carousels (e.g. Women, Men, Electronics, etc.) */}
             {categorySections.map((section: any, idx: number) => (
               <ProductCarouselSection
                 key={section.category._id}
@@ -269,19 +282,6 @@ export default async function ResellerStorePage({ params }: Props) {
                 layout={layout}
               />
             ))}
-
-            {/* 5. New Arrivals Carousel */}
-            {newArrivals.length > 0 && (
-              <ProductCarouselSection
-                title="New Arrivals"
-                description="Discover the latest additions to our collection. Stay ahead of the curve."
-                products={newArrivals}
-                viewAllLink="/shop?filter=new"
-                bgColor="bg-background"
-                cardStyle={cardStyle}
-                layout={layout}
-              />
-            )}
 
             {/* 6. General / All Products Carousel (Fallback if no category or promo filters exist) */}
             {categorySections.length === 0 && (

@@ -46,14 +46,14 @@ export function ProductCarouselSection({
   if (!products || products.length === 0) return null;
 
   return (
-    <section className={`py-8 ${bgColor} overflow-hidden`}>
+    <section className={`py-6 ${bgColor} overflow-hidden`}>
       <div className="px-[2px] md:px-4">
 
         {/* Header */}
-        <div className="flex flex-row items-center justify-between mb-8 md:mb-10 gap-4">
+        <div className="flex flex-row items-center justify-between mb-4 md:mb-6 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <h2 className="text-xl md:text-4xl font-black tracking-tighter text-foreground">
+              <h2 className="text-xl md:text-3xl font-bold tracking-tighter text-foreground">
                 {title}
               </h2>
               {isFlashSale && (
@@ -69,7 +69,7 @@ export function ProductCarouselSection({
 
           </div>
 
-          <Button asChild variant="default" className="rounded-full font-bold group">
+          <Button asChild variant="default" className="rounded-full group">
             <Link href={viewAllLink}>
               View All
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
@@ -80,7 +80,7 @@ export function ProductCarouselSection({
         {/* Embla Carousel Viewport */}
         <div className="relative">
           <div className="overflow-hidden cursor-grab active:cursor-grabbing" ref={emblaRef}>
-            <div className="flex -ml-[2px]">
+            <div className="flex -ml-[2px] md:-ml-4">
               {products.map((product) => (
                 <div
                   key={product._id}
