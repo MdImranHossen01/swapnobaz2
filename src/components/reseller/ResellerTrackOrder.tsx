@@ -16,28 +16,36 @@ interface Props {
 }
 
 export function ResellerTrackOrder({ subdomain, storeName }: Props) {
-  const [orderId, setOrderId] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [order, setOrder] = useState<any>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!orderId) {
-      toast.error('অর্ডার আইডি দিন');
+    const query = searchQuery.trim();
+    if (!query) {
+      toast.error('অর্ডার আইডি অথবা মোবাইল নম্বর দিন');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/store/${subdomain}/track-order/${encodeURIComponent(orderId)}`);
+      const res = await fetch(`/api/store/${subdomain}/track-order/${encodeURIComponent(query)}`);
       if (res.ok) {
         const data = await res.json();
-        setOrder(data);
-        toast.success('অর্ডার তথ্য পাওয়া গেছে!');
+        const fetchedOrders = data.orders && data.orders.length > 0 ? data.orders : [data];
+        setOrders(fetchedOrders);
+        setSelectedOrder(fetchedOrders[0]);
+        toast.success(fetchedOrders.length > 1 
+          ? `${fetchedOrders.length}টি অর্ডার পাওয়া গেছে!` 
+          : 'অর্ডার তথ্য পাওয়া গেছে!'
+        );
       } else {
-        setOrder(null);
+        setOrders([]);
+        setSelectedOrder(null);
         const errorData = await res.json();
-        toast.error(errorData.message || 'অর্ডার পাওয়া যায়নি। সঠিক আইডি দিন।');
+        toast.error(errorData.message || 'অর্ডার পাওয়া যায়নি। সঠিক আইডি বা মোবাইল নম্বর দিন।');
       }
     } catch {
       toast.error('অর্ডার ট্র্যাক করতে ব্যর্থ হয়েছে');
@@ -73,21 +81,21 @@ export function ResellerTrackOrder({ subdomain, storeName }: Props) {
     { label: 'ডেলিভার্ড', desc: 'সফলভাবে ডেলিভারি হয়েছে', icon: MapPin },
   ];
 
-  const currentStep = order ? getStatusStep(order.status) : -1;
+  const currentStep = selectedOrder ? getStatusStep(selectedOrder.status) : -1;
 
   return (
     <div className="space-y-8">
       {/* Search Panel */}
-      <Card className="border-2 shadow-lg rounded-2xl overflow-hidden">
+      <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card">
         <CardContent className="p-6 md:p-8">
           <form onSubmit={handleTrack} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                placeholder="অর্ডার আইডি লিখুন (যেমন: #RS12345)"
+                placeholder="অর্ডার আইডি বা মোবাইল নম্বর লিখুন (যেমন: 017XXXXXXXX বা #RS12345)"
                 className="h-12 pl-12 rounded-xl border focus-visible:ring-primary bg-background font-medium"
-                value={orderId}
-                onChange={(e) => setOrderId(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <Button
@@ -101,22 +109,61 @@ export function ResellerTrackOrder({ subdomain, storeName }: Props) {
         </CardContent>
       </Card>
 
+      {/* Multiple Orders Selector */}
+      {orders.length > 1 && (
+        <div className="space-y-3 animate-in fade-in duration-300">
+          <div className="flex items-center justify-between">
+            <p className="text-xs sm:text-sm font-bold text-muted-foreground">
+              এই নম্বরে {orders.length}টি অর্ডার পাওয়া গেছে:
+            </p>
+            <span className="text-xs text-primary font-semibold">অর্ডারটি সিলেক্ট করুন</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {orders.map((ord) => {
+              const isSelected = selectedOrder?._id === ord._id;
+              return (
+                <button
+                  key={ord._id}
+                  onClick={() => setSelectedOrder(ord)}
+                  className={`p-4 rounded-xl border text-left transition-all duration-200 flex flex-col gap-1.5 ${
+                    isSelected 
+                      ? 'border-primary bg-primary/10 shadow-md ring-2 ring-primary/20' 
+                      : 'border-border bg-card hover:bg-muted/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-black text-sm">#{ord.shortId}</span>
+                    <Badge variant={isSelected ? 'default' : 'secondary'} className="text-[10px] px-2 py-0.5">
+                      {ord.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mt-1">
+                    <span>৳{ord.totalAmount?.toLocaleString()}</span>
+                    <span>{new Date(ord.createdAt).toLocaleDateString('bn-BD')}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Result Panel */}
-      {order && (
+      {selectedOrder && (
         <Card className="border shadow-xl rounded-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="bg-primary text-primary-foreground p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/75">অর্ডার আইডি:</p>
-              <h2 className="text-2xl font-black">#{order.shortId}</h2>
+              <h2 className="text-2xl font-black">#{selectedOrder.shortId}</h2>
             </div>
             <div className="flex gap-4 text-xs font-medium">
               <div>
                 <p className="text-primary-foreground/75">তারিখ:</p>
-                <p className="font-bold">{new Date(order.createdAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="font-bold">{new Date(selectedOrder.createdAt).toLocaleDateString('bn-BD', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               </div>
               <div>
                 <p className="text-primary-foreground/75">মোট মূল্য:</p>
-                <p className="font-bold">৳{order.totalAmount.toLocaleString()}</p>
+                <p className="font-bold">৳{selectedOrder.totalAmount.toLocaleString()}</p>
               </div>
             </div>
           </div>
@@ -167,17 +214,17 @@ export function ResellerTrackOrder({ subdomain, storeName }: Props) {
             </div>
 
             {/* Courier status info */}
-            {order.shippingDetails?.courierName && (
+            {selectedOrder.shippingDetails?.courierName && (
               <div className="rounded-xl border bg-muted/20 p-4 flex gap-3 items-start">
                 <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-semibold text-muted-foreground">শিপিং ইনফরমেশন:</p>
                   <p className="text-sm font-bold text-foreground mt-0.5">
-                    {order.shippingDetails.courierName} কুরিয়ার সার্ভিসের মাধ্যমে আপনার অর্ডারটি পাঠানো হয়েছে।
+                    {selectedOrder.shippingDetails.courierName} কুরিয়ার সার্ভিসের মাধ্যমে আপনার অর্ডারটি পাঠানো হয়েছে।
                   </p>
-                  {order.shippingDetails.trackingUrl && (
+                  {selectedOrder.shippingDetails.trackingUrl && (
                     <a
-                      href={order.shippingDetails.trackingUrl}
+                      href={selectedOrder.shippingDetails.trackingUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary font-bold hover:underline inline-flex items-center gap-1 mt-1.5"
@@ -195,7 +242,7 @@ export function ResellerTrackOrder({ subdomain, storeName }: Props) {
               <div className="space-y-4">
                 <h3 className="font-black text-sm text-foreground uppercase tracking-wider">পণ্যসমূহ</h3>
                 <div className="space-y-3">
-                  {order.items.map((item: any, i: number) => (
+                  {selectedOrder.items.map((item: any, i: number) => (
                     <div key={i} className="flex gap-3 items-center">
                       <div className="w-12 h-12 rounded-lg overflow-hidden border bg-muted shrink-0 relative">
                         {item.image ? (
@@ -222,19 +269,19 @@ export function ResellerTrackOrder({ subdomain, storeName }: Props) {
                 <div className="text-xs space-y-2 text-muted-foreground font-medium">
                   <div>
                     <span className="text-foreground font-bold">নাম: </span>
-                    <span>{order.shippingDetails.name}</span>
+                    <span>{selectedOrder.shippingDetails.name}</span>
                   </div>
                   <div>
                     <span className="text-foreground font-bold">ফোন: </span>
-                    <span>{order.shippingDetails.phone}</span>
+                    <span>{selectedOrder.shippingDetails.phone}</span>
                   </div>
                   <div>
                     <span className="text-foreground font-bold">জেলা/শহর: </span>
-                    <span>{order.shippingDetails.address}</span>
+                    <span>{selectedOrder.shippingDetails.address}</span>
                   </div>
                   <div>
                     <span className="text-foreground font-bold">পেমেন্ট পদ্ধতি: </span>
-                    <span>{order.paymentMethod === 'COD' ? 'ক্যাশ অন ডেলিভারি (COD)' : order.paymentMethod}</span>
+                    <span>{selectedOrder.paymentMethod === 'COD' ? 'ক্যাশ অন ডেলিভারি (COD)' : selectedOrder.paymentMethod}</span>
                   </div>
                 </div>
               </div>
