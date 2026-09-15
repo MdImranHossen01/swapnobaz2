@@ -14,15 +14,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Loader2, Check, X, ShieldAlert, Store, Search, ExternalLink, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
@@ -343,37 +334,6 @@ export default function AdminResellersPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Edit Commission Modal */}
-      <Dialog open={editingReseller !== null} onOpenChange={open => !open && setEditingReseller(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>কমিশন রেট আপডেট</DialogTitle>
-            <DialogDescription>
-              {editingReseller?.storeName} স্টোরের জন্য প্ল্যাটফর্ম কমিশন রেট নির্ধারণ করুন।
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-1">
-              <Label>কমিশন রেট (%)</Label>
-              <Input
-                type="number"
-                value={commissionRate}
-                onChange={e => setCommissionRate(Number(e.target.value))}
-                min={0}
-                max={100}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingReseller(null)} disabled={updating}>বাতিল</Button>
-            <Button onClick={handleUpdateCommission} disabled={updating}>
-              {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              সংরক্ষণ
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

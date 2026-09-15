@@ -23,6 +23,7 @@ export interface IReseller extends Document {
     contactPerson?: string;
     phone?: string;
     address?: string;
+    division?: string;
     district?: string;
     thana?: string;
   };
@@ -123,6 +124,7 @@ const ResellerSchema: Schema<IReseller> = new Schema(
         contactPerson: { type: String, default: '' },
         phone: { type: String, default: '' },
         address: { type: String, default: '' },
+        division: { type: String, default: '' },
         district: { type: String, default: '' },
         thana: { type: String, default: '' },
       }, { _id: false }),

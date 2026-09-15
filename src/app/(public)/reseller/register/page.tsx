@@ -12,8 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Store, Loader2, CheckCircle2, User, Mail, Lock, Phone, MapPin, Sparkles, Globe, ArrowRight } from 'lucide-react';
+import { Store, Loader2, CheckCircle2, User, Mail, Lock, Phone, MapPin, Sparkles, Globe, ArrowRight, Truck, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { divisions, getDistrictsByDivision, getThanasByDistrict } from '@/lib/bd-locations';
 
 const createSchema = (isLoggedIn: boolean) => z.object({
   name: isLoggedIn ? z.string().optional() : z.string().min(2, 'Please enter your full name'),
@@ -25,7 +26,11 @@ const createSchema = (isLoggedIn: boolean) => z.object({
     .max(30, 'Subdomain cannot exceed 30 characters')
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Only lowercase letters, numbers, and hyphens (-) are allowed'),
   phone: z.string().min(11, 'Please enter a valid 11-digit phone number'),
-  address: z.string().min(5, 'Please enter a valid address (min 5 characters)'),
+  division: z.string().min(1, 'Please select your division (বিভাগ)'),
+  district: z.string().min(1, 'Please select your district (জেলা)'),
+  thana: z.string().min(1, 'Please select your thana/upazila (থানা/উপজেলা)'),
+  address: z.string().min(5, 'Please enter complete pickup address (Road, House, Area)'),
+  hubName: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -49,12 +54,34 @@ export default function ResellerRegisterPage() {
       storeName: '',
       subdomain: '',
       phone: '',
+      division: '',
+      district: '',
+      thana: '',
       address: '',
+      hubName: '',
       description: ''
     },
   });
 
   const subdomainValue = form.watch('subdomain');
+  const selectedDivision = form.watch('division');
+  const selectedDistrict = form.watch('district');
+
+  const availableDistricts = selectedDivision ? getDistrictsByDivision(selectedDivision) : [];
+  const availableThanas = selectedDistrict ? getThanasByDistrict(selectedDistrict) : [];
+
+  const handleDivisionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    form.setValue('division', val, { shouldValidate: true });
+    form.setValue('district', '', { shouldValidate: true });
+    form.setValue('thana', '', { shouldValidate: true });
+  };
+
+  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    form.setValue('district', val, { shouldValidate: true });
+    form.setValue('thana', '', { shouldValidate: true });
+  };
 
   const onSubmit = async (values: FormValues) => {
     setSubmitting(true);
@@ -63,8 +90,21 @@ export default function ResellerRegisterPage() {
         storeName: values.storeName.trim(),
         subdomain: values.subdomain.toLowerCase().trim(),
         phone: values.phone.trim(),
+        division: values.division,
+        district: values.district,
+        thana: values.thana,
         address: values.address.trim(),
+        hubName: values.hubName?.trim() || `${values.storeName.trim()} Hub`,
         description: values.description?.trim() || '',
+        pickupAddress: {
+          hubName: values.hubName?.trim() || `${values.storeName.trim()} Hub`,
+          contactPerson: values.name?.trim() || session?.user?.name || values.storeName.trim(),
+          phone: values.phone.trim(),
+          division: values.division,
+          district: values.district,
+          thana: values.thana,
+          address: values.address.trim(),
+        }
       };
 
       if (!isLoggedIn) {
@@ -134,7 +174,7 @@ export default function ResellerRegisterPage() {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center p-4 py-12 bg-muted/20 font-sans">
-      <Card className="max-w-xl w-full border-border/80 shadow-2xl bg-card">
+      <Card className="max-w-2xl w-full border-border/80 shadow-2xl bg-card">
         <CardHeader className="text-center space-y-2">
           <div className="h-12 w-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto border border-primary/20">
             <Store className="h-6 w-6" />
@@ -155,12 +195,12 @@ export default function ResellerRegisterPage() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             {/* Guest Account Details */}
             {!isLoggedIn && (
               <div className="space-y-4 p-4 rounded-xl bg-muted/40 border border-border/60">
-                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Personal & Account Details
+                <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <User className="h-4 w-4 text-primary" /> Personal & Account Details
                 </div>
 
                 <div className="space-y-1">
@@ -202,19 +242,32 @@ export default function ResellerRegisterPage() {
 
             {/* Store Information */}
             <div className="space-y-4 p-4 rounded-xl bg-muted/40 border border-border/60">
-              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Store & Contact Information
+              <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                <Store className="h-4 w-4 text-primary" /> Store Information
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Store / Brand Name</Label>
-                <div className="relative">
-                  <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input {...form.register('storeName')} placeholder="e.g. Apex Trends" className="pl-9" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Store / Brand Name</Label>
+                  <div className="relative">
+                    <Store className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input {...form.register('storeName')} placeholder="e.g. Apex Trends" className="pl-9" />
+                  </div>
+                  {form.formState.errors.storeName && (
+                    <p className="text-xs text-destructive">{form.formState.errors.storeName.message as string}</p>
+                  )}
                 </div>
-                {form.formState.errors.storeName && (
-                  <p className="text-xs text-destructive">{form.formState.errors.storeName.message as string}</p>
-                )}
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Contact Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input {...form.register('phone')} placeholder="017XXXXXXXX" type="tel" className="pl-9" />
+                  </div>
+                  {form.formState.errors.phone && (
+                    <p className="text-xs text-destructive">{form.formState.errors.phone.message as string}</p>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-1">
@@ -240,33 +293,107 @@ export default function ResellerRegisterPage() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Store Description (Optional)</Label>
+                <Textarea {...form.register('description')} placeholder="Tell us briefly about your business niche or plan..." rows={2} />
+              </div>
+            </div>
+
+            {/* Warehouse & Courier Pickup Point (Location Cascading Dropdowns) */}
+            <div className="space-y-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+                  <Truck className="h-4 w-4" /> Warehouse & Pickup Point (পিকআপ পয়েন্ট)
+                </div>
+                <span className="text-[11px] text-muted-foreground">For Courier Delivery & Returns</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Division Dropdown */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input {...form.register('phone')} placeholder="017XXXXXXXX" type="tel" className="pl-9" />
-                  </div>
-                  {form.formState.errors.phone && (
-                    <p className="text-xs text-destructive">{form.formState.errors.phone.message as string}</p>
+                  <Label className="text-xs font-semibold">Division / বিভাগ <span className="text-destructive">*</span></Label>
+                  <select
+                    value={selectedDivision}
+                    onChange={handleDivisionChange}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">-- বিভাগ নির্বাচন করুন --</option>
+                    {divisions.map(div => (
+                      <option key={div} value={div}>{div}</option>
+                    ))}
+                  </select>
+                  {form.formState.errors.division && (
+                    <p className="text-xs text-destructive">{form.formState.errors.division.message as string}</p>
                   )}
                 </div>
 
+                {/* District Dropdown */}
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Business / Personal Address</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input {...form.register('address')} placeholder="House/Street, Area, City" className="pl-9" />
-                  </div>
-                  {form.formState.errors.address && (
-                    <p className="text-xs text-destructive">{form.formState.errors.address.message as string}</p>
+                  <Label className="text-xs font-semibold">District / জেলা <span className="text-destructive">*</span></Label>
+                  <select
+                    value={selectedDistrict}
+                    onChange={handleDistrictChange}
+                    disabled={!selectedDivision}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">{selectedDivision ? '-- জেলা নির্বাচন করুন --' : '-- আগে বিভাগ বাছুন --'}</option>
+                    {availableDistricts.map(dist => (
+                      <option key={dist} value={dist}>{dist}</option>
+                    ))}
+                  </select>
+                  {form.formState.errors.district && (
+                    <p className="text-xs text-destructive">{form.formState.errors.district.message as string}</p>
+                  )}
+                </div>
+
+                {/* Thana Dropdown */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Thana / থানা / উপজেলা <span className="text-destructive">*</span></Label>
+                  <select
+                    {...form.register('thana')}
+                    disabled={!selectedDistrict}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">{selectedDistrict ? '-- থানা বাছুন --' : '-- আগে জেলা বাছুন --'}</option>
+                    {availableThanas.map(th => (
+                      <option key={th} value={th}>{th}</option>
+                    ))}
+                  </select>
+                  {form.formState.errors.thana && (
+                    <p className="text-xs text-destructive">{form.formState.errors.thana.message as string}</p>
                   )}
                 </div>
               </div>
 
+              {/* Detailed Address */}
               <div className="space-y-1">
-                <Label className="text-xs font-semibold">Store Description (Optional)</Label>
-                <Textarea {...form.register('description')} placeholder="Tell us briefly about your business plans or product niche..." rows={2} />
+                <Label className="text-xs font-semibold">
+                  Detailed Pickup Address (Road, House, Landmark) / বিস্তারিত পিকআপ ঠিকানা <span className="text-destructive">*</span>
+                </Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    {...form.register('address')} 
+                    placeholder="e.g. Holding 45/A, Road 3, Sector 4, Uttara" 
+                    className="pl-9" 
+                  />
+                </div>
+                {form.formState.errors.address && (
+                  <p className="text-xs text-destructive">{form.formState.errors.address.message as string}</p>
+                )}
+              </div>
+
+              {/* Hub / Warehouse Nickname (Optional) */}
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Warehouse / Hub Name (ঐচ্ছিক)</Label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    {...form.register('hubName')} 
+                    placeholder="e.g. Main Outlet / Central Warehouse" 
+                    className="pl-9" 
+                  />
+                </div>
               </div>
             </div>
 

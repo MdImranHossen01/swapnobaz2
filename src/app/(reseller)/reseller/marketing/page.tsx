@@ -265,7 +265,7 @@ export default function ResellerMarketingPage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">Facebook Access Token (CAPI)</Label>
                     <Input
-                      type="password"
+                      type="text"
                       value={tracking.facebookAccessToken}
                       onChange={e => setTracking(t => ({ ...t, facebookAccessToken: e.target.value }))}
                       placeholder="EAA..."
@@ -293,7 +293,7 @@ export default function ResellerMarketingPage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">TikTok Access Token</Label>
                     <Input
-                      type="password"
+                      type="text"
                       value={tracking.tiktokAccessToken}
                       onChange={e => setTracking(t => ({ ...t, tiktokAccessToken: e.target.value }))}
                       placeholder="tok..."

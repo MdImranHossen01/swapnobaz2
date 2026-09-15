@@ -9,7 +9,23 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     const body = await request.json();
-    const { storeName, subdomain, phone, address, description, name, email, password } = body;
+    const {
+      storeName,
+      subdomain,
+      phone,
+      address,
+      description,
+      name,
+      email,
+      password,
+      division,
+      district,
+      thana,
+      hubName,
+      contactPerson,
+      pickupPhone,
+      pickupAddress: customPickupAddress,
+    } = body;
 
     if (!storeName || !subdomain || !phone) {
       return NextResponse.json({ error: 'Store name, subdomain, and phone number are required.' }, { status: 400 });
@@ -87,6 +103,8 @@ export async function POST(request: NextRequest) {
         phone: normalizedPhone,
         addresses: [{
           street: address || '',
+          city: district || '',
+          state: thana || '',
           country: 'Bangladesh',
           isDefault: true
         }],
@@ -96,6 +114,14 @@ export async function POST(request: NextRequest) {
       targetUserId = newUser._id.toString();
       targetEmail = normalizedEmail;
     }
+
+    const resolvedDivision = division || customPickupAddress?.division || '';
+    const resolvedDistrict = district || customPickupAddress?.district || '';
+    const resolvedThana = thana || customPickupAddress?.thana || '';
+    const resolvedAddress = customPickupAddress?.address || address || '';
+    const resolvedHubName = hubName || customPickupAddress?.hubName || `${storeName} Hub`;
+    const resolvedContactPerson = contactPerson || customPickupAddress?.contactPerson || name || session?.user?.name || storeName;
+    const resolvedPickupPhone = pickupPhone || customPickupAddress?.phone || phone;
 
     const newReseller = await Reseller.create({
       userId: targetUserId,
@@ -109,10 +135,13 @@ export async function POST(request: NextRequest) {
         email: targetEmail,
       },
       pickupAddress: {
-        hubName: `${storeName} Hub`,
-        contactPerson: name || session?.user?.name || storeName,
-        phone: phone,
-        address: address || '',
+        hubName: resolvedHubName,
+        contactPerson: resolvedContactPerson,
+        phone: resolvedPickupPhone,
+        division: resolvedDivision,
+        district: resolvedDistrict,
+        thana: resolvedThana,
+        address: resolvedAddress,
       },
     });
 

@@ -29,23 +29,36 @@ export async function GET(request: NextRequest) {
     let page = parseInt(searchParams.get('page') || '1', 10);
     if (isNaN(page) || page < 1) page = 1;
 
-    let limit = parseInt(searchParams.get('limit') || '10', 10);
-    if (isNaN(limit) || limit < 1) limit = 10;
+    let limit = parseInt(searchParams.get('limit') || '12', 10);
+    if (isNaN(limit) || limit < 1) limit = 12;
     if (limit > 100) limit = 100;
 
     const search = searchParams.get('search') || '';
+    const sourceFilter = searchParams.get('source') || 'all'; // 'all' | 'admin' | 'reseller' | 'sourced'
 
-    // Query filters:
-    // 1. Must be published.
-    // 2. uploadedBy is null (Admin) OR (uploadedBy is not this reseller AND isShared is true).
-    const query: Record<string, any> = {
-      isPublished: true,
-      $or: [
+    // Build query based on source filter
+    let query: Record<string, any> = { isPublished: true };
+
+    if (sourceFilter === 'admin') {
+      // Only Main Store / Admin products
+      query.$or = [
+        { uploadedBy: null },
+        { uploadedBy: { $exists: false } },
+      ];
+    } else if (sourceFilter === 'reseller') {
+      // Only other resellers' shared products
+      query.uploadedBy = { $ne: resellerId };
+      query.isShared = true;
+      // Exclude products with no uploadedBy (admin)
+      query['$and'] = [{ uploadedBy: { $ne: null } }, { uploadedBy: { $exists: true } }];
+    } else {
+      // 'all' or 'sourced' — default: show admin + other resellers' shared products
+      query.$or = [
         { uploadedBy: null },
         { uploadedBy: { $exists: false } },
         { uploadedBy: { $ne: resellerId }, isShared: true },
-      ],
-    };
+      ];
+    }
 
     if (search) {
       const sanitized = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
@@ -53,7 +66,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [products, total] = await Promise.all([
-      Product.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Product.find(query).populate('categories', 'name slug').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
       Product.countDocuments(query),
     ]);
 
@@ -66,11 +79,12 @@ export async function GET(request: NextRequest) {
 
     const sourcedMap = new Map(sourced.map((s) => [s.productId.toString(), s]));
 
-    const mappedProducts = products.map((product: any) => {
+    let mappedProducts = products.map((product: any) => {
       const sourcedItem: any = sourcedMap.get(product._id.toString());
       return {
         ...product,
         isSourced: !!sourcedItem,
+        sourceType: (!product.uploadedBy) ? 'admin' : 'reseller',
         sourcedDetails: sourcedItem
           ? {
               _id: sourcedItem._id,
@@ -82,9 +96,34 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // If filter = 'sourced', only return products already added to store
+    if (sourceFilter === 'sourced') {
+      mappedProducts = mappedProducts.filter((p: any) => p.isSourced);
+    }
+
+    // Count totals for tab badges
+    const allProductIds = (await Product.find({
+      isPublished: true,
+      $or: [
+        { uploadedBy: null },
+        { uploadedBy: { $exists: false } },
+        { uploadedBy: { $ne: resellerId }, isShared: true },
+      ],
+    }).select('_id uploadedBy').lean()) as any[];
+
+    const adminCount = allProductIds.filter((p: any) => !p.uploadedBy).length;
+    const resellerCount = allProductIds.filter((p: any) => p.uploadedBy).length;
+    const sourcedCount = sourced.length;
+
     return NextResponse.json({
       products: mappedProducts,
-      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      pagination: { total: sourceFilter === 'sourced' ? mappedProducts.length : total, page, limit, totalPages: sourceFilter === 'sourced' ? 1 : Math.ceil(total / limit) },
+      counts: {
+        all: allProductIds.length,
+        admin: adminCount,
+        reseller: resellerCount,
+        sourced: sourcedCount,
+      },
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   ChevronRight,
@@ -168,12 +169,47 @@ function NavMain({ items, pathname }: { items: typeof resellerNav; pathname: str
 
 export function ResellerAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const [storeInfo, setStoreInfo] = React.useState<{ storeName: string; logoUrl: string } | null>(null)
+
+  React.useEffect(() => {
+    let isMounted = true
+    fetch('/api/reseller/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted && data?.reseller) {
+          setStoreInfo({
+            storeName: data.reseller.storeName || 'Reseller Panel',
+            logoUrl: data.reseller.logoUrl || '',
+          })
+        }
+      })
+      .catch(() => {})
+    return () => { isMounted = false }
+  }, [pathname])
 
   return (
     <Sidebar {...props}>
-      <SidebarHeader className="border-b h-14 lg:h-[60px] px-4 flex items-center gap-2">
-        <Store className="h-5 w-5 text-primary shrink-0" />
-        <span className="font-black text-sm tracking-wide truncate">Reseller Panel</span>
+      <SidebarHeader className="border-b h-14 lg:h-[60px] px-4 flex items-center gap-3">
+        {storeInfo?.logoUrl ? (
+          <div className="h-8 w-8 rounded-lg overflow-hidden border border-primary/20 shrink-0 bg-background flex items-center justify-center">
+            <Image
+              src={storeInfo.logoUrl}
+              alt={storeInfo.storeName || "Store"}
+              width={32}
+              height={32}
+              className="h-full w-full object-cover"
+              unoptimized
+            />
+          </div>
+        ) : (
+          <Store className="h-5 w-5 text-primary shrink-0" />
+        )}
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="font-black text-sm tracking-wide truncate">
+            {storeInfo?.storeName || 'Reseller Panel'}
+          </span>
+          <span className="text-[10px] text-muted-foreground -mt-0.5">Reseller Portal</span>
+        </div>
       </SidebarHeader>
       <SidebarContent className="gap-0">
         <NavMain items={resellerNav} pathname={pathname} />

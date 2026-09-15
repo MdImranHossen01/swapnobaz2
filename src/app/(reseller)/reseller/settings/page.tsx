@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +12,10 @@ import { Loader2, Store, Globe, Save, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { PasswordChangeForm } from '@/components/user/PasswordChangeForm';
+import { divisions, getDistrictsByDivision, getThanasByDistrict, findDivisionByDistrict } from '@/lib/bd-locations';
 
 export default function ResellerSettingsPage() {
+  const { update: updateSession } = useSession();
   const [reseller, setReseller] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -23,7 +26,7 @@ export default function ResellerSettingsPage() {
   });
   const [contact, setContact] = useState({ email: '', phone: '', address: '' });
   const [pickup, setPickup] = useState({
-    hubName: '', contactPerson: '', phone: '', address: '', district: '', thana: '',
+    hubName: '', contactPerson: '', phone: '', address: '', division: '', district: '', thana: '',
   });
   const [social, setSocial] = useState({
     facebook: '', instagram: '', tiktok: '', whatsapp: '', youtube: '', twitter: '', linkedin: '',
@@ -46,12 +49,15 @@ export default function ResellerSettingsPage() {
         metaDescription: r.seoConfig?.metaDescription || '',
       });
       setContact({ email: r.contact?.email || '', phone: r.contact?.phone || '', address: r.contact?.address || '' });
+      const dist = r.pickupAddress?.district || '';
+      const div = r.pickupAddress?.division || (dist ? findDivisionByDistrict(dist) : '');
       setPickup({
         hubName: r.pickupAddress?.hubName || '',
         contactPerson: r.pickupAddress?.contactPerson || '',
         phone: r.pickupAddress?.phone || '',
         address: r.pickupAddress?.address || '',
-        district: r.pickupAddress?.district || '',
+        division: div,
+        district: dist,
         thana: r.pickupAddress?.thana || '',
       });
       setSocial({
@@ -76,7 +82,17 @@ export default function ResellerSettingsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ resellerId: reseller._id, ...payload }),
     });
-    if (res.ok) { toast.success('Settings saved successfully'); fetchSettings(); }
+    if (res.ok) {
+      toast.success('Settings saved successfully');
+      if (payload.logoUrl !== undefined) {
+        try {
+          await updateSession({ image: payload.logoUrl });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      fetchSettings();
+    }
     else toast.error('Failed to save settings');
     setSaving(false);
   };
@@ -217,7 +233,7 @@ export default function ResellerSettingsPage() {
                     placeholder="e.g. Md. Imran" 
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 md:col-span-2">
                   <Label>Pickup Contact Phone (Courier Rider Calls here)</Label>
                   <Input 
                     value={pickup.phone} 
@@ -225,23 +241,64 @@ export default function ResellerSettingsPage() {
                     placeholder="017XXXXXXXX" 
                   />
                 </div>
+              </div>
+
+              {/* Cascading Location Dropdowns */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                {/* Division Dropdown */}
+                <div className="space-y-1">
+                  <Label>Division / বিভাগ</Label>
+                  <select
+                    value={pickup.division}
+                    onChange={e => {
+                      const newDiv = e.target.value;
+                      setPickup(p => ({ ...p, division: newDiv, district: '', thana: '' }));
+                    }}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">-- বিভাগ নির্বাচন করুন --</option>
+                    {divisions.map(div => (
+                      <option key={div} value={div}>{div}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* District Dropdown */}
                 <div className="space-y-1">
                   <Label>District / জেলা</Label>
-                  <Input 
-                    value={pickup.district} 
-                    onChange={e => setPickup(p => ({ ...p, district: e.target.value }))} 
-                    placeholder="e.g. Barishal / Barisal" 
-                  />
+                  <select
+                    value={pickup.district}
+                    disabled={!pickup.division}
+                    onChange={e => {
+                      const newDist = e.target.value;
+                      setPickup(p => ({ ...p, district: newDist, thana: '' }));
+                    }}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">{pickup.division ? '-- জেলা নির্বাচন করুন --' : '-- আগে বিভাগ বাছুন --'}</option>
+                    {(pickup.division ? getDistrictsByDivision(pickup.division) : []).map(dist => (
+                      <option key={dist} value={dist}>{dist}</option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* Thana Dropdown */}
                 <div className="space-y-1">
-                  <Label>Thana / Police Station / থানা</Label>
-                  <Input 
-                    value={pickup.thana} 
-                    onChange={e => setPickup(p => ({ ...p, thana: e.target.value }))} 
-                    placeholder="e.g. Kotwali / Sadar" 
-                  />
+                  <Label>Thana / থানা / উপজেলা</Label>
+                  <select
+                    value={pickup.thana}
+                    disabled={!pickup.district}
+                    onChange={e => setPickup(p => ({ ...p, thana: e.target.value }))}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">{pickup.district ? '-- থানা বাছুন --' : '-- আগে জেলা বাছুন --'}</option>
+                    {(pickup.district ? getThanasByDistrict(pickup.district) : []).map(th => (
+                      <option key={th} value={th}>{th}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
+
               <div className="space-y-1">
                 <Label>Full Pickup Address (Road, House, Landmark)</Label>
                 <Textarea 

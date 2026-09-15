@@ -565,7 +565,7 @@ export default function SuperConfigPage() {
                      <div className="space-y-2">
                        <Label htmlFor="stripe-sec-key" className="font-bold text-xs">Secret Key</Label>
                        <input 
-                         id="stripe-sec-key" type="password"
+                         id="stripe-sec-key" type="text"
                          value={settings?.paymentConfig?.stripe?.secretKey || ''} 
                          onChange={(e) => setSettings({
                            ...settings, 
@@ -584,7 +584,7 @@ export default function SuperConfigPage() {
                      <div className="space-y-2 md:col-span-2">
                        <Label htmlFor="stripe-webhook-secret" className="font-bold text-xs">Webhook Secret</Label>
                        <input 
-                         id="stripe-webhook-secret" type="password"
+                         id="stripe-webhook-secret" type="text"
                          value={settings?.paymentConfig?.stripe?.webhookSecret || ''} 
                          onChange={(e) => setSettings({
                            ...settings, 

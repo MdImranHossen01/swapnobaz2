@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
 import Reseller from '@/models/Reseller';
+import User from '@/models/User';
 
 // GET - Load current reseller's settings
 export async function GET() {
@@ -12,10 +13,17 @@ export async function GET() {
 
   try {
     await dbConnect();
-    const reseller = await Reseller.findOne({ userId: (session.user as any).id });
+    const currentUserId = (session.user as any).id;
+    const reseller = await Reseller.findOne({ userId: currentUserId });
     if (!reseller) {
       return NextResponse.json({ error: 'Reseller not found' }, { status: 404 });
     }
+
+    // Ensure User profile image is synchronized with store logo
+    if (reseller.logoUrl && currentUserId) {
+      await User.findByIdAndUpdate(currentUserId, { image: reseller.logoUrl });
+    }
+
     return NextResponse.json({ reseller });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
@@ -76,7 +84,13 @@ export async function PATCH(request: NextRequest) {
     if (storeName !== undefined) updatePayload.storeName = storeName;
     if (description !== undefined) updatePayload.description = description;
     if (marqueeText !== undefined) updatePayload.marqueeText = marqueeText;
-    if (logoUrl !== undefined) updatePayload.logoUrl = logoUrl;
+    if (logoUrl !== undefined) {
+      updatePayload.logoUrl = logoUrl;
+      const targetUserId = reseller?.userId || (session.user as any).id;
+      if (targetUserId) {
+        await User.findByIdAndUpdate(targetUserId, { image: logoUrl });
+      }
+    }
     if (faviconUrl !== undefined) updatePayload.faviconUrl = faviconUrl;
 
     // Domain
