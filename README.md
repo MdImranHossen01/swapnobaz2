@@ -10,6 +10,8 @@ All technical and handover documentations required by the project agreement are 
 1. **[Database Schema & Collections Guide](./docs/DATABASE_SCHEMA.md)** – Comprehensive schema specifications for all 29 MongoDB collections, indexes, and relations.
 2. **[REST API & Postman/Swagger Reference](./docs/API_DOCUMENTATION.md)** – Complete backend endpoint specification, payloads, authentication, and Postman collection format.
 3. **[Deployment & Server Configuration Guide](./docs/DEPLOYMENT_GUIDE.md)** – Production VPS setup, Nginx reverse proxy, SSL, Redis, PM2, and environment variables.
+4. **[Admin Manual](./docs/ADMIN_MANUAL.md)** – Full operational guide for `super_admin`, `admin`, `manager`, and `moderator` roles covering all 34 admin panel sections.
+5. **[Reseller Manual](./docs/RESELLER_MANUAL.md)** – Complete guide for resellers covering products, orders, wallet, CMS, offers, coupons, and best practices.
 
 ---
 
@@ -84,11 +86,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Role | Test Email | Permissions & Accessible Scope |
 | :--- | :--- | :--- |
-| **`super_admin`** | `imranshuvo101@gmail.com` | Full root control: System Design, Component Switcher (V1-V6), Project Expiration, Tenant Oversight. |
 | **`admin`** | `admin1@swapnobaz.com` | Operational control: Orders, Inventory, Reseller Management, Fraud Checker, Payouts, Chalans. |
 | **`manager`** | `manager1@swapnobaz.com` | Catalog management, Categories, Brands, Orders, Offers, Chalans, Client Bills, Blog CMS, Banners, Subscribers. |
 | **`moderator`** | `moderator1@swapnobaz.com` | Catalog management, Categories, Brands, Orders, Offers, Chalans, Client Bills, Blog CMS, Banners, Subscribers. |
-| **`supplier`** | `supplier1@swapnobaz.com` | Supplier portal, stock uploads, wholesale purchase bills, payout records. |
 | **`reseller`** | `reseller1@swapnobaz.com` | Dedicated Reseller Panel (`/reseller/dashboard`), custom pricing, wallet & profit logs. |
 | **`user`** (Customer) | `user1@swapnobaz.com` | Storefront shopping, wishlist, cart, live order tracking (`/track-order`). |
 
@@ -121,6 +121,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - [x] [Database Schema Documentation](./docs/DATABASE_SCHEMA.md)
 - [x] [REST API Specification](./docs/API_DOCUMENTATION.md)
 - [x] [VPS Deployment & Setup Manual](./docs/DEPLOYMENT_GUIDE.md)
+- [x] [Admin Panel User Manual](./docs/ADMIN_MANUAL.md)
+- [x] [Reseller Panel User Manual](./docs/RESELLER_MANUAL.md)
 
 ---
 
