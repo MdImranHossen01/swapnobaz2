@@ -26,7 +26,7 @@ function validateIds(ids: any) {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session || !(['admin', 'super_admin', 'manager'].includes((session?.user as any)?.role))) {
+    if (!session || !(['admin', 'super_admin', 'manager', 'moderator'].includes((session?.user as any)?.role))) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
@@ -150,32 +150,32 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-    try {
-      const session = await auth();
-      if (!session || !(['admin', 'super_admin', 'manager'].includes((session?.user as any)?.role))) {
-        return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-      }
-  
-      const { ids } = await req.json();
-  
-      const idError = validateIds(ids);
-      if (idError) {
-        return NextResponse.json({ message: idError }, { status: 400 });
-      }
-  
-      await connectToDatabase();
-  
-      const result = await Order.updateMany(
-        { _id: { $in: ids } },
-        { $set: { deletedAt: new Date() } }
-      );
-  
-      return NextResponse.json({ 
-        message: `${result.modifiedCount} orders soft-deleted successfully`,
-        count: result.modifiedCount 
-      });
-    } catch (error) {
-      console.error('Bulk Delete Error:', error);
-      return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+  try {
+    const session = await auth();
+    if (!session || !(['admin', 'super_admin', 'manager', 'moderator'].includes((session?.user as any)?.role))) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
+
+    const { ids } = await req.json();
+
+    const idError = validateIds(ids);
+    if (idError) {
+      return NextResponse.json({ message: idError }, { status: 400 });
+    }
+
+    await connectToDatabase();
+
+    const result = await Order.updateMany(
+      { _id: { $in: ids } },
+      { $set: { deletedAt: new Date() } }
+    );
+
+    return NextResponse.json({ 
+      message: `${result.modifiedCount} orders soft-deleted successfully`,
+      count: result.modifiedCount 
+    });
+  } catch (error) {
+    console.error('Bulk Delete Error:', error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
+}

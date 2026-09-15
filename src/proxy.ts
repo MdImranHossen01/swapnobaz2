@@ -99,7 +99,7 @@ export const proxy = auth(async (req) => {
 
   // ── 3. Redirect logged-in users away from auth pages ──────────────────────
   if (isAuthRoute && isLoggedIn) {
-    if (role === "admin" || role === "super_admin" || role === "manager") {
+    if (role === "admin" || role === "super_admin" || role === "manager" || role === "moderator") {
       return NextResponse.redirect(new URL("/admin/dashboard", nextUrl));
     }
     if (role === "reseller") {
@@ -114,24 +114,31 @@ export const proxy = auth(async (req) => {
       return NextResponse.redirect(new URL("/login", nextUrl));
     }
 
-    if (role !== "admin" && role !== "super_admin" && role !== "manager") {
+    if (role !== "admin" && role !== "super_admin" && role !== "manager" && role !== "moderator") {
       return NextResponse.redirect(new URL("/", nextUrl));
     }
 
-    if (role === "manager") {
+    if (role === "manager" || role === "moderator") {
       const allowedPaths = [
         "/admin/dashboard",
         "/admin/products",
         "/admin/categories",
+        "/admin/brands",
+        "/admin/upcoming-expiry",
+        "/admin/low-stock",
         "/admin/orders",
         "/admin/offers",
+        "/admin/coupons",
         "/admin/chalans",
         "/admin/bills",
         "/admin/abandoned-carts",
         "/admin/cms",
         "/admin/landing-pages",
         "/admin/catalog",
-        "/admin/blogs"
+        "/admin/blogs",
+        "/admin/subscribers",
+        "/admin/fraud-checker",
+        "/admin/marketing"
       ];
       const isPathAllowed = allowedPaths.some(path =>
         nextUrl.pathname === path || nextUrl.pathname.startsWith(path + "/")
@@ -149,7 +156,7 @@ export const proxy = auth(async (req) => {
 
   // ── 5. /dashboard redirect ─────────────────────────────────────────────────
   if (nextUrl.pathname === "/dashboard" || nextUrl.pathname.startsWith("/dashboard/")) {
-    if (role === "admin" || role === "super_admin" || role === "manager") {
+    if (role === "admin" || role === "super_admin" || role === "manager" || role === "moderator") {
       return NextResponse.redirect(new URL("/admin/dashboard", nextUrl));
     }
     if (role === "reseller") {

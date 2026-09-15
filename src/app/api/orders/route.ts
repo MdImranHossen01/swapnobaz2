@@ -542,7 +542,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const fetchAll = searchParams.get('all') === 'true';
-    const isAdmin = ['admin', 'super_admin', 'manager'].includes((session.user as any)?.role);
+    const isAdmin = ['admin', 'super_admin', 'manager', 'moderator'].includes((session.user as any)?.role);
 
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.max(1, parseInt(searchParams.get('limit') || '20'));

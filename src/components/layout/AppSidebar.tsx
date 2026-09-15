@@ -355,9 +355,38 @@ function NavMain({ items, pathname, role }: { items: typeof data.navMain; pathna
   const { setOpenMobile, isMobile } = useSidebar()
 
   // Filter items based on role
+  const isLimitedStaff = role === 'manager' || role === 'moderator';
+  const allowedPrefixes = [
+    "/admin/dashboard",
+    "/admin/products",
+    "/admin/categories",
+    "/admin/brands",
+    "/admin/upcoming-expiry",
+    "/admin/low-stock",
+    "/admin/orders",
+    "/admin/offers",
+    "/admin/coupons",
+    "/admin/chalans",
+    "/admin/bills",
+    "/admin/abandoned-carts",
+    "/admin/cms",
+    "/admin/landing-pages",
+    "/admin/catalog",
+    "/admin/blogs",
+    "/admin/subscribers",
+    "/admin/fraud-checker",
+    "/admin/marketing"
+  ];
+
   const filteredItems = items.map(item => ({
     ...item,
-    items: item.items.filter((subItem: any) => !subItem.superOnly || role === 'super_admin')
+    items: item.items.filter((subItem: any) => {
+      if (subItem.superOnly && role !== 'super_admin') return false;
+      if (isLimitedStaff) {
+        return allowedPrefixes.some(prefix => subItem.url === prefix || subItem.url.startsWith(prefix + "/") || subItem.url.startsWith(prefix + "?"));
+      }
+      return true;
+    })
   })).filter(item => item.items.length > 0);
 
   const handleLinkClick = () => {

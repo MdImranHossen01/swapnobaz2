@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const session = await auth();
     const userRole = (session?.user as any)?.role;
 
-    if (!session || (userRole !== 'admin' && userRole !== 'super_admin' && userRole !== 'manager')) {
+    if (!session || (userRole !== 'admin' && userRole !== 'super_admin' && userRole !== 'manager' && userRole !== 'moderator')) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
@@ -123,7 +123,7 @@ export async function DELETE(req: NextRequest) {
     const session = await auth();
     const userRole = (session?.user as any)?.role;
 
-    if (!session || (userRole !== 'admin' && userRole !== 'super_admin' && userRole !== 'manager')) {
+    if (!session || (userRole !== 'admin' && userRole !== 'super_admin' && userRole !== 'manager' && userRole !== 'moderator')) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 

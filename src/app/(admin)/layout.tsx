@@ -17,7 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.push('/login');
     } else if (status === 'authenticated' && session?.user) {
       const role = (session.user as any)?.role;
-      if (role !== 'admin' && role !== 'super_admin') {
+      if (role !== 'admin' && role !== 'super_admin' && role !== 'manager' && role !== 'moderator') {
         router.push('/dashboard');
       }
     }
@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   const role = (session?.user as any)?.role;
-  if (role !== 'admin' && role !== 'super_admin') {
+  if (role !== 'admin' && role !== 'super_admin' && role !== 'manager' && role !== 'moderator') {
     return null;
   }
 

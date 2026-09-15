@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     const session = await auth();
-    const isAdmin = session?.user && ['admin', 'super_admin', 'manager'].includes((session.user as any).role);
+    const isAdmin = session?.user && ['admin', 'super_admin', 'manager', 'moderator'].includes((session.user as any).role);
     if (!isAdmin) {
       let resellerId = null;
       if (session?.user) {
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
 
-    if (!session || !session.user || !(['admin', 'super_admin', 'manager'].includes((session.user as any)?.role))) {
+    if (!session || !session.user || !(['admin', 'super_admin', 'manager', 'moderator'].includes((session.user as any)?.role))) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 

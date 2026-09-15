@@ -86,8 +86,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 | :--- | :--- | :--- |
 | **`super_admin`** | `imranshuvo101@gmail.com` | Full root control: System Design, Component Switcher (V1-V6), Project Expiration, Tenant Oversight. |
 | **`admin`** | `admin1@swapnobaz.com` | Operational control: Orders, Inventory, Reseller Management, Fraud Checker, Payouts, Chalans. |
-| **`manager`** | `manager1@swapnobaz.com` | Catalog management, Categories, Offers, Blog CMS, Subscriber lists. |
-| **`moderator`** | `moderator1@swapnobaz.com` | Customer service, manual order booking, delivery verification. |
+| **`manager`** | `manager1@swapnobaz.com` | Catalog management, Categories, Brands, Orders, Offers, Chalans, Client Bills, Blog CMS, Banners, Subscribers. |
+| **`moderator`** | `moderator1@swapnobaz.com` | Catalog management, Categories, Brands, Orders, Offers, Chalans, Client Bills, Blog CMS, Banners, Subscribers. |
 | **`supplier`** | `supplier1@swapnobaz.com` | Supplier portal, stock uploads, wholesale purchase bills, payout records. |
 | **`reseller`** | `reseller1@swapnobaz.com` | Dedicated Reseller Panel (`/reseller/dashboard`), custom pricing, wallet & profit logs. |
 | **`user`** (Customer) | `user1@swapnobaz.com` | Storefront shopping, wishlist, cart, live order tracking (`/track-order`). |

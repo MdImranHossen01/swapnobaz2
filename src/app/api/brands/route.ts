@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     const role = (session?.user as any)?.role;
 
-    if (!session || !session.user || !['admin', 'super_admin', 'manager'].includes(role)) {
+    if (!session || !session.user || !['admin', 'super_admin', 'manager', 'moderator'].includes(role)) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
