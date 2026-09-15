@@ -102,8 +102,6 @@ To combat fraudulent Cash-on-Delivery orders, Swapnobaz features an integrated f
 ### 4. Dynamic System Design and Live UI Theme Switcher
 
 Platform super administrators have complete control over the visual presentation of the storefronts through a centralized System Design configuration panel.
-
-- How it Works: The system features 6 distinct Navbar designs (V1 to V6), 6 Footer layouts (V1 to V6), and 6 Product Card styles (V1 to V6). The super admin can select any combination and modify the primary, secondary, background, and accent color variables in real time. The configuration is stored in the GlobalSettings MongoDB document and injected into the root layout as dynamic CSS variables.
 - User Benefit: Complete visual redesigns and holiday marketing themes can be applied instantly across the entire platform without modifying source code or triggering server deployments.
 - Technical Challenge and Solution: Dynamically updating colors without triggering CSS build steps. Implemented by binding all shadcn/ui components and custom styles to CSS custom properties injected directly into the HTML root element.
 - Non-Technical Challenge and Solution: Ensuring consistent aesthetic quality across all 216 possible component combinations. Each version was designed with strict modular constraints to ensure visual harmony regardless of combination.
