@@ -427,6 +427,16 @@ export default function AdminDashboard() {
               <span className="text-muted-foreground">Active Resellers:</span>
               <span className="font-bold text-blue-600">{stats?.activeResellers || 0}</span>
             </Link>
+            {(stats?.pendingResellers || 0) > 0 && (
+              <Link href="/admin/resellers?status=pending" className="flex justify-between items-center hover:underline">
+                <span className="text-orange-600 font-semibold flex items-center gap-1">
+                  <Clock className="h-3 w-3" /> Pending Approval:
+                </span>
+                <Badge className="bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300 font-bold text-[10px] h-5">
+                  {stats?.pendingResellers}
+                </Badge>
+              </Link>
+            )}
             <div className="flex justify-between items-center text-muted-foreground text-xs">
               <span>Newsletter Subscribers:</span>
               <span className="font-medium text-foreground">{stats?.subscribersCount || 0}</span>

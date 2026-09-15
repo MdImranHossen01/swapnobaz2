@@ -60,6 +60,7 @@ export async function GET(req: NextRequest) {
       orderStatusStats,
       totalUsersCount,
       activeResellersCount,
+      pendingResellersCount,
       subscribersCount,
       stockValueStats,
       lowStockProducts,
@@ -138,6 +139,9 @@ export async function GET(req: NextRequest) {
 
       // 5. Active Resellers
       Reseller.countDocuments({ status: 'active' }),
+
+      // 5b. Pending Resellers awaiting approval
+      Reseller.countDocuments({ status: 'pending' }),
 
       // 6. Subscribers
       Subscriber.countDocuments({ isActive: true }).catch(() => 0),
@@ -418,6 +422,7 @@ export async function GET(req: NextRequest) {
         netProfit,
         totalCustomers: totalUsersCount,
         activeResellers: activeResellersCount,
+        pendingResellers: pendingResellersCount,
         subscribersCount,
         pendingOrdersCount,
         pendingOrdersAmount,
