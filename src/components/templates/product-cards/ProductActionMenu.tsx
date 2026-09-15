@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -90,6 +90,30 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
   );
 
   const isResellerProduct = Boolean(uploadedById);
+
+  const initialStoreName =
+    (typeof product.uploadedBy === 'object' && product.uploadedBy !== null
+      ? (product.uploadedBy.storeName || product.uploadedBy.name)
+      : null) ||
+    product.uploadedByStoreName ||
+    null;
+
+  const [resellerStoreName, setResellerStoreName] = useState<string | null>(initialStoreName);
+
+  useEffect(() => {
+    if (initialStoreName) {
+      setResellerStoreName(initialStoreName);
+    } else if (uploadedById && !isOwnProduct) {
+      fetch(`/api/reseller/store-lookup?id=${uploadedById}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.storeName) {
+            setResellerStoreName(data.storeName);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [uploadedById, initialStoreName, isOwnProduct]);
 
   // If user is neither Admin nor Reseller, render nothing
   if (!isAdmin && !isReseller) {
@@ -187,11 +211,11 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
           <DropdownMenuTrigger asChild>
             <Button
               size="icon"
-              variant="secondary"
-              className="h-7 w-7 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-md hover:bg-background transition-transform active:scale-95"
+              variant="ghost"
+              className="h-7 w-7 p-0 bg-transparent hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-transform active:scale-90 border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
               aria-label="Product Actions"
             >
-              <MoreVertical className="h-3.5 w-3.5 text-foreground" />
+              <MoreVertical className="h-4 w-4 text-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
             </Button>
           </DropdownMenuTrigger>
 
@@ -237,8 +261,8 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                         <Store className="h-3.5 w-3.5 text-purple-600" />
                         Reseller Product
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">
-                        Uploaded by independent reseller
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Uploaded by: <span className="font-bold text-foreground">{resellerStoreName || 'Reseller'}</span>
                       </p>
                     </div>
 

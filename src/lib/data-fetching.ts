@@ -12,6 +12,7 @@ import Coupon from '@/models/Coupon';
 import Order from '@/models/Order';
 
 import Brand from '@/models/Brand';
+import Reseller from '@/models/Reseller';
 
 // Helper to serialize MongoDB data
 const serialize = (data: any) => JSON.parse(JSON.stringify(data));
@@ -36,9 +37,12 @@ export const getCachedProducts = (query = {}, limit = 10, sort: any = { createdA
   return unstable_cache(
     async () => {
       await connectToDatabase();
+      // Ensure Reseller model is registered
+      if (!Reseller) {}
       const products = await Product.find({ isPublished: true, ...query })
         .populate('categories')
         .populate('brand')
+        .populate('uploadedBy', 'storeName subdomain')
         .sort(sort as any)
         .limit(limit)
         .lean();
@@ -56,6 +60,7 @@ export const getCachedProductBySlug = (slug: string) => {
       const product = await Product.findOne({ slug, isPublished: true })
         .populate('categories')
         .populate('brand')
+        .populate('uploadedBy', 'storeName subdomain')
         .lean();
       return serialize(product);
     },
