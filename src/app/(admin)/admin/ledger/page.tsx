@@ -349,29 +349,29 @@ function AccountsLedgerContent() {
       </div>
 
       {/* Account Balance Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         {accounts.map((acc) => {
           const isCash = acc.code === 'CASH';
           const isBank = acc.code === 'BANK';
 
           return (
             <Card key={acc._id} className="relative overflow-hidden shadow-xs">
-              <CardHeader className="flex flex-row items-center justify-between pb-1.5 p-3 md:p-4">
-                <CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <CardHeader className="flex flex-row items-center justify-between pb-1 p-2.5 sm:p-3 md:p-4">
+                <CardTitle className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate">
                   {acc.name}
                 </CardTitle>
                 {isCash ? (
-                  <Wallet className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                  <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
                 ) : isBank ? (
-                  <Landmark className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                  <Landmark className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
                 ) : (
-                  <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                  <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
                 )}
               </CardHeader>
-              <CardContent className="space-y-2 p-3 md:p-4 pt-0">
-                <div className="text-xl md:text-3xl font-bold tracking-tight">৳{Math.round(acc.currentBalance).toLocaleString()}</div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-1.5">
-                  <span>Opening: ৳{Math.round(acc.openingBalance || 0).toLocaleString()}</span>
+              <CardContent className="space-y-1.5 p-2.5 sm:p-3 md:p-4 pt-0">
+                <div className="text-lg sm:text-2xl font-bold tracking-tight">৳{Math.round(acc.currentBalance).toLocaleString()}</div>
+                <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] sm:text-xs text-muted-foreground border-t pt-1.5">
+                  <span className="truncate">Opening: ৳{Math.round(acc.openingBalance || 0).toLocaleString()}</span>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -379,9 +379,9 @@ function AccountsLedgerContent() {
                       setEditingAccount(acc);
                       setNewOpeningBalance(acc.openingBalance || 0);
                     }}
-                    className="h-6 px-1.5 text-xs hover:bg-muted"
+                    className="h-5 sm:h-6 px-1.5 text-[10px] sm:text-xs hover:bg-muted"
                   >
-                    <Edit2 className="h-3 w-3 mr-1" /> Edit
+                    <Edit2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" /> Edit
                   </Button>
                 </div>
               </CardContent>
@@ -453,43 +453,43 @@ function AccountsLedgerContent() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Account</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="text-right">Amount (৳)</TableHead>
-                      <TableHead className="text-right">Running Balance (৳)</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="w-[110px] whitespace-nowrap">Date</TableHead>
+                      <TableHead className="w-[150px] whitespace-nowrap">Account</TableHead>
+                      <TableHead className="max-w-[300px]">Description</TableHead>
+                      <TableHead className="w-[110px] whitespace-nowrap">Type</TableHead>
+                      <TableHead className="text-right w-[120px] whitespace-nowrap">Amount (৳)</TableHead>
+                      <TableHead className="text-right w-[150px] whitespace-nowrap">Running Balance (৳)</TableHead>
+                      <TableHead className="text-right w-[80px] whitespace-nowrap">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedTransactions.map((tx) => (
                       <TableRow key={tx._id}>
-                        <TableCell className="text-muted-foreground">
+                        <TableCell className="text-muted-foreground whitespace-nowrap text-xs">
                           {format(new Date(tx.date), 'dd MMM yyyy')}
                         </TableCell>
-                        <TableCell className="font-medium">{tx.account?.name}</TableCell>
-                        <TableCell>
-                          <div className="space-y-0.5">
-                            <p>{tx.description}</p>
+                        <TableCell className="font-semibold whitespace-nowrap text-xs">{tx.account?.name}</TableCell>
+                        <TableCell className="max-w-[280px] md:max-w-[340px] whitespace-normal break-words py-2.5">
+                          <div className="space-y-1">
+                            <p className="leading-snug text-xs md:text-sm text-foreground">{tx.description}</p>
                             {tx.reference && (
-                              <span className="text-xs text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded">
+                              <span className="inline-block text-[10px] text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded font-mono">
                                 Ref: {tx.reference}
                               </span>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <Badge
                             variant={tx.type === 'debit' ? 'default' : 'outline'}
-                            className={tx.type === 'debit' ? 'bg-primary/20 text-primary hover:bg-primary/20 border-transparent' : ''}
+                            className={tx.type === 'debit' ? 'bg-primary/20 text-primary hover:bg-primary/20 border-transparent text-xs' : 'text-xs'}
                           >
                             {tx.type === 'debit' ? 'Debit (+)' : 'Credit (-)'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-medium">৳{Math.round(tx.amount).toLocaleString()}</TableCell>
-                        <TableCell className="text-right font-semibold">৳{Math.round(tx.balanceAfter).toLocaleString()}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right font-semibold whitespace-nowrap text-xs md:text-sm">৳{Math.round(tx.amount).toLocaleString()}</TableCell>
+                        <TableCell className="text-right font-bold whitespace-nowrap text-xs md:text-sm">৳{Math.round(tx.balanceAfter).toLocaleString()}</TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
                           {tx.reference && ['manual-deposit', 'manual-withdrawal', 'manual-transfer'].includes(tx.reference) ? (
                             <div className="flex items-center justify-end gap-1.5">
                               <DropdownMenu>

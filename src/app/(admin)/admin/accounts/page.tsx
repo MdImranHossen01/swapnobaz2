@@ -520,7 +520,13 @@ export default function AccountsPage() {
                 onValueChange={(val) => val && setTransferForm(prev => ({ ...prev, fromAccountId: val }))}
               >
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Select Source Account" />
+                  <SelectValue placeholder="Select Source Account">
+                    {transferForm.fromAccountId ? (
+                      accounts.find(a => a._id === transferForm.fromAccountId)
+                        ? `${accounts.find(a => a._id === transferForm.fromAccountId)?.name} (Available: ৳${Math.round(accounts.find(a => a._id === transferForm.fromAccountId)?.currentBalance || 0)})`
+                        : 'Select Source Account'
+                    ) : 'Select Source Account'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map(a => (
@@ -539,7 +545,13 @@ export default function AccountsPage() {
                 onValueChange={(val) => val && setTransferForm(prev => ({ ...prev, toAccountId: val }))}
               >
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Select Destination Account" />
+                  <SelectValue placeholder="Select Destination Account">
+                    {transferForm.toAccountId ? (
+                      accounts.find(a => a._id === transferForm.toAccountId)
+                        ? `${accounts.find(a => a._id === transferForm.toAccountId)?.name} (Balance: ৳${Math.round(accounts.find(a => a._id === transferForm.toAccountId)?.currentBalance || 0)})`
+                        : 'Select Destination Account'
+                    ) : 'Select Destination Account'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.filter(a => a._id !== transferForm.fromAccountId).map(a => (

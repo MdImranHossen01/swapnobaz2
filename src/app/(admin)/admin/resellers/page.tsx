@@ -39,7 +39,7 @@ export default function AdminResellersPage() {
         setResellers(data.resellers || []);
       }
     } catch {
-      toast.error('রিসেলার তালিকা লোড করতে সমস্যা হয়েছে');
+      toast.error('Failed to load resellers list');
     } finally {
       setLoading(false);
     }
@@ -50,14 +50,15 @@ export default function AdminResellersPage() {
   }, []);
 
   const handleStatusChange = async (resellerId: string, status: 'active' | 'suspended', name: string) => {
-    const actionText = status === 'active' ? 'অনুমোদন' : 'স্থগিত';
+    const actionVerb = status === 'active' ? 'approve' : 'suspend';
+    const actionText = status === 'active' ? 'Approved' : 'Suspended';
     const confirmResult = await Swal.fire({
-      title: 'আপনি কি নিশ্চিত?',
-      text: `আপনি কি "${name}" স্টোরটি ${actionText} করতে চান?`,
+      title: 'Are you sure?',
+      text: `Do you want to ${actionVerb} "${name}" store?`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'হ্যাঁ',
-      cancelButtonText: 'না',
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'Cancel',
       confirmButtonColor: '#3085d6',
       cancelButtonColor: '#d33',
     });
@@ -71,14 +72,14 @@ export default function AdminResellersPage() {
         body: JSON.stringify({ resellerId, status }),
       });
       if (res.ok) {
-        toast.success(`সফলভাবে ${actionText} করা হয়েছে`);
+        toast.success(`Store successfully ${actionText.toLowerCase()}`);
         fetchResellers();
       } else {
         const err = await res.json();
-        toast.error(err.error || 'সমস্যা হয়েছে');
+        toast.error(err.error || 'An error occurred');
       }
     } catch {
-      toast.error('নেটওয়ার্ক ত্রুটি');
+      toast.error('Network error');
     }
   };
 
@@ -117,14 +118,14 @@ export default function AdminResellersPage() {
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
             <Store className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-            রিসেলার ম্যানেজমেন্ট
+            Reseller Management
           </h2>
           <p className="text-xs md:text-sm text-muted-foreground">
-            সব রিসেলার স্টোর ও তাদের অ্যাকাউন্ট স্ট্যাটাস পরিচালনা করুন
+            Manage all reseller storefronts, domains, and account approval statuses
           </p>
         </div>
         <Button size="sm" variant="outline" className="h-8 text-xs w-fit" onClick={fetchResellers}>
-          <RefreshCw className="h-3.5 w-3.5 mr-1" />রিফ্রেশ
+          <RefreshCw className="h-3.5 w-3.5 mr-1" />Refresh
         </Button>
       </div>
 
@@ -149,7 +150,7 @@ export default function AdminResellersPage() {
                 : 'bg-card text-muted-foreground border-border hover:bg-muted/40'
             }`}
           >
-            {s === 'all' ? 'সব' : s === 'pending' ? 'পেন্ডিং' : s === 'active' ? 'সক্রিয়' : 'স্থগিত'}
+            {s === 'all' ? 'All' : s === 'pending' ? 'Pending' : s === 'active' ? 'Active' : 'Suspended'}
             <span className="ml-1.5 opacity-70">({counts[s]})</span>
           </button>
         ))}
@@ -159,7 +160,7 @@ export default function AdminResellersPage() {
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="স্টোর, ডোমেন বা মালিকের নাম..."
+            placeholder="Search by store, domain, or owner..."
             value={search}
             onChange={e => {
               setSearch(e.target.value);
@@ -179,7 +180,7 @@ export default function AdminResellersPage() {
           ) : paginatedResellers.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
               <Store className="h-16 w-16 mx-auto mb-4" />
-              <p>কোনো রিসেলার স্টোর খুঁজে পাওয়া যায়নি</p>
+              <p>No reseller stores found</p>
             </div>
           ) : (
             <>
@@ -188,13 +189,13 @@ export default function AdminResellersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>স্টোরের নাম</TableHead>
-                      <TableHead>ডোমেন / সাবডোমেন</TableHead>
-                      <TableHead>মালিক</TableHead>
-                      <TableHead>মোট অর্ডার</TableHead>
-                      <TableHead>মোট রেভিনিউ</TableHead>
-                      <TableHead>স্ট্যাটাস</TableHead>
-                      <TableHead className="text-right">অ্যাকশন</TableHead>
+                      <TableHead>Store Name</TableHead>
+                      <TableHead>Domain / Subdomain</TableHead>
+                      <TableHead>Owner</TableHead>
+                      <TableHead>Total Orders</TableHead>
+                      <TableHead>Total Revenue</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -236,7 +237,7 @@ export default function AdminResellersPage() {
                         <TableCell>৳{r.totalRevenue?.toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className={statusBadgeColor[r.status] || ''}>
-                            {r.status === 'active' ? 'সক্রিয়' : r.status === 'pending' ? 'অনুমোদন পেন্ডিং' : 'স্থগিত'}
+                            {r.status === 'active' ? 'Active' : r.status === 'pending' ? 'Pending Approval' : 'Suspended'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-1">
@@ -246,7 +247,7 @@ export default function AdminResellersPage() {
                               className="bg-green-600 hover:bg-green-700"
                               onClick={() => handleStatusChange(r._id, 'active', r.storeName)}
                             >
-                              <Check className="h-3.5 w-3.5 mr-1" />অনুমোদন
+                              <Check className="h-3.5 w-3.5 mr-1" />Approve
                             </Button>
                           )}
                           {r.status === 'active' && (
@@ -255,7 +256,7 @@ export default function AdminResellersPage() {
                               variant="destructive"
                               onClick={() => handleStatusChange(r._id, 'suspended', r.storeName)}
                             >
-                              <ShieldAlert className="h-3.5 w-3.5 mr-1" />স্থগিত
+                              <ShieldAlert className="h-3.5 w-3.5 mr-1" />Suspend
                             </Button>
                           )}
                           {r.status === 'suspended' && (
@@ -264,7 +265,7 @@ export default function AdminResellersPage() {
                               variant="outline"
                               onClick={() => handleStatusChange(r._id, 'active', r.storeName)}
                             >
-                              <Check className="h-3.5 w-3.5 mr-1" />সক্রিয়
+                              <Check className="h-3.5 w-3.5 mr-1" />Activate
                             </Button>
                           )}
                         </TableCell>
@@ -284,7 +285,7 @@ export default function AdminResellersPage() {
                         <p className="text-[11px] text-muted-foreground">{r.userId?.name || 'Unknown'} • {r.contact?.phone || r.userId?.email}</p>
                       </div>
                       <Badge variant="outline" className={`text-[10px] shrink-0 ${statusBadgeColor[r.status] || ''}`}>
-                        {r.status === 'active' ? 'সক্রিয়' : r.status === 'pending' ? 'অনুমোদন পেন্ডিং' : 'স্থগিত'}
+                        {r.status === 'active' ? 'Active' : r.status === 'pending' ? 'Pending Approval' : 'Suspended'}
                       </Badge>
                     </div>
 
@@ -309,11 +310,11 @@ export default function AdminResellersPage() {
 
                     <div className="grid grid-cols-2 gap-1.5 bg-muted/40 p-2 rounded text-center text-xs">
                       <div>
-                        <span className="text-[10px] text-muted-foreground block">অর্ডার</span>
+                        <span className="text-[10px] text-muted-foreground block">Orders</span>
                         <span className="font-semibold">{r.totalOrders || 0}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-muted-foreground block">রেভিনিউ</span>
+                        <span className="text-[10px] text-muted-foreground block">Revenue</span>
                         <span className="font-semibold">৳{(r.totalRevenue || 0).toLocaleString()}</span>
                       </div>
                     </div>
@@ -325,7 +326,7 @@ export default function AdminResellersPage() {
                           className="h-7 text-xs px-2.5 bg-green-600 hover:bg-green-700"
                           onClick={() => handleStatusChange(r._id, 'active', r.storeName)}
                         >
-                          <Check className="h-3 w-3 mr-1" />অনুমোদন
+                          <Check className="h-3 w-3 mr-1" />Approve
                         </Button>
                       )}
                       {r.status === 'active' && (
@@ -335,7 +336,7 @@ export default function AdminResellersPage() {
                           className="h-7 text-xs px-2.5"
                           onClick={() => handleStatusChange(r._id, 'suspended', r.storeName)}
                         >
-                          <ShieldAlert className="h-3 w-3 mr-1" />স্থগিত
+                          <ShieldAlert className="h-3 w-3 mr-1" />Suspend
                         </Button>
                       )}
                       {r.status === 'suspended' && (
@@ -345,7 +346,7 @@ export default function AdminResellersPage() {
                           className="h-7 text-xs px-2.5"
                           onClick={() => handleStatusChange(r._id, 'active', r.storeName)}
                         >
-                          <Check className="h-3 w-3 mr-1" />সক্রিয়
+                          <Check className="h-3 w-3 mr-1" />Activate
                         </Button>
                       )}
                     </div>
@@ -357,8 +358,8 @@ export default function AdminResellersPage() {
               {!loading && totalPages > 1 && (
                 <div className="flex items-center justify-between p-4 border-t">
                   <p className="text-xs text-muted-foreground">
-                    দেখাচ্ছে {(currentPage - 1) * ITEMS_PER_PAGE + 1} থেকে{' '}
-                    {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} (মোট {filtered.length})
+                    Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+                    {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} entries
                   </p>
                   <Pagination
                     currentPage={currentPage}

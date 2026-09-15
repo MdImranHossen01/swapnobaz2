@@ -570,7 +570,11 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                         >
                           <FormControl>
                             <SelectTrigger className="h-10">
-                              <SelectValue placeholder="Select a brand (Optional)" />
+                              <SelectValue placeholder="Select a brand (Optional)">
+                                {field.value && field.value !== "none"
+                                  ? brands.find((b) => b._id === field.value)?.name || "Select a brand (Optional)"
+                                  : "Select a brand (Optional)"}
+                              </SelectValue>
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>

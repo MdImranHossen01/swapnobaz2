@@ -102,7 +102,9 @@ export default function CategoriesPage() {
                 <Label className="text-xs">Category Type</Label>
                 <Select value={type} onValueChange={(val: any) => val && setType(val)}>
                   <SelectTrigger className="h-9 text-xs">
-                    <SelectValue placeholder="Select Type" />
+                    <SelectValue placeholder="Select Type">
+                      {type === "expense" ? "Expense (খরচ)" : type === "income" ? "Income (আয়)" : "Select Type"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="expense" className="text-xs font-semibold text-rose-600">Expense (খরচ)</SelectItem>

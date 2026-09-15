@@ -259,7 +259,11 @@ export default function CategoriesPage() {
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select a parent category" />
+                            <SelectValue placeholder="Select a parent category">
+                              {field.value && field.value !== "none"
+                                ? categories.find((c) => c._id === field.value)?.name || "Select a parent category"
+                                : "Select a parent category"}
+                            </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>

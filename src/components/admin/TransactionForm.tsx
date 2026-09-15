@@ -234,7 +234,13 @@ export function TransactionForm({ initialData, onSuccess }: TransactionFormProps
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="h-8 text-xs">
-                      <SelectValue placeholder="Select Account" />
+                      <SelectValue placeholder="Select Account">
+                        {field.value
+                          ? accounts.find((a) => a._id === field.value)
+                            ? `${accounts.find((a) => a._id === field.value)?.name} (৳${Math.round(accounts.find((a) => a._id === field.value)?.currentBalance || 0)})`
+                            : "Select Account"
+                          : "Select Account"}
+                      </SelectValue>
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>

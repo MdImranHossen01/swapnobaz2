@@ -344,7 +344,13 @@ export default function LoansPage() {
                   }}
                 >
                   <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Select Loan Provider" />
+                    <SelectValue placeholder="Select Loan Provider">
+                      {loanForm.lenderId ? (
+                        providers.find(p => p._id === loanForm.lenderId)
+                          ? `${providers.find(p => p._id === loanForm.lenderId)?.name}${providers.find(p => p._id === loanForm.lenderId)?.phone ? ` (${providers.find(p => p._id === loanForm.lenderId)?.phone})` : ''}`
+                          : loanForm.lenderName || 'Select Loan Provider'
+                      ) : 'Select Loan Provider'}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {providers.map(p => (
@@ -398,7 +404,13 @@ export default function LoansPage() {
                 onValueChange={(val) => val && setLoanForm(prev => ({ ...prev, receivingAccountId: val }))}
               >
                 <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Select Account to Deposit Loan" />
+                  <SelectValue placeholder="Select Account to Deposit Loan">
+                    {loanForm.receivingAccountId ? (
+                      accounts.find(a => a._id === loanForm.receivingAccountId)
+                        ? `${accounts.find(a => a._id === loanForm.receivingAccountId)?.name} (${accounts.find(a => a._id === loanForm.receivingAccountId)?.category || accounts.find(a => a._id === loanForm.receivingAccountId)?.code || ''})`
+                        : 'Select Account to Deposit Loan'
+                    ) : 'Select Account to Deposit Loan'}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {accounts.map(a => (
