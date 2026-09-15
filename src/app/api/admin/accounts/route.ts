@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, code, category, accountNumber, bankName, branchName, openingBalance, description } = body;
+    const { name, code, category, accountNumber, bankName, branchName, bankAccountType, mfsProvider, mfsType, openingBalance, description } = body;
 
     if (!name || typeof name !== 'string' || !name.trim() || !code || typeof code !== 'string' || !code.trim()) {
       return NextResponse.json({ message: 'Name and unique account code are required' }, { status: 400 });
@@ -87,6 +87,9 @@ export async function POST(req: NextRequest) {
           accountNumber,
           bankName,
           branchName,
+          bankAccountType,
+          mfsProvider,
+          mfsType,
           openingBalance: initialBalance,
           currentBalance: initialBalance,
           type: 'asset',

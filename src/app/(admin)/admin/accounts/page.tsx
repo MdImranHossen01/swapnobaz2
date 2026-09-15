@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Plus,
@@ -19,9 +20,19 @@ import {
   Building2,
   CreditCard,
   FileText,
+  MoreHorizontal,
+  ArrowDownCircle,
+  X,
+  Save,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   Dialog,
   DialogContent,
@@ -50,8 +61,11 @@ export default function AccountsPage() {
     category: 'Bank',
     bankName: '',
     branchName: '',
+    bankAccountType: 'Savings',
     accountNumber: '',
-    openingBalance: '0',
+    mfsProvider: 'bKash',
+    mfsType: 'Merchant',
+    openingBalance: '',
     description: ''
   });
   const [creating, setCreating] = useState(false);
@@ -140,8 +154,11 @@ export default function AccountsPage() {
         category: 'Bank',
         bankName: '',
         branchName: '',
+        bankAccountType: 'Savings',
         accountNumber: '',
-        openingBalance: '0',
+        mfsProvider: 'bKash',
+        mfsType: 'Merchant',
+        openingBalance: '',
         description: ''
       });
       fetchAccounts();
@@ -348,7 +365,7 @@ export default function AccountsPage() {
                   <th className="p-3 text-left font-bold text-foreground">Details / Bank Info</th>
                   <th className="p-3 font-bold text-muted-foreground">Opening Balance</th>
                   <th className="p-3 font-bold text-primary text-right">Current Live Balance</th>
-                  <th className="p-3 font-bold text-foreground text-center">Quick Actions</th>
+                  <th className="p-3 font-bold text-foreground text-center w-14">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -383,10 +400,16 @@ export default function AccountsPage() {
                         {acc.accountNumber && (
                           <div className="font-mono text-xs text-foreground">A/C: {acc.accountNumber}</div>
                         )}
+                        {acc.mfsProvider && (
+                          <div className="text-[11px] text-sky-600 font-semibold">{acc.mfsProvider} {acc.mfsType ? `· ${acc.mfsType}` : ''}</div>
+                        )}
                         {acc.bankName && (
                           <div className="text-[11px] text-muted-foreground">{acc.bankName} {acc.branchName ? `(${acc.branchName})` : ''}</div>
                         )}
-                        {!acc.accountNumber && !acc.bankName && (
+                        {acc.bankAccountType && (
+                          <div className="text-[11px] text-indigo-500">{acc.bankAccountType} Account</div>
+                        )}
+                        {!acc.accountNumber && !acc.bankName && !acc.mfsProvider && (
                           <span className="text-muted-foreground italic text-[11px]">Direct account</span>
                         )}
                       </td>
@@ -394,46 +417,51 @@ export default function AccountsPage() {
                       <td className="p-3 font-bold text-right text-base text-primary">
                         ৳{Math.round(acc.currentBalance || 0).toLocaleString()}
                       </td>
-                      <td className="p-3">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleOpenCredit(acc)}
-                            className="h-7 px-2 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-300 dark:border-emerald-800"
-                            title="Add Money / Credit to this account"
-                          >
-                            <Plus className="h-3 w-3 mr-0.5" /> Credit +
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleOpenDebit(acc)}
-                            className="h-7 px-2 text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-300 dark:border-rose-800"
-                            title="Expense / Debit from this account"
-                          >
-                            Debit -
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleOpenTransfer(acc)}
-                            className="h-7 px-2 text-[11px] font-semibold text-primary hover:bg-primary/10"
-                            title="Transfer fund from this account"
-                          >
-                            <ArrowRightLeft className="h-3 w-3 mr-0.5" /> Transfer
-                          </Button>
-                          <Link href={`/admin/ledger?search=${encodeURIComponent(acc.name)}`}>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 px-2 text-[11px] font-semibold text-muted-foreground hover:text-foreground"
-                              title="View account ledger"
+                      <td className="p-3 text-center">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-8 w-8 p-0 hover:bg-muted/80 rounded-md"
                             >
-                              <FileText className="h-3 w-3 mr-0.5" /> Ledger
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
                             </Button>
-                          </Link>
-                        </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 text-xs font-medium">
+                            <DropdownMenuItem
+                              onClick={() => handleOpenCredit(acc)}
+                              className="text-emerald-600 focus:text-emerald-700 font-semibold cursor-pointer gap-2"
+                            >
+                              <Plus className="h-3.5 w-3.5 text-emerald-600" />
+                              <span>Credit + (Add Money)</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleOpenDebit(acc)}
+                              className="text-rose-600 focus:text-rose-700 font-semibold cursor-pointer gap-2"
+                            >
+                              <ArrowDownCircle className="h-3.5 w-3.5 text-rose-600" />
+                              <span>Debit - (Expense)</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleOpenTransfer(acc)}
+                              className="text-primary font-semibold cursor-pointer gap-2"
+                            >
+                              <ArrowRightLeft className="h-3.5 w-3.5" />
+                              <span>Transfer Funds</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/admin/ledger?search=${encodeURIComponent(acc.name)}`}
+                                className="flex items-center gap-2 cursor-pointer w-full text-foreground"
+                              >
+                                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span>View Ledger</span>
+                              </Link>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   ))
@@ -469,46 +497,51 @@ export default function AccountsPage() {
                     </Badge>
                   }
                   footer={
-                    <div className="space-y-2 w-full">
-                      <div className="flex items-center justify-between w-full font-bold text-xs">
+                    <div className="flex items-center justify-between w-full font-bold text-xs pt-2 border-t">
+                      <div className="flex items-center gap-1.5">
                         <span className="text-muted-foreground">Live Balance:</span>
                         <span className="text-primary text-sm font-black">৳{Math.round(acc.currentBalance || 0).toLocaleString()}</span>
                       </div>
-                      <div className="grid grid-cols-4 gap-1 pt-2 border-t">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOpenCredit(acc)}
-                          className="h-7 px-1 text-[10px] font-bold text-emerald-600 border-emerald-300"
-                        >
-                          Credit +
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOpenDebit(acc)}
-                          className="h-7 px-1 text-[10px] font-bold text-rose-600 border-rose-300"
-                        >
-                          Debit -
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOpenTransfer(acc)}
-                          className="h-7 px-1 text-[10px] font-semibold text-primary"
-                        >
-                          Transfer
-                        </Button>
-                        <Link href={`/admin/ledger?search=${encodeURIComponent(acc.name)}`} className="w-full">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-7 px-1 text-[10px] font-semibold w-full"
-                          >
-                            Ledger
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="h-7 px-2 text-xs gap-1 font-semibold">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                            <span>Action</span>
                           </Button>
-                        </Link>
-                      </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 text-xs font-medium">
+                          <DropdownMenuItem
+                            onClick={() => handleOpenCredit(acc)}
+                            className="text-emerald-600 focus:text-emerald-700 font-semibold cursor-pointer gap-2"
+                          >
+                            <Plus className="h-3.5 w-3.5 text-emerald-600" />
+                            <span>Credit + (Add Money)</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenDebit(acc)}
+                            className="text-rose-600 focus:text-rose-700 font-semibold cursor-pointer gap-2"
+                          >
+                            <ArrowDownCircle className="h-3.5 w-3.5 text-rose-600" />
+                            <span>Debit - (Expense)</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenTransfer(acc)}
+                            className="text-primary font-semibold cursor-pointer gap-2"
+                          >
+                            <ArrowRightLeft className="h-3.5 w-3.5" />
+                            <span>Transfer Funds</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href={`/admin/ledger?search=${encodeURIComponent(acc.name)}`}
+                              className="flex items-center gap-2 cursor-pointer w-full text-foreground"
+                            >
+                              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span>View Ledger</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   }
                 >
@@ -555,126 +588,203 @@ export default function AccountsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Account Modal */}
+      {/* Add Account Modal — AmaniOutfits Style */}
       <Dialog open={newAccountOpen} onOpenChange={setNewAccountOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-bold">
-              <Plus className="h-5 w-5 text-primary" />
-              Create New Account
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-md p-0 overflow-hidden gap-0">
+          {/* Styled Header */}
+          <div className="bg-primary px-5 py-3.5 flex justify-between items-center">
+            <h2 className="text-base font-bold text-primary-foreground flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add New Account
+            </h2>
+            <button
+              onClick={() => setNewAccountOpen(false)}
+              className="text-primary-foreground hover:bg-white/10 p-1 rounded-md transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-          <form onSubmit={handleCreateAccount} className="space-y-3 py-2 text-xs">
-            <div className="space-y-1">
-              <Label className="text-xs">Account Name *</Label>
+          {/* Form Body — Scrollable */}
+          <div className="overflow-y-auto max-h-[80vh]">
+          <form onSubmit={handleCreateAccount} className="p-5 space-y-4 pb-6">
+            {/* Account Name */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Account Name <span className="text-red-500">*</span></Label>
               <Input
                 required
+                autoFocus
                 placeholder="e.g. City Bank Primary / bKash Merchant"
                 value={accountForm.name}
                 onChange={(e) => setAccountForm(prev => ({ ...prev, name: e.target.value }))}
-                className="h-8 text-xs"
+                className="h-11 text-base"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Account Code (Unique) *</Label>
-                <Input
-                  required
-                  placeholder="e.g. CBL-01 / BKASH-01"
-                  value={accountForm.code}
-                  onChange={(e) => setAccountForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                  className="h-8 text-xs font-mono uppercase"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Category *</Label>
-                <Select
-                  value={accountForm.category}
-                  onValueChange={(val) => val && setAccountForm(prev => ({ ...prev, category: val }))}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Category">
-                      {accountForm.category || "Select Category"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Bank" className="text-xs">Bank Account</SelectItem>
-                    <SelectItem value="Cash" className="text-xs">Cash in Hand</SelectItem>
-                    <SelectItem value="MFS" className="text-xs">Mobile Financial Service (bKash/Nagad)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Account Code */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Account Code (Unique) <span className="text-red-500">*</span></Label>
+              <Input
+                required
+                placeholder="e.g. CBL-01 / BKASH-01"
+                value={accountForm.code}
+                onChange={(e) => setAccountForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                className="h-11 text-base font-mono uppercase"
+              />
             </div>
 
-            {accountForm.category === 'Bank' && (
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-xs">Bank Name</Label>
-                  <Input
-                    placeholder="e.g. Dutch Bangla Bank"
-                    value={accountForm.bankName}
-                    onChange={(e) => setAccountForm(prev => ({ ...prev, bankName: e.target.value }))}
-                    className="h-8 text-xs"
-                  />
+            {/* Category */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Account Type <span className="text-red-500">*</span></Label>
+              <Select
+                value={accountForm.category}
+                onValueChange={(val) => val && setAccountForm(prev => ({ ...prev, category: val }))}
+              >
+                <SelectTrigger className="h-11 text-base">
+                  <SelectValue placeholder="Select Account Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MFS">MFS (bKash, Nagad, etc.)</SelectItem>
+                  <SelectItem value="Bank">Bank Account</SelectItem>
+                  <SelectItem value="Cash">Cash in Hand</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* MFS-specific fields */}
+            {accountForm.category === 'MFS' && (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 border p-4 rounded-lg bg-muted/30">
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-semibold">MFS Provider</Label>
+                  <Select
+                    value={accountForm.mfsProvider}
+                    onValueChange={(val) => val && setAccountForm(prev => ({ ...prev, mfsProvider: val }))}
+                  >
+                    <SelectTrigger className="h-11 text-base">
+                      <SelectValue placeholder="Select Provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="bKash">bKash</SelectItem>
+                      <SelectItem value="Nagad">Nagad</SelectItem>
+                      <SelectItem value="Rocket">Rocket</SelectItem>
+                      <SelectItem value="Upay">Upay</SelectItem>
+                      <SelectItem value="mCash">mCash</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">Branch Name</Label>
-                  <Input
-                    placeholder="e.g. Dhanmondi Branch"
-                    value={accountForm.branchName}
-                    onChange={(e) => setAccountForm(prev => ({ ...prev, branchName: e.target.value }))}
-                    className="h-8 text-xs"
-                  />
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-semibold">Account Type</Label>
+                  <Select
+                    value={accountForm.mfsType}
+                    onValueChange={(val) => val && setAccountForm(prev => ({ ...prev, mfsType: val }))}
+                  >
+                    <SelectTrigger className="h-11 text-base">
+                      <SelectValue placeholder="Select Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Merchant">Merchant</SelectItem>
+                      <SelectItem value="Agent">Agent</SelectItem>
+                      <SelectItem value="Personal">Personal</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}
 
+            {/* Bank-specific fields */}
+            {accountForm.category === 'Bank' && (
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-semibold">Bank Name</Label>
+                    <Input
+                      placeholder="e.g. Dutch Bangla"
+                      value={accountForm.bankName}
+                      onChange={(e) => setAccountForm(prev => ({ ...prev, bankName: e.target.value }))}
+                      className="h-11 text-base"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm font-semibold">Branch Name</Label>
+                    <Input
+                      placeholder="e.g. Dhanmondi"
+                      value={accountForm.branchName}
+                      onChange={(e) => setAccountForm(prev => ({ ...prev, branchName: e.target.value }))}
+                      className="h-11 text-base"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-semibold">Bank Account Type</Label>
+                  <Select
+                    value={accountForm.bankAccountType}
+                    onValueChange={(val) => val && setAccountForm(prev => ({ ...prev, bankAccountType: val }))}
+                  >
+                    <SelectTrigger className="h-11 text-base">
+                      <SelectValue placeholder="Select Account Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Savings">Savings Account</SelectItem>
+                      <SelectItem value="Current">Current Account</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {/* Account Number / Mobile Number */}
             {(accountForm.category === 'Bank' || accountForm.category === 'MFS') && (
-              <div className="space-y-1">
-                <Label className="text-xs">Account Number / Mobile Number</Label>
+              <div className="space-y-1.5 animate-in fade-in">
+                <Label className="text-sm font-semibold">
+                  {accountForm.category === 'MFS' ? 'Mobile Number' : 'Account Number'}
+                </Label>
                 <Input
-                  placeholder="e.g. 104.120.55421 / 01712345678"
+                  placeholder={accountForm.category === 'MFS' ? 'e.g. 01712345678' : 'e.g. 104.120.55421'}
                   value={accountForm.accountNumber}
                   onChange={(e) => setAccountForm(prev => ({ ...prev, accountNumber: e.target.value }))}
-                  className="h-8 text-xs font-mono"
+                  className="h-11 text-base font-mono"
                 />
               </div>
             )}
 
-            <div className="space-y-1">
-              <Label className="text-xs">Opening Balance (৳)</Label>
+            {/* Opening Balance */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Opening Balance (৳)</Label>
               <Input
                 type="number"
                 min="0"
                 placeholder="0"
                 value={accountForm.openingBalance}
                 onChange={(e) => setAccountForm(prev => ({ ...prev, openingBalance: e.target.value }))}
-                className="h-8 text-xs"
+                className="h-11 text-base"
               />
-              <p className="text-[10px] text-muted-foreground">Initial balance when starting with this system.</p>
+              <p className="text-xs text-muted-foreground">Current balance when starting with this system.</p>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs">Description / Note</Label>
-              <Input
+            {/* Description/Note */}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold">Note / Description</Label>
+              <Textarea
                 placeholder="Optional notes regarding this account..."
                 value={accountForm.description}
                 onChange={(e) => setAccountForm(prev => ({ ...prev, description: e.target.value }))}
-                className="h-8 text-xs"
+                className="min-h-[80px] text-sm resize-y"
               />
             </div>
 
-            <DialogFooter className="pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setNewAccountOpen(false)}>Cancel</Button>
-              <Button type="submit" size="sm" disabled={creating} className="font-bold">
-                {creating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                Create Account
+            {/* Submit */}
+            <div className="pt-1 flex justify-center">
+              <Button
+                type="submit"
+                disabled={creating}
+                className="w-full sm:w-auto px-8 h-11 text-base rounded-full font-semibold"
+              >
+                {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                Save Account
               </Button>
-            </DialogFooter>
+            </div>
           </form>
+          </div>
         </DialogContent>
       </Dialog>
 

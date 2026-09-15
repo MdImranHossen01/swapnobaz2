@@ -6,6 +6,9 @@ export interface ILedgerAccount extends Document {
   accountNumber?: string;
   bankName?: string;
   branchName?: string;
+  bankAccountType?: 'Savings' | 'Current';
+  mfsProvider?: string;
+  mfsType?: 'Merchant' | 'Agent' | 'Personal';
   openingBalance: number;
   currentBalance: number;
   type: 'asset' | 'liability';
@@ -22,6 +25,9 @@ const LedgerAccountSchema: Schema<ILedgerAccount> = new Schema(
     accountNumber: { type: String },
     bankName: { type: String },
     branchName: { type: String },
+    bankAccountType: { type: String, enum: ['Savings', 'Current'] },
+    mfsProvider: { type: String },
+    mfsType: { type: String, enum: ['Merchant', 'Agent', 'Personal'] },
     openingBalance: { type: Number, default: 0 },
     currentBalance: { type: Number, default: 0 },
     type: { type: String, default: 'asset', enum: ['asset', 'liability'] },
