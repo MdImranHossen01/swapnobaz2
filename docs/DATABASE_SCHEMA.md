@@ -36,7 +36,7 @@ Stores platform users, credentials, role-based authorization scopes, and profile
 | `email` | String | Unique | Login email address |
 | `password` | String | | Argon2 / Bcrypt hashed password |
 | `phone` | String | Sparse Index | Customer/Reseller contact phone |
-| `role` | String | Indexed | `super_admin`, `admin`, `manager`, `moderator`, `supplier`, `reseller`, `user` |
+| `role` | String | Indexed | `admin`, `manager`, `moderator`, `supplier`, `reseller`, `user` |
 | `image` | String | | Profile avatar URL |
 | `emailVerified` | Date | | Timestamp when email was verified |
 | `resellerId` | ObjectId | Indexed | Linked Reseller ID if role is `reseller` |
