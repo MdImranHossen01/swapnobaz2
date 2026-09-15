@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -22,16 +23,17 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Loader2, Check, X, ShieldAlert, Edit, Store, Search, ExternalLink } from 'lucide-react';
+import { Loader2, Check, X, ShieldAlert, Store, Search, ExternalLink, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
 
 export default function AdminResellersPage() {
+  const searchParams = useSearchParams();
+  const initialStatus = searchParams.get('status') || 'all';
   const [resellers, setResellers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [editingReseller, setEditingReseller] = useState<any | null>(null);
-  const [commissionRate, setCommissionRate] = useState<number>(10);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [updating, setUpdating] = useState(false);
 
   const fetchResellers = async () => {
@@ -85,41 +87,27 @@ export default function AdminResellersPage() {
     }
   };
 
-  const handleUpdateCommission = async () => {
-    if (!editingReseller) return;
-    setUpdating(true);
-    try {
-      const res = await fetch('/api/admin/resellers', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resellerId: editingReseller._id, commissionRate }),
-      });
-      if (res.ok) {
-        toast.success('কমিশন রেট আপডেট হয়েছে');
-        setEditingReseller(null);
-        fetchResellers();
-      } else {
-        const err = await res.json();
-        toast.error(err.error || 'সমস্যা হয়েছে');
-      }
-    } catch {
-      toast.error('নেটওয়ার্ক ত্রুটি');
-    } finally {
-      setUpdating(false);
-    }
-  };
-
   const statusBadgeColor: Record<string, string> = {
     active: 'bg-green-500/10 text-green-600 border-green-500/20',
     pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
     suspended: 'bg-red-500/10 text-red-600 border-red-500/20',
   };
 
-  const filtered = resellers.filter(r =>
-    r.storeName.toLowerCase().includes(search.toLowerCase()) ||
-    r.subdomain.toLowerCase().includes(search.toLowerCase()) ||
-    r.userId?.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = resellers.filter(r => {
+    const matchSearch =
+      r.storeName.toLowerCase().includes(search.toLowerCase()) ||
+      r.subdomain.toLowerCase().includes(search.toLowerCase()) ||
+      r.userId?.name?.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === 'all' || r.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const counts = {
+    all: resellers.length,
+    pending: resellers.filter(r => r.status === 'pending').length,
+    active: resellers.filter(r => r.status === 'active').length,
+    suspended: resellers.filter(r => r.status === 'suspended').length,
+  };
 
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
@@ -128,6 +116,33 @@ export default function AdminResellersPage() {
           <h1 className="text-xl md:text-2xl font-bold tracking-tight">রিসেলার স্টোর সমূহ</h1>
           <p className="text-xs md:text-sm text-muted-foreground">সব রিসেলার স্টোর এবং তাদের কমিশন রেট এখানে পরিচালনা করুন</p>
         </div>
+        <Button size="sm" variant="outline" className="h-8 text-xs w-fit" onClick={fetchResellers}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1" />রিফ্রেশ
+        </Button>
+      </div>
+
+      {/* Status Filter Tabs */}
+      <div className="flex items-center gap-1.5 flex-wrap px-1 md:px-0">
+        {(['all', 'pending', 'active', 'suspended'] as const).map(s => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(s)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+              statusFilter === s
+                ? s === 'pending'
+                  ? 'bg-yellow-500 text-white border-yellow-500'
+                  : s === 'active'
+                  ? 'bg-green-600 text-white border-green-600'
+                  : s === 'suspended'
+                  ? 'bg-red-600 text-white border-red-600'
+                  : 'bg-primary text-primary-foreground border-primary'
+                : 'bg-card text-muted-foreground border-border hover:bg-muted/40'
+            }`}
+          >
+            {s === 'all' ? 'সব' : s === 'pending' ? 'পেন্ডিং' : s === 'active' ? 'সক্রিয়' : 'স্থগিত'}
+            <span className="ml-1.5 opacity-70">({counts[s]})</span>
+          </button>
+        ))}
       </div>
 
       <div className="flex items-center justify-between gap-4 px-1 md:px-0">
@@ -163,7 +178,6 @@ export default function AdminResellersPage() {
                       <TableHead>স্টোরের নাম</TableHead>
                       <TableHead>ডোমেন / সাবডোমেন</TableHead>
                       <TableHead>মালিক</TableHead>
-                      <TableHead>কমিশন রেট</TableHead>
                       <TableHead>মোট অর্ডার</TableHead>
                       <TableHead>মোট রেভিনিউ</TableHead>
                       <TableHead>স্ট্যাটাস</TableHead>
@@ -205,7 +219,6 @@ export default function AdminResellersPage() {
                             <p className="text-xs text-muted-foreground">{r.contact?.phone || r.userId?.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell>{r.commissionRate}%</TableCell>
                         <TableCell>{r.totalOrders}</TableCell>
                         <TableCell>৳{r.totalRevenue?.toLocaleString()}</TableCell>
                         <TableCell>
@@ -214,16 +227,6 @@ export default function AdminResellersPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setEditingReseller(r);
-                              setCommissionRate(r.commissionRate);
-                            }}
-                          >
-                            <Edit className="h-3.5 w-3.5 mr-1" />কমিশন
-                          </Button>
                           {r.status === 'pending' && (
                             <Button
                               size="sm"
@@ -291,11 +294,7 @@ export default function AdminResellersPage() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-1.5 bg-muted/40 p-2 rounded text-center text-xs">
-                      <div>
-                        <span className="text-[10px] text-muted-foreground block">কমিশন</span>
-                        <span className="font-semibold text-primary">{r.commissionRate}%</span>
-                      </div>
+                    <div className="grid grid-cols-2 gap-1.5 bg-muted/40 p-2 rounded text-center text-xs">
                       <div>
                         <span className="text-[10px] text-muted-foreground block">অর্ডার</span>
                         <span className="font-semibold">{r.totalOrders || 0}</span>
@@ -307,17 +306,6 @@ export default function AdminResellersPage() {
                     </div>
 
                     <div className="flex items-center justify-end gap-1.5 pt-1">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-xs px-2.5"
-                        onClick={() => {
-                          setEditingReseller(r);
-                          setCommissionRate(r.commissionRate);
-                        }}
-                      >
-                        <Edit className="h-3 w-3 mr-1" />কমিশন
-                      </Button>
                       {r.status === 'pending' && (
                         <Button
                           size="sm"

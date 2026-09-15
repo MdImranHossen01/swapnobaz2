@@ -264,6 +264,33 @@ const data = {
       ],
     },
     {
+      title: "Reseller Management",
+      url: "#",
+      icon: Store,
+      items: [
+        {
+          title: "Resellers",
+          url: "/admin/resellers",
+        },
+        {
+          title: "Pending Approval",
+          url: "/admin/resellers?status=pending",
+        },
+        {
+          title: "Reseller Payouts",
+          url: "/admin/payouts",
+        },
+        {
+          title: "Reseller Sales Report",
+          url: "/admin/reports/reseller-sales",
+        },
+        {
+          title: "Commission Report",
+          url: "/admin/reports/reseller-commission",
+        },
+      ],
+    },
+    {
       title: "CMS Manager",
       url: "#",
       icon: ImageIcon,

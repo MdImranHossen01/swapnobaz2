@@ -24,7 +24,6 @@ interface ResellerSidebarProps {
     storeName: string;
     subdomain: string;
     status: string;
-    commissionRate?: number;
   };
   statusColor: Record<string, string>;
   recentOrdersCount: number;
