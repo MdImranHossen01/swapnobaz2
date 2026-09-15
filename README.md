@@ -174,11 +174,6 @@ Default Password for All Seeded Test Accounts: `Password123!`
 - Test Email: `user1@swapnobaz.com`
 - Permissions and Accessible Scope: Storefront shopping, wishlist, cart, checkout, and live order tracking (`/track-order`).
 
-### 6. Super Admin
-- Role: `super_admin`
-- Default Account: Designated root emails (e.g., `imranshuvo101@gmail.com`)
-- Permissions and Accessible Scope: Full unrestricted platform authority. Dynamic System Design Switcher (Navbars V1-V6, Footers V1-V6, Product Cards V1-V6), Theme color palette customization, Admin role assignment, and Project expiration settings.
-
 ---
 
 ## Comprehensive Technology Stack
