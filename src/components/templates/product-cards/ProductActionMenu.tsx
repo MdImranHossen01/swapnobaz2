@@ -102,14 +102,14 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
     e.stopPropagation();
 
     const result = await Swal.fire({
-      title: 'আপনি কি নিশ্চিত?',
-      text: `"${product.name}" প্রোডাক্টটি স্থায়ীভাবে মুছে ফেলা হবে।`,
+      title: 'Are you sure?',
+      text: `"${product.name}" will be permanently deleted.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: 'var(--destructive, #ef4444)',
       cancelButtonColor: '#6b7280',
-      confirmButtonText: 'হ্যাঁ, ডিলিট করুন!',
-      cancelButtonText: 'বাতিল',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
     });
 
     if (!result.isConfirmed) return;
@@ -120,10 +120,10 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to delete product');
       }
-      toast.success('প্রোডাক্টটি সফলভাবে মুছে ফেলা হয়েছে');
+      toast.success('Product deleted successfully');
       router.refresh();
     } catch (err: any) {
-      toast.error(`ত্রুটি: ${err.message || 'প্রোডাক্ট ডিলিট করা যায়নি'}`);
+      toast.error(`Error: ${err.message || 'Failed to delete product'}`);
     }
   };
 
@@ -133,17 +133,17 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
     e.stopPropagation();
 
     if (!product._id) {
-      toast.error('প্রোডাক্ট আইডি পাওয়া যায়নি');
+      toast.error('Product ID not found');
       return;
     }
 
     if (!retailPrice || retailPrice <= 0) {
-      toast.error('অনুগ্রহ করে সঠিক বিক্রয় মূল্য দিন');
+      toast.error('Please enter a valid retail price');
       return;
     }
 
     if (wholesaleCost > 0 && retailPrice < wholesaleCost) {
-      toast.warning('বিক্রয় মূল্য পাইকারি মূল্যের চেয়ে কম হতে পারে না!');
+      toast.warning('Selling price cannot be less than wholesale cost!');
       return;
     }
 
@@ -160,13 +160,13 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
 
       const data = await res.json();
       if (res.ok) {
-        toast.success(`✓ "${product.name}" সফলভাবে আপনার স্টোরে যোগ করা হয়েছে!`);
+        toast.success(`✓ "${product.name}" added to your store successfully!`);
         setShowSourceModal(false);
       } else {
-        toast.error(data.error || 'স্টোরে যোগ করতে সমস্যা হয়েছে');
+        toast.error(data.error || 'Failed to add product to store');
       }
     } catch {
-      toast.error('নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।');
+      toast.error('Network error. Please check your connection and try again.');
     } finally {
       setSourcing(false);
     }
@@ -208,14 +208,14 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-medium"
                     >
-                      <Edit className="mr-2 h-4 w-4 text-primary" /> এডিট (Edit Product)
+                      <Edit className="mr-2 h-4 w-4 text-primary" /> Edit Product
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       onClick={handleDeleteProduct}
                       className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 font-medium"
                     >
-                      <Trash2 className="mr-2 h-4 w-4 text-destructive" /> ডিলিট (Delete)
+                      <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
@@ -227,7 +227,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-medium"
                     >
-                      <Settings className="mr-2 h-4 w-4 text-muted-foreground" /> ম্যানেজ ড্যাশবোর্ড (Manage)
+                      <Settings className="mr-2 h-4 w-4 text-muted-foreground" /> Manage Products
                     </DropdownMenuItem>
                   </>
                 ) : (
@@ -235,10 +235,10 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                     <div className="px-2 py-1.5 text-xs text-muted-foreground">
                       <p className="font-semibold text-foreground flex items-center gap-1.5">
                         <Store className="h-3.5 w-3.5 text-purple-600" />
-                        রিসেলার প্রোডাক্ট
+                        Reseller Product
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        রিসেলার কর্তৃক আপলোডকৃত পণ্য
+                        Uploaded by independent reseller
                       </p>
                     </div>
 
@@ -251,7 +251,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-medium"
                     >
-                      <Settings className="mr-2 h-4 w-4 text-muted-foreground" /> প্রোডাক্ট তালিকা (Manage)
+                      <Settings className="mr-2 h-4 w-4 text-muted-foreground" /> Manage Products
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
@@ -261,7 +261,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-medium"
                     >
-                      <Store className="mr-2 h-4 w-4 text-primary" /> রিসেলার ডিরেক্টরি
+                      <Store className="mr-2 h-4 w-4 text-primary" /> Reseller Directory
                     </DropdownMenuItem>
                   </>
                 )}
@@ -281,14 +281,14 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-medium"
                     >
-                      <Edit className="mr-2 h-4 w-4 text-primary" /> এডিট (Edit My Product)
+                      <Edit className="mr-2 h-4 w-4 text-primary" /> Edit My Product
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
                       onClick={handleDeleteProduct}
                       className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 font-medium"
                     >
-                      <Trash2 className="mr-2 h-4 w-4 text-destructive" /> ডিলিট (Delete)
+                      <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
@@ -300,7 +300,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-medium"
                     >
-                      <Settings className="mr-2 h-4 w-4 text-muted-foreground" /> আমার প্রোডাক্ট লিস্ট (Manage)
+                      <Settings className="mr-2 h-4 w-4 text-muted-foreground" /> Manage My Products
                     </DropdownMenuItem>
                   </>
                 ) : (
@@ -313,7 +313,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-bold text-primary focus:text-primary focus:bg-primary/10"
                     >
-                      <PlusCircle className="mr-2 h-4 w-4 text-primary" /> স্টোরে যোগ করুন (Add to Store)
+                      <PlusCircle className="mr-2 h-4 w-4 text-primary" /> Add to Your Store
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
@@ -325,7 +325,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-medium"
                     >
-                      <ShoppingBag className="mr-2 h-4 w-4 text-muted-foreground" /> সোর্স প্রোডাক্ট ক্যাটালগ
+                      <ShoppingBag className="mr-2 h-4 w-4 text-muted-foreground" /> Source B2B Catalog
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
@@ -335,7 +335,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                       }}
                       className="cursor-pointer font-medium"
                     >
-                      <Store className="mr-2 h-4 w-4 text-muted-foreground" /> রিসেলার ড্যাশবোর্ড
+                      <Store className="mr-2 h-4 w-4 text-muted-foreground" /> Reseller Dashboard
                     </DropdownMenuItem>
                   </>
                 )}
@@ -354,13 +354,13 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
           >
             <DialogHeader className="space-y-1 text-left">
               <div className="flex items-center gap-2 text-primary font-bold text-sm">
-                <Store className="h-4 w-4" /> রিসেলার স্টোর সোর্সিং
+                <Store className="h-4 w-4" /> Reseller Store Sourcing
               </div>
               <DialogTitle className="text-lg font-black tracking-tight leading-snug">
-                স্টোরে প্রোডাক্ট যোগ করুন
+                Add Product to Your Store
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                প্রোডাক্টটির পাইকারি মূল্য দেখে আপনার ইচ্ছামতো বিক্রয় মূল্য নির্ধারণ করুন।
+                Set your desired retail selling price based on the wholesale cost to start selling.
               </DialogDescription>
             </DialogHeader>
 
@@ -380,7 +380,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                   {product.name}
                 </p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  মেইন স্টোর মূল্য: <span className="font-semibold text-foreground">৳{Math.round(product.price || 0)}</span>
+                  Main Store Price: <span className="font-semibold text-foreground">Tk {Math.round(product.price || 0)}</span>
                 </p>
               </div>
             </div>
@@ -389,11 +389,11 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
               {/* Cost vs Selling Grid */}
               <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-primary/5 border border-primary/20 text-xs">
                 <div>
-                  <span className="text-muted-foreground text-[11px] block">আপনার পাইকারি খরচ:</span>
-                  <span className="text-base font-black text-foreground">৳{wholesaleCost}</span>
+                  <span className="text-muted-foreground text-[11px] block">Wholesale Cost:</span>
+                  <span className="text-base font-black text-foreground">Tk {wholesaleCost}</span>
                 </div>
                 <div>
-                  <span className="text-muted-foreground text-[11px] block">প্রত্যাশিত নিট লাভ:</span>
+                  <span className="text-muted-foreground text-[11px] block">Estimated Net Profit:</span>
                   <span
                     className={cn(
                       'text-base font-black flex items-center gap-1',
@@ -401,7 +401,7 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                     )}
                   >
                     <TrendingUp className="h-3.5 w-3.5" />
-                    ৳{estimatedProfit}
+                    Tk {estimatedProfit}
                   </span>
                 </div>
               </div>
@@ -409,11 +409,11 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
               {/* Retail Price Input */}
               <div className="space-y-1.5">
                 <Label htmlFor="selling-price" className="text-xs font-bold">
-                  আপনার বিক্রয় মূল্য (Retail Selling Price) <span className="text-destructive">*</span>
+                  Your Retail Selling Price <span className="text-destructive">*</span>
                 </Label>
                 <div className="relative">
                   <span className="absolute left-3 top-2.5 text-sm font-bold text-muted-foreground">
-                    ৳
+                    Tk
                   </span>
                   <Input
                     id="selling-price"
@@ -421,13 +421,13 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                     min={wholesaleCost || 1}
                     value={retailPrice}
                     onChange={(e) => setRetailPrice(Number(e.target.value))}
-                    className="pl-8 text-base font-black h-11"
+                    className="pl-9 text-base font-black h-11"
                     placeholder="e.g. 500"
                     required
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  গ্রাহকরা আপনার স্টোরে (<Badge variant="outline" className="text-[10px] py-0 px-1 font-mono">subdomain.swapnobaz.com</Badge>) এই মূল্যে প্রোডাক্টটি কিনতে পারবে।
+                  Customers on your storefront (<Badge variant="outline" className="text-[10px] py-0 px-1 font-mono">subdomain.swapnobaz.com</Badge>) will buy at this price.
                 </p>
               </div>
 
@@ -438,16 +438,16 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                   onClick={() => setShowSourceModal(false)}
                   disabled={sourcing}
                 >
-                  বাতিল
+                  Cancel
                 </Button>
                 <Button type="submit" disabled={sourcing} className="font-bold">
                   {sourcing ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> স্টোরে যোগ হচ্ছে...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding to Store...
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="mr-2 h-4 w-4" /> স্টোরে যুক্ত করুন
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> Add to Store
                     </>
                   )}
                 </Button>
