@@ -50,7 +50,7 @@ export default function LoginPage() {
     if (status === 'authenticated' && session?.user) {
       const role = (session.user as any)?.role;
       const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect');
-      
+
       if (callbackUrl) {
         router.replace(callbackUrl);
       } else if (role === 'admin' || role === 'super_admin') {
@@ -221,16 +221,7 @@ export default function LoginPage() {
           </div>
         </motion.div>
 
-        <div className="mt-auto pt-6 text-center text-xs text-muted-foreground">
-          By clicking continue, you agree to our{' '}
-          <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">
-            Privacy Policy
-          </Link>.
-        </div>
+
       </div>
     </main>
   );

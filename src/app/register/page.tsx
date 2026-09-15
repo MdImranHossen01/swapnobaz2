@@ -391,16 +391,7 @@ export default function RegisterPage() {
           </div>
         </motion.div>
 
-        <div className="mt-auto pt-6 text-center text-xs text-muted-foreground">
-          By clicking register, you agree to our{' '}
-          <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">
-            Privacy Policy
-          </Link>.
-        </div>
+
       </div>
     </div>
   );

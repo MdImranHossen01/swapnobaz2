@@ -129,12 +129,7 @@ export default function ForgotPasswordPage() {
           </div>
         </motion.div>
 
-        <div className="mt-auto pt-6 text-center text-xs text-muted-foreground">
-          Need help? Contact our{' '}
-          <Link href="/support" className="underline underline-offset-4 hover:text-primary">
-            Support Team
-          </Link>.
-        </div>
+
       </div>
     </div>
   );
