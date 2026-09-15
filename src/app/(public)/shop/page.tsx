@@ -77,7 +77,7 @@ function ShopFallback() {
           </div>
         </aside>
         <div className="flex-1">
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
             {[...Array(8)].map((_, i) => (
               <ProductCardSkeleton key={i} />
             ))}

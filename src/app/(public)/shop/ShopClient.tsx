@@ -384,7 +384,7 @@ export default function ShopClient({ initialProducts, initialCategories }: ShopC
               <Button variant="outline" onClick={clearFilters}>Reset All Filters</Button>
             </div>
           ) : (
-            <div className={`grid gap-6 ${view === 'grid' ? 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+            <div className={`grid gap-2 ${view === 'grid' ? 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
               {paginatedProducts.map((product, index) => (
                 <ProductCard key={product._id} product={product} priority={index < 4} />
               ))}

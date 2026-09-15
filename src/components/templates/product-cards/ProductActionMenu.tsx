@@ -212,10 +212,10 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
             <Button
               size="icon"
               variant="ghost"
-              className="h-7 w-7 p-0 bg-transparent hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-transform active:scale-90 border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
+              className="h-7 w-7 p-0 rounded-full bg-transparent text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] group-hover:bg-white group-hover:text-black group-hover:shadow-md group-hover:drop-shadow-none hover:!bg-white hover:!text-black hover:!shadow-md hover:!drop-shadow-none data-[state=open]:!bg-white data-[state=open]:!text-black data-[state=open]:!shadow-md data-[state=open]:!drop-shadow-none transition-all duration-200 border-0 focus-visible:ring-0 focus-visible:outline-none"
               aria-label="Product Actions"
             >
-              <MoreVertical className="h-4 w-4 text-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
+              <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
 
