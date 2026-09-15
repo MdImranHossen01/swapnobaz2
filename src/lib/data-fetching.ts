@@ -244,7 +244,9 @@ export const getCachedBanners = () => {
   return unstable_cache(
     async () => {
       await connectToDatabase();
-      const banners = await Banner.find({ isActive: true })
+      // Only fetch admin global banners (resellerId: null) for the main storefront.
+      // Reseller-specific banners are fetched separately for their own storefronts.
+      const banners = await Banner.find({ isActive: true, resellerId: null })
         .sort({ order: 1 })
         .lean();
       return serialize(banners);
