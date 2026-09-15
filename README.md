@@ -16,7 +16,6 @@ Swapnobaz separates itself from standard e-commerce scripts and generic Shopify 
 
 - Multi-Tenant Subdomain and Custom Domain Engine: Each reseller receives an independent storefront with isolated branding and data partitioning, hosted dynamically on a single Next.js codebase without requiring separate servers or manual DNS provisioning.
 - Reverse Order Routing Workflow: Resellers never handle stock or pack products. When a customer orders on a reseller storefront, the system automatically routes the order to the mother warehouse, books the courier shipment, attaches tracking numbers, and calculates commissions in real time.
-- Dynamic System Design Switcher: Platform administrators can swap entire UI layouts on the fly - choosing between 6 distinct Navbars, 6 Footers, 6 Product Card designs, and custom color palettes directly from the admin panel without editing code or rebuilding the application.
 - Real-Time BD Courier Fraud Detection: The platform analyzes customer phone numbers against historical delivery data across major Bangladeshi couriers, scoring every incoming order for RTO (Return to Origin) risk before shipment.
 - Integrated Double-Entry Accounting and Virtual Wallets: Every taka earned, held in pending status, transferred, or withdrawn is tracked through an immutable financial ledger, giving administrators and resellers total financial transparency.
 
