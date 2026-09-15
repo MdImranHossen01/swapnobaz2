@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -13,8 +13,10 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AlertTriangle, TrendingDown, Edit, Store, Package } from 'lucide-react';
+import { Pagination } from '@/components/ui/pagination';
+import { AlertTriangle, TrendingDown, Edit, Store, Package, Search } from 'lucide-react';
 import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
 interface LowStockItem {
@@ -37,9 +39,13 @@ interface LowStockItem {
   sourceType: 'own' | 'mother' | 'other_reseller';
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function LowStockPage() {
   const [items, setItems] = useState<LowStockItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchLowStock = async () => {
     try {
@@ -59,9 +65,33 @@ export default function LowStockPage() {
     fetchLowStock();
   }, []);
 
+  const filteredItems = useMemo(() => {
+    if (!search.trim()) return items;
+    const term = search.toLowerCase();
+    return items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(term) ||
+        (item.color && item.color.toLowerCase().includes(term)) ||
+        (item.size && item.size.toLowerCase().includes(term)) ||
+        (item.uploadedByStoreName && item.uploadedByStoreName.toLowerCase().includes(term))
+    );
+  }, [items, search]);
+
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="flex flex-col gap-4 px-0 py-2 md:p-6 w-full max-w-full">
-      <div className="flex items-center justify-between border-b pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
             <TrendingDown className="h-5 w-5 text-red-500" />
@@ -70,6 +100,17 @@ export default function LowStockPage() {
           <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
             Products and variants with less than 5 units remaining in stock across catalogs
           </p>
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search low stock..."
+            className="pl-9 h-9 text-xs md:text-sm rounded-xl"
+            value={search}
+            onChange={handleSearchChange}
+          />
         </div>
       </div>
 
@@ -99,14 +140,14 @@ export default function LowStockPage() {
                     <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto rounded-lg" /></TableCell>
                   </TableRow>
                 ))
-              ) : items.length === 0 ? (
+              ) : paginatedItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                    All products are adequately stocked (≥ 5 units).
+                    {search ? 'No low stock products match your search.' : 'All products are adequately stocked (≥ 5 units).'}
                   </TableCell>
                 </TableRow>
               ) : (
-                items.map((item) => (
+                paginatedItems.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/20 transition-colors">
                     <TableCell className="font-bold text-sm">
                       <div className="flex items-center gap-2.5">
@@ -204,6 +245,22 @@ export default function LowStockPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Desktop Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between px-2 pt-4">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of{' '}
+              {filteredItems.length} items
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mobile Card View */}
@@ -217,12 +274,12 @@ export default function LowStockPage() {
               </div>
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : paginatedItems.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground bg-card rounded-xl border text-xs">
-            All products are adequately stocked.
+            {search ? 'No low stock products match your search.' : 'All products are adequately stocked.'}
           </div>
         ) : (
-          items.map((item) => (
+          paginatedItems.map((item) => (
             <MobileDataCard
               key={item.id}
               title={item.name}
@@ -271,6 +328,17 @@ export default function LowStockPage() {
               />
             </MobileDataCard>
           ))
+        )}
+
+        {/* Mobile Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="pt-2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
     </div>

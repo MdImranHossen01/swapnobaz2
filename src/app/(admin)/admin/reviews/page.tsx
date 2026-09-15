@@ -24,10 +24,17 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import Swal from 'sweetalert2';
+import { Pagination } from '@/components/ui/pagination';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function ReviewsModerationPage() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchReviews = async () => {
     try {
@@ -116,16 +123,48 @@ export default function ReviewsModerationPage() {
     );
   }
 
+  const filteredReviews = reviews.filter((r) => {
+    if (!search.trim()) return true;
+    const term = search.toLowerCase();
+    return (
+      (r.product?.name && r.product.name.toLowerCase().includes(term)) ||
+      (r.user?.name && r.user.name.toLowerCase().includes(term)) ||
+      (r.user?.email && r.user.email.toLowerCase().includes(term)) ||
+      (r.name && r.name.toLowerCase().includes(term)) ||
+      (r.comment && r.comment.toLowerCase().includes(term))
+    );
+  });
+
+  const totalPages = Math.ceil(filteredReviews.length / ITEMS_PER_PAGE) || 1;
+  const paginatedReviews = filteredReviews.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 md:px-0">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight">Review Moderation</h1>
           <p className="text-xs md:text-sm text-muted-foreground">Manage and moderate customer product reviews.</p>
         </div>
-        <Badge variant="outline" className="px-3 py-1 self-start sm:self-auto text-xs">
-          {reviews.filter(r => r.status === 'pending').length} Pending Reviews
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Badge variant="outline" className="px-3 py-1 text-xs">
+            {reviews.filter(r => r.status === 'pending').length} Pending Reviews
+          </Badge>
+          <div className="relative w-48 sm:w-64">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search reviews..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-9 h-9 text-xs md:text-sm rounded-xl"
+            />
+          </div>
+        </div>
       </div>
       
       <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
@@ -143,14 +182,14 @@ export default function ReviewsModerationPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {reviews.length === 0 ? (
+              {paginatedReviews.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                    No reviews found for moderation.
+                    {search ? 'No reviews match your search.' : 'No reviews found for moderation.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                reviews.map((review) => (
+                paginatedReviews.map((review) => (
                   <TableRow key={review._id} className={review.status === 'pending' ? 'bg-yellow-50/30' : ''}>
                     <TableCell>
                       <div className="flex flex-col gap-1">
@@ -233,12 +272,12 @@ export default function ReviewsModerationPage() {
 
         {/* Mobile Card View */}
         <div className="block md:hidden p-2 space-y-2.5">
-          {reviews.length === 0 ? (
+          {paginatedReviews.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground text-sm">
-              No reviews found for moderation.
+              {search ? 'No reviews match your search.' : 'No reviews found for moderation.'}
             </div>
           ) : (
-            reviews.map((review) => (
+            paginatedReviews.map((review) => (
               <div key={review._id} className={`p-3 bg-card border rounded-lg shadow-sm space-y-2 ${review.status === 'pending' ? 'border-yellow-300' : ''}`}>
                 <div className="flex items-start justify-between gap-2 border-b pb-2">
                   <div>
@@ -297,6 +336,22 @@ export default function ReviewsModerationPage() {
             ))
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredReviews.length)} of{' '}
+              {filteredReviews.length} reviews
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

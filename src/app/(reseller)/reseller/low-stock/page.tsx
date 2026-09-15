@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Pagination } from '@/components/ui/pagination';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ import {
   TrendingUp,
   Loader2,
   Package,
+  Search,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -59,9 +61,13 @@ interface LowStockItem {
   sourceType: 'own' | 'mother' | 'other_reseller';
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function ResellerLowStockPage() {
   const [items, setItems] = useState<LowStockItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Sourcing Modal State
   const [selectedSourceItem, setSelectedSourceItem] = useState<LowStockItem | null>(null);
@@ -85,6 +91,31 @@ export default function ResellerLowStockPage() {
   useEffect(() => {
     fetchLowStock();
   }, []);
+
+  // Filtered & Paginated items
+  const filteredItems = useMemo(() => {
+    if (!search.trim()) return items;
+    const term = search.toLowerCase();
+    return items.filter(
+      (item) =>
+        item.name.toLowerCase().includes(term) ||
+        (item.color && item.color.toLowerCase().includes(term)) ||
+        (item.size && item.size.toLowerCase().includes(term)) ||
+        (item.uploadedByStoreName && item.uploadedByStoreName.toLowerCase().includes(term))
+    );
+  }, [items, search]);
+
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
 
   const openSourceModal = (item: LowStockItem) => {
     setSelectedSourceItem(item);
@@ -157,7 +188,7 @@ export default function ResellerLowStockPage() {
 
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6 w-full max-w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 md:px-0">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
             <TrendingDown className="h-5 w-5 md:h-6 md:w-6 text-red-500" />
@@ -166,6 +197,17 @@ export default function ResellerLowStockPage() {
           <p className="text-xs md:text-sm text-muted-foreground">
             Inventory monitoring for products and variants with less than 5 units remaining in stock
           </p>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search low stock products..."
+            className="pl-9 h-9 text-xs md:text-sm rounded-xl"
+            value={search}
+            onChange={handleSearchChange}
+          />
         </div>
       </div>
 
@@ -195,14 +237,14 @@ export default function ResellerLowStockPage() {
                     <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto rounded-lg" /></TableCell>
                   </TableRow>
                 ))
-              ) : items.length === 0 ? (
+              ) : paginatedItems.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                    All products are adequately stocked (≥ 5 units).
+                    {search ? 'No low stock products match your search.' : 'All products are adequately stocked (≥ 5 units).'}
                   </TableCell>
                 </TableRow>
               ) : (
-                items.map((item) => (
+                paginatedItems.map((item) => (
                   <TableRow key={item.id} className="hover:bg-muted/20 transition-colors">
                     <TableCell className="font-bold text-sm">
                       <div className="flex items-center gap-2.5">
@@ -318,6 +360,22 @@ export default function ResellerLowStockPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Desktop Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between px-2 pt-4">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} of{' '}
+              {filteredItems.length} items
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mobile Card View */}
@@ -331,12 +389,12 @@ export default function ResellerLowStockPage() {
               </div>
             ))}
           </div>
-        ) : items.length === 0 ? (
+        ) : paginatedItems.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground bg-card rounded-2xl border">
-            All products are adequately stocked.
+            {search ? 'No low stock products match your search.' : 'All products are adequately stocked.'}
           </div>
         ) : (
-          items.map((item) => (
+          paginatedItems.map((item) => (
             <div key={item.id} className="p-4 border rounded-2xl bg-card shadow-sm flex flex-col gap-3">
               <div className="flex justify-between items-start gap-2">
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -417,6 +475,17 @@ export default function ResellerLowStockPage() {
               </div>
             </div>
           ))
+        )}
+
+        {/* Mobile Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="pt-2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
 

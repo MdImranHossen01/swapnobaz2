@@ -15,8 +15,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Loader2, Check, X, ShieldAlert, Store, Search, ExternalLink, RefreshCw } from 'lucide-react';
+import { Pagination } from '@/components/ui/pagination';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminResellersPage() {
   const searchParams = useSearchParams();
@@ -26,6 +29,7 @@ export default function AdminResellersPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [updating, setUpdating] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchResellers = async () => {
     try {
@@ -93,6 +97,12 @@ export default function AdminResellersPage() {
     return matchSearch && matchStatus;
   });
 
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+  const paginatedResellers = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   const counts = {
     all: resellers.length,
     pending: resellers.filter(r => r.status === 'pending').length,
@@ -101,11 +111,17 @@ export default function AdminResellersPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
+    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 md:px-0">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">রিসেলার স্টোর সমূহ</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">সব রিসেলার স্টোর এবং তাদের কমিশন রেট এখানে পরিচালনা করুন</p>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Store className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+            রিসেলার ম্যানেজমেন্ট
+          </h2>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            সব রিসেলার স্টোর ও তাদের অ্যাকাউন্ট স্ট্যাটাস পরিচালনা করুন
+          </p>
         </div>
         <Button size="sm" variant="outline" className="h-8 text-xs w-fit" onClick={fetchResellers}>
           <RefreshCw className="h-3.5 w-3.5 mr-1" />রিফ্রেশ
@@ -117,7 +133,10 @@ export default function AdminResellersPage() {
         {(['all', 'pending', 'active', 'suspended'] as const).map(s => (
           <button
             key={s}
-            onClick={() => setStatusFilter(s)}
+            onClick={() => {
+              setStatusFilter(s);
+              setCurrentPage(1);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
               statusFilter === s
                 ? s === 'pending'
@@ -142,7 +161,10 @@ export default function AdminResellersPage() {
           <Input
             placeholder="স্টোর, ডোমেন বা মালিকের নাম..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-9 h-9 text-xs md:text-sm"
           />
         </div>
@@ -154,7 +176,7 @@ export default function AdminResellersPage() {
             <div className="flex justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : filtered.length === 0 ? (
+          ) : paginatedResellers.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
               <Store className="h-16 w-16 mx-auto mb-4" />
               <p>কোনো রিসেলার স্টোর খুঁজে পাওয়া যায়নি</p>
@@ -176,7 +198,7 @@ export default function AdminResellersPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map(r => (
+                    {paginatedResellers.map(r => (
                       <TableRow key={r._id}>
                         <TableCell className="font-bold">
                           <div>
@@ -254,7 +276,7 @@ export default function AdminResellersPage() {
 
               {/* Mobile Card View */}
               <div className="block md:hidden p-2 space-y-2.5">
-                {filtered.map(r => (
+                {paginatedResellers.map(r => (
                   <div key={r._id} className="p-3 bg-card border rounded-lg shadow-sm space-y-2.5">
                     <div className="flex items-start justify-between gap-2 border-b pb-2">
                       <div>
@@ -330,6 +352,21 @@ export default function AdminResellersPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {!loading && totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t">
+                  <p className="text-xs text-muted-foreground">
+                    দেখাচ্ছে {(currentPage - 1) * ITEMS_PER_PAGE + 1} থেকে{' '}
+                    {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} (মোট {filtered.length})
+                  </p>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
             </>
           )}
         </CardContent>

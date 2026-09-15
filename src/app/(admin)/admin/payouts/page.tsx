@@ -27,11 +27,15 @@ import { toast } from 'sonner';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
 import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
+import { Pagination } from '@/components/ui/pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminPayoutsPage() {
   const [payouts, setPayouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [processingTransaction, setProcessingTransaction] = useState<any | null>(null);
   const [payoutReference, setPayoutReference] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -95,6 +99,12 @@ export default function AdminPayoutsPage() {
     p.payoutMethod?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+  const paginatedPayouts = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="flex-1 space-y-4 md:space-y-6 px-0 py-2 md:p-8">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3">
@@ -110,7 +120,10 @@ export default function AdminPayoutsPage() {
           <Input
             placeholder="স্টোর নাম, মেথড বা রেফারেন্স..."
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-8 h-9 text-xs"
           />
         </div>
@@ -122,7 +135,7 @@ export default function AdminPayoutsPage() {
             <div className="flex justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : filtered.length === 0 ? (
+          ) : paginatedPayouts.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground text-xs">
               <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-40" />
               <p>কোনো পেআউট অনুরোধ পাওয়া যায়নি</p>
@@ -145,7 +158,7 @@ export default function AdminPayoutsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filtered.map(p => (
+                    {paginatedPayouts.map(p => (
                       <TableRow key={p._id}>
                         <TableCell className="text-xs text-muted-foreground">{format(new Date(p.createdAt), 'dd MMM yyyy, hh:mm a')}</TableCell>
                         <TableCell className="font-bold">{p.resellerId?.storeName || 'Deleted Store'}</TableCell>
@@ -213,7 +226,7 @@ export default function AdminPayoutsPage() {
 
               {/* Mobile Card List */}
               <div className="block md:hidden p-2 space-y-2.5">
-                {filtered.map(p => (
+                {paginatedPayouts.map(p => (
                   <MobileDataCard
                     key={p._id}
                     title={p.resellerId?.storeName || 'Deleted Store'}
@@ -273,6 +286,21 @@ export default function AdminPayoutsPage() {
                   </MobileDataCard>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {!loading && totalPages > 1 && (
+                <div className="flex items-center justify-between p-4 border-t">
+                  <p className="text-xs text-muted-foreground">
+                    দেখাচ্ছে {(currentPage - 1) * ITEMS_PER_PAGE + 1} থেকে{' '}
+                    {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} (মোট {filtered.length})
+                  </p>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
             </>
           )}
         </CardContent>

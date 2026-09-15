@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -11,9 +11,11 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Pagination } from '@/components/ui/pagination';
 import { format } from 'date-fns';
-import { CalendarDays, AlertTriangle, ArrowRight, Edit } from 'lucide-react';
+import { CalendarDays, AlertTriangle, Edit, Search } from 'lucide-react';
 import Link from 'next/link';
 import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
 
@@ -28,9 +30,13 @@ interface ExpiringBatch {
   stock: number;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function UpcomingExpiryPage() {
   const [batches, setBatches] = useState<ExpiringBatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchUpcomingExpiry = async () => {
     try {
@@ -59,19 +65,56 @@ export default function UpcomingExpiryPage() {
     return diffDays;
   };
 
+  const filteredBatches = useMemo(() => {
+    if (!search.trim()) return batches;
+    const term = search.toLowerCase();
+    return batches.filter(
+      (b) =>
+        b.name.toLowerCase().includes(term) ||
+        b.batchNumber.toLowerCase().includes(term) ||
+        (b.color && b.color.toLowerCase().includes(term)) ||
+        (b.size && b.size.toLowerCase().includes(term))
+    );
+  }, [batches, search]);
+
+  const totalPages = Math.ceil(filteredBatches.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedBatches = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredBatches.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredBatches, currentPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="flex flex-col gap-4 px-0 py-2 md:p-6 w-full max-w-full">
-      <div className="flex items-center justify-between border-b pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-orange-500" />
             Upcoming Expiry Batches
           </h1>
-          <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Monitor product inventory expiring within the next 30 days</p>
+          <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
+            Monitor batches across all products expiring within the next 30 days
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search expiring batches..."
+            className="pl-9 h-9 text-xs md:text-sm rounded-xl"
+            value={search}
+            onChange={handleSearchChange}
+          />
         </div>
       </div>
 
-      {/* Desktop View */}
+      {/* Desktop Table View */}
       <div className="hidden md:block">
         <div className="rounded-2xl border bg-card shadow-xs overflow-hidden">
           <Table>
@@ -99,14 +142,14 @@ export default function UpcomingExpiryPage() {
                     <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto rounded-lg" /></TableCell>
                   </TableRow>
                 ))
-              ) : batches.length === 0 ? (
+              ) : paginatedBatches.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                    No products expiring within the next 30 days.
+                    {search ? 'No expiring batches match your search.' : 'No products expiring within the next 30 days.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                batches.map((batch) => {
+                paginatedBatches.map((batch) => {
                   const daysLeft = getDaysRemaining(batch.expiryDate);
                   return (
                     <TableRow key={batch.id} className="hover:bg-muted/20 transition-colors">
@@ -147,9 +190,9 @@ export default function UpcomingExpiryPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/admin/products/${batch.productId}/edit`}>
+                        <Link href={`/admin/products`}>
                           <Button variant="ghost" size="sm" className="h-8 rounded-lg text-xs gap-1">
-                            <Edit className="h-3.5 w-3.5" /> Edit
+                            <Edit className="h-3.5 w-3.5" /> View
                           </Button>
                         </Link>
                       </TableCell>
@@ -160,9 +203,25 @@ export default function UpcomingExpiryPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Desktop Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between px-2 pt-4">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredBatches.length)} of{' '}
+              {filteredBatches.length} batches
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Mobile View */}
+      {/* Mobile Card View */}
       <div className="block md:hidden p-1 space-y-2.5">
         {loading ? (
           <div className="space-y-2.5">
@@ -173,12 +232,12 @@ export default function UpcomingExpiryPage() {
               </div>
             ))}
           </div>
-        ) : batches.length === 0 ? (
+        ) : paginatedBatches.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground bg-card rounded-xl border text-xs">
-            No products expiring soon.
+            {search ? 'No expiring batches match your search.' : 'No products expiring within next 30 days.'}
           </div>
         ) : (
-          batches.map((batch) => {
+          paginatedBatches.map((batch) => {
             const daysLeft = getDaysRemaining(batch.expiryDate);
             return (
               <MobileDataCard
@@ -194,19 +253,39 @@ export default function UpcomingExpiryPage() {
                   )
                 }
                 footer={
-                  <Link href={`/admin/products/${batch.productId}/edit`} className="w-full">
+                  <Link href={`/admin/products`} className="w-full">
                     <Button variant="outline" size="sm" className="w-full h-8 rounded-lg text-xs gap-1">
-                      <Edit className="h-3.5 w-3.5" /> Edit Product
+                      <Edit className="h-3.5 w-3.5" /> Manage Product
                     </Button>
                   </Link>
                 }
               >
-                <MobileDataRow label="Batch No" value={<span className="font-mono text-xs font-semibold">{batch.batchNumber}</span>} />
-                <MobileDataRow label="Remaining Stock" value={<span className="font-bold">{batch.stock} units</span>} />
-                <MobileDataRow label="Expiry Date" value={format(new Date(batch.expiryDate), 'dd MMM yyyy')} />
+                <MobileDataRow 
+                  label="Batch / Specs" 
+                  value={`${batch.batchNumber} • ${[batch.color, batch.size].filter(Boolean).join(' / ') || 'Base'}`} 
+                />
+                <MobileDataRow 
+                  label="Remaining Stock" 
+                  value={<span className="font-bold">{batch.stock} units</span>} 
+                />
+                <MobileDataRow 
+                  label="Expiry Date" 
+                  value={format(new Date(batch.expiryDate), 'dd MMM yyyy')} 
+                />
               </MobileDataCard>
             );
           })
+        )}
+
+        {/* Mobile Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="pt-2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -11,9 +11,11 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Pagination } from '@/components/ui/pagination';
 import { format } from 'date-fns';
-import { CalendarDays, AlertTriangle, Edit } from 'lucide-react';
+import { CalendarDays, AlertTriangle, Edit, Search } from 'lucide-react';
 import Link from 'next/link';
 
 interface ExpiringBatch {
@@ -27,9 +29,13 @@ interface ExpiringBatch {
   stock: number;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function ResellerUpcomingExpiryPage() {
   const [batches, setBatches] = useState<ExpiringBatch[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchUpcomingExpiry = async () => {
     try {
@@ -57,15 +63,52 @@ export default function ResellerUpcomingExpiryPage() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
+  const filteredBatches = useMemo(() => {
+    if (!search.trim()) return batches;
+    const term = search.toLowerCase();
+    return batches.filter(
+      (b) =>
+        b.name.toLowerCase().includes(term) ||
+        b.batchNumber.toLowerCase().includes(term) ||
+        (b.color && b.color.toLowerCase().includes(term)) ||
+        (b.size && b.size.toLowerCase().includes(term))
+    );
+  }, [batches, search]);
+
+  const totalPages = Math.ceil(filteredBatches.length / ITEMS_PER_PAGE) || 1;
+
+  const paginatedBatches = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredBatches.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredBatches, currentPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6 w-full max-w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 md:px-0">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
             <CalendarDays className="h-5 w-5 md:h-6 md:w-6 text-orange-500" />
             My Upcoming Expiry Batches
           </h1>
-          <p className="text-xs md:text-sm text-muted-foreground">Monitor your personal product inventory expiring within the next 30 days</p>
+          <p className="text-xs md:text-sm text-muted-foreground">
+            Monitor your personal product inventory expiring within the next 30 days
+          </p>
+        </div>
+
+        {/* Search */}
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search batches..."
+            className="pl-9 h-9 text-xs md:text-sm rounded-xl"
+            value={search}
+            onChange={handleSearchChange}
+          />
         </div>
       </div>
 
@@ -97,14 +140,14 @@ export default function ResellerUpcomingExpiryPage() {
                     <TableCell className="text-right"><Skeleton className="h-8 w-16 ml-auto rounded-lg" /></TableCell>
                   </TableRow>
                 ))
-              ) : batches.length === 0 ? (
+              ) : paginatedBatches.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                    No products expiring within the next 30 days.
+                    {search ? 'No expiring batches match your search.' : 'No products expiring within the next 30 days.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                batches.map((batch) => {
+                paginatedBatches.map((batch) => {
                   const daysLeft = getDaysRemaining(batch.expiryDate);
                   return (
                     <TableRow key={batch.id} className="hover:bg-muted/20 transition-colors">
@@ -158,6 +201,22 @@ export default function ResellerUpcomingExpiryPage() {
             </TableBody>
           </Table>
         </div>
+
+        {/* Desktop Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between px-2 pt-4">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredBatches.length)} of{' '}
+              {filteredBatches.length} batches
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
 
       {/* Mobile View */}
@@ -171,12 +230,12 @@ export default function ResellerUpcomingExpiryPage() {
               </div>
             ))}
           </div>
-        ) : batches.length === 0 ? (
+        ) : paginatedBatches.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground bg-card rounded-2xl border">
-            No products expiring soon.
+            {search ? 'No expiring batches match your search.' : 'No products expiring soon.'}
           </div>
         ) : (
-          batches.map((batch) => {
+          paginatedBatches.map((batch) => {
             const daysLeft = getDaysRemaining(batch.expiryDate);
             return (
               <div key={batch.id} className="p-4 border rounded-2xl bg-card shadow-sm flex flex-col gap-3">
@@ -198,7 +257,7 @@ export default function ResellerUpcomingExpiryPage() {
 
                 <div className="flex items-center justify-between text-xs border-t pt-2">
                   <span className="text-muted-foreground">Stock: <strong className="text-foreground">{batch.stock} units</strong></span>
-                  <span className="text-muted-foreground">Expiry: <strong className="text-foreground">{format(new Date(batch.expiryDate), 'dd MMM yyyy')}</strong></span>
+                  <span className="text-muted-foreground">Exp: {format(new Date(batch.expiryDate), 'dd MMM yyyy')}</span>
                 </div>
 
                 <div className="border-t pt-2 flex justify-end">
@@ -211,6 +270,17 @@ export default function ResellerUpcomingExpiryPage() {
               </div>
             );
           })
+        )}
+
+        {/* Mobile Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="pt-2">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
         )}
       </div>
     </div>

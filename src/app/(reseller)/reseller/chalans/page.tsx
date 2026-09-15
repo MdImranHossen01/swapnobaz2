@@ -1,20 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/ui/pagination';
 import { Loader2, Search, RefreshCcw, Truck, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function ResellerChalansPage() {
   const [chalans, setChalans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchChalans = async () => {
     setLoading(true);
@@ -26,7 +30,21 @@ export default function ResellerChalansPage() {
 
   useEffect(() => { fetchChalans(); }, []);
 
-  const filtered = chalans.filter(c => JSON.stringify(c).toLowerCase().includes(search.toLowerCase()));
+  const filtered = useMemo(() => {
+    if (!search.trim()) return chalans;
+    return chalans.filter(c => JSON.stringify(c).toLowerCase().includes(search.toLowerCase()));
+  }, [chalans, search]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+  const paginatedChalans = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filtered.slice(start, start + ITEMS_PER_PAGE);
+  }, [filtered, currentPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
@@ -42,7 +60,7 @@ export default function ResellerChalansPage() {
 
       <div className="relative flex-1 max-w-sm px-1 md:px-0">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search chalans..." className="pl-8 h-9 text-xs md:text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+        <Input placeholder="Search chalans..." className="pl-8 h-9 text-xs md:text-sm" value={search} onChange={handleSearchChange} />
       </div>
 
       <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
@@ -65,15 +83,15 @@ export default function ResellerChalansPage() {
                 <TableRow><TableCell colSpan={7} className="h-40 text-center">
                   <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                 </TableCell></TableRow>
-              ) : filtered.length === 0 ? (
+              ) : paginatedChalans.length === 0 ? (
                 <TableRow><TableCell colSpan={7} className="h-40 text-center">
                   <div className="flex flex-col items-center gap-2">
                     <Truck className="h-8 w-8 text-muted-foreground" />
-                    <p className="text-muted-foreground">No delivery challans found</p>
+                    <p className="text-muted-foreground">{search ? 'No matching challans found' : 'No delivery challans found'}</p>
                   </div>
                 </TableCell></TableRow>
               ) : (
-                filtered.map(c => (
+                paginatedChalans.map(c => (
                   <TableRow key={c._id} className="hover:bg-muted/30 transition-colors">
                     <TableCell className="font-mono font-bold">{c.chalanNumber}</TableCell>
                     <TableCell className="font-mono text-primary">{c.orderId?.shortId || '-'}</TableCell>
@@ -100,12 +118,12 @@ export default function ResellerChalansPage() {
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
               Loading challans...
             </div>
-          ) : filtered.length === 0 ? (
+          ) : paginatedChalans.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground text-sm">
-              No delivery challans found
+              {search ? 'No matching challans found' : 'No delivery challans found'}
             </div>
           ) : (
-            filtered.map(c => (
+            paginatedChalans.map(c => (
               <div key={c._id} className="p-3 bg-card border rounded-lg shadow-sm space-y-2">
                 <div className="flex items-start justify-between gap-2 border-b pb-2">
                   <div>
@@ -134,6 +152,22 @@ export default function ResellerChalansPage() {
             ))
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of{' '}
+              {filtered.length} challans
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

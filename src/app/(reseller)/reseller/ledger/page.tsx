@@ -1,20 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Wallet, RefreshCcw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/ui/pagination';
+import { Loader2, Wallet, RefreshCcw, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function ResellerLedgerPage() {
   const [entries, setEntries] = useState<any[]>([]);
   const [balance, setBalance] = useState({ available: 0, pending: 0, withdrawn: 0 });
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = async () => {
     setLoading(true);
@@ -34,6 +40,27 @@ export default function ResellerLedgerPage() {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return entries;
+    const term = search.toLowerCase();
+    return entries.filter(e => 
+      e.description?.toLowerCase().includes(term) ||
+      e.reference?.toLowerCase().includes(term) ||
+      e.type?.toLowerCase().includes(term)
+    );
+  }, [entries, search]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
+  const paginatedEntries = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filtered.slice(start, start + ITEMS_PER_PAGE);
+  }, [filtered, currentPage]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
@@ -65,6 +92,11 @@ export default function ResellerLedgerPage() {
         ))}
       </div>
 
+      <div className="relative flex-1 max-w-sm px-1 md:px-0">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Search descriptions or ref..." className="pl-8 h-9 text-xs md:text-sm" value={search} onChange={handleSearchChange} />
+      </div>
+
       <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-x-auto">
@@ -84,12 +116,12 @@ export default function ResellerLedgerPage() {
                 <TableRow><TableCell colSpan={6} className="h-40 text-center">
                   <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
                 </TableCell></TableRow>
-              ) : entries.length === 0 ? (
+              ) : paginatedEntries.length === 0 ? (
                 <TableRow><TableCell colSpan={6} className="h-40 text-center text-muted-foreground">
-                  No ledger entries found
+                  {search ? 'No matching ledger entries found' : 'No ledger entries found'}
                 </TableCell></TableRow>
               ) : (
-                entries.map(e => (
+                paginatedEntries.map(e => (
                   <TableRow key={e._id} className="hover:bg-muted/30 transition-colors">
                     <TableCell className="text-sm">{e.createdAt ? format(new Date(e.createdAt), 'dd MMM yyyy, hh:mm a') : '-'}</TableCell>
                     <TableCell>{e.description}</TableCell>
@@ -113,12 +145,12 @@ export default function ResellerLedgerPage() {
               <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-primary" />
               Loading ledger...
             </div>
-          ) : entries.length === 0 ? (
+          ) : paginatedEntries.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground text-sm">
-              No ledger entries found
+              {search ? 'No matching ledger entries found' : 'No ledger entries found'}
             </div>
           ) : (
-            entries.map(e => (
+            paginatedEntries.map(e => (
               <div key={e._id} className="p-3 bg-card border rounded-lg shadow-sm space-y-2">
                 <div className="flex items-start justify-between gap-2 border-b pb-2">
                   <div>
@@ -145,6 +177,22 @@ export default function ResellerLedgerPage() {
             ))
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)} of{' '}
+              {filtered.length} entries
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

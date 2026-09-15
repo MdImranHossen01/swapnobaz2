@@ -24,11 +24,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
 import { format } from 'date-fns';
+import { Pagination } from '@/components/ui/pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function SubscribersPage() {
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchSubscribers = async () => {
     setIsLoading(true);
@@ -62,69 +66,69 @@ export default function SubscribersPage() {
 
     if (result.isConfirmed) {
       try {
-        const res = await fetch('/api/admin/subscribers', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id }),
+        const res = await fetch(`/api/admin/subscribers/${id}`, {
+          method: 'DELETE'
         });
 
         if (res.ok) {
-          toast.success('Subscriber removed');
+          toast.success('Subscriber removed successfully');
           setSubscribers(subscribers.filter(s => s._id !== id));
         } else {
-          toast.error('Failed to delete');
+          toast.error('Failed to delete subscriber');
         }
       } catch (error) {
-        toast.error('Something went wrong');
+        toast.error('An error occurred');
       }
     }
   };
 
-  const exportCSV = () => {
-    const headers = ['Email', 'Subscribed At'];
-    const rows = subscribers.map(s => [
-      s.email,
-      format(new Date(s.createdAt), 'yyyy-MM-dd HH:mm:ss')
-    ]);
+  const filteredSubscribers = subscribers.filter(s => 
+    s.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
+  const totalPages = Math.ceil(filteredSubscribers.length / ITEMS_PER_PAGE) || 1;
+  const paginatedSubscribers = filteredSubscribers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handleExportCSV = () => {
+    if (subscribers.length === 0) return;
     const csvContent = "data:text/csv;charset=utf-8," 
-      + headers.join(",") + "\n" 
-      + rows.map(e => e.join(",")).join("\n");
-
+      + "Email,Subscribed Date\n"
+      + subscribers.map(s => `"${s.email}","${new Date(s.createdAt).toISOString()}"`).join("\n");
+    
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "subscribers_list.csv");
+    link.setAttribute("download", `subscribers_${format(new Date(), 'yyyy-MM-dd')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const filteredSubscribers = subscribers.filter(s => 
-    s.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="px-0 py-4 md:p-8 space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 md:px-0">
         <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-            <Users className="h-8 w-8 text-primary" /> Newsletter Subscribers
-          </h1>
-          <p className="text-muted-foreground">Manage your store's email subscription list.</p>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Newsletter Subscribers</h1>
+          <p className="text-xs md:text-sm text-muted-foreground">Manage your store newsletter subscriber list.</p>
         </div>
-        <Button onClick={exportCSV} className="gap-2">
-          <Download className="h-4 w-4" /> Export CSV
+        <Button onClick={handleExportCSV} disabled={subscribers.length === 0} variant="outline" size="sm" className="gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="bg-primary/5 border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Subscribers</CardTitle>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Subscribers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-black">{subscribers.length}</div>
+            <div className="text-2xl font-bold">{subscribers.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">Active audience members</p>
           </CardContent>
         </Card>
       </div>
@@ -138,15 +142,20 @@ export default function SubscribersPage() {
                 placeholder="Search by email..." 
                 className="pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
               />
             </div>
             <div className="text-sm text-muted-foreground">
-              Showing {filteredSubscribers.length} of {subscribers.length}
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredSubscribers.length)} of{' '}
+              {filteredSubscribers.length}
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="rounded-md border">
             <Table>
               <TableHeader>
@@ -166,14 +175,14 @@ export default function SubscribersPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : filteredSubscribers.length === 0 ? (
+                ) : paginatedSubscribers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={3} className="h-32 text-center text-muted-foreground font-medium">
-                      No subscribers found.
+                      {searchTerm ? 'No subscribers match your search.' : 'No subscribers found.'}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredSubscribers.map((subscriber) => (
+                  paginatedSubscribers.map((subscriber) => (
                     <TableRow key={subscriber._id} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="font-bold">
                         <div className="flex items-center gap-2">
@@ -205,6 +214,16 @@ export default function SubscribersPage() {
               </TableBody>
             </Table>
           </div>
+
+          {!isLoading && totalPages > 1 && (
+            <div className="pt-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

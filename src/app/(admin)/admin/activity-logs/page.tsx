@@ -24,6 +24,9 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Search, Eye, ShieldAlert, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { Pagination } from '@/components/ui/pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminActivityLogsPage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -31,6 +34,7 @@ export default function AdminActivityLogsPage() {
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -55,6 +59,12 @@ export default function AdminActivityLogsPage() {
     fetchLogs();
   }, [search, actionFilter]);
 
+  const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE) || 1;
+  const paginatedLogs = logs.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
       <div>
@@ -69,24 +79,22 @@ export default function AdminActivityLogsPage() {
             <Input
               placeholder="ইউজার ইমেইল দিয়ে খুঁজুন..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-9"
+              onChange={e => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-9 h-9 text-xs md:text-sm"
             />
           </div>
-          <select
+          <Input
+            placeholder="অ্যাকশন (যেমন: CREATE, UPDATE)"
             value={actionFilter}
-            onChange={e => setActionFilter(e.target.value)}
-            className="h-10 border rounded-lg px-3 text-sm bg-background"
-          >
-            <option value="">সকল অ্যাকশন</option>
-            <option value="LOGIN">LOGIN</option>
-            <option value="CREATE_PRODUCT">CREATE_PRODUCT</option>
-            <option value="UPDATE_PRODUCT">UPDATE_PRODUCT</option>
-            <option value="DELETE_PRODUCT">DELETE_PRODUCT</option>
-            <option value="UPDATE_ORDER_STATUS">UPDATE_ORDER_STATUS</option>
-            <option value="RELEASE_PAYOUT">RELEASE_PAYOUT</option>
-            <option value="UPDATE_SETTINGS">UPDATE_SETTINGS</option>
-          </select>
+            onChange={e => {
+              setActionFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-48 h-9 text-xs md:text-sm"
+          />
         </div>
       </div>
 
@@ -96,7 +104,7 @@ export default function AdminActivityLogsPage() {
             <div className="flex justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-          ) : logs.length === 0 ? (
+          ) : paginatedLogs.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
               <ShieldAlert className="h-16 w-16 mx-auto mb-4" />
               <p>কোনো অ্যাক্টিভিটি লগ পাওয়া যায়নি</p>
@@ -116,7 +124,7 @@ export default function AdminActivityLogsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {logs.map(log => (
+                {paginatedLogs.map(log => (
                   <TableRow key={log._id}>
                     <TableCell>{format(new Date(log.createdAt), 'dd MMM yyyy, hh:mm:ss a')}</TableCell>
                     <TableCell className="font-medium">{log.userEmail || 'System/Guest'}</TableCell>
@@ -144,6 +152,19 @@ export default function AdminActivityLogsPage() {
             </Table>
           )}
         </CardContent>
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-between p-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              দেখাচ্ছে {(currentPage - 1) * ITEMS_PER_PAGE + 1} থেকে{' '}
+              {Math.min(currentPage * ITEMS_PER_PAGE, logs.length)} (মোট {logs.length})
+            </p>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
       </Card>
 
       {/* Details Dialog */}
