@@ -34,16 +34,13 @@
 
 ## 1. Role Hierarchy & Permissions
 
-| Role | Dashboard | Orders | Finance | Users | System Design |
-|------|-----------|--------|---------|-------|---------------|
-| `super_admin` | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ✅ Full |
-| `admin` | ✅ Full | ✅ Full | ✅ Full | ✅ Assign Roles | ❌ |
-| `manager` | ✅ View | ✅ View/Edit | ✅ View | ❌ | ❌ |
-| `moderator` | ✅ View | ✅ View | ❌ | ❌ | ❌ |
+| Role | Dashboard | Orders | Finance | Users |
+|------|-----------|--------|---------|-------|
+| `admin` | ✅ Full | ✅ Full | ✅ Full | ✅ Assign Roles |
+| `manager` | ✅ View | ✅ View/Edit | ✅ View | ❌ |
+| `moderator` | ✅ View | ✅ View | ❌ | ❌ |
 
-> **Auto Super Admin:** The email `imranshuvo101@gmail.com` is automatically configured as `super_admin` and cannot be demoted.
-
-> **Admin Assignment:** Both `admin` and `super_admin` can assign the `admin` role to any user by email from the Users page.
+> **Admin Assignment:**  `admin` can assign the `admin` role to any user by email from the Users page.
 
 ---
 
