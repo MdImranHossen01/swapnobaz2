@@ -87,7 +87,6 @@ export default function ResellerDashboard() {
               <Badge className={`text-[10px] border ${statusColorMap[reseller.status] || ''}`}>
                 {reseller.status === 'active' ? '● Active Store' : reseller.status}
               </Badge>
-              <span className="text-xs text-muted-foreground">Commission: {reseller.commissionRate}%</span>
             </div>
           </div>
         </div>

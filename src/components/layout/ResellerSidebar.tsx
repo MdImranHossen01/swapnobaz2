@@ -104,7 +104,6 @@ export function ResellerSidebar({
           <Badge variant="outline" className={`text-[10px] px-2 py-0.5 font-bold ${statusColor[reseller.status] || ''}`}>
             {reseller.status === 'active' ? '● সক্রিয় স্টোর' : reseller.status === 'pending' ? 'অনুমোদনের অপেক্ষায়' : 'স্থগিত'}
           </Badge>
-          <span className="text-[10px] text-muted-foreground font-semibold">কমিশন: {reseller.commissionRate ?? 10}%</span>
         </div>
       </div>
 
