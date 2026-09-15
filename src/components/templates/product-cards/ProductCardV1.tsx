@@ -16,14 +16,8 @@ import { toast } from 'sonner';
 import Swal from 'sweetalert2';
 import { fbEvent } from '@/lib/fpixel';
 import { ttEvent } from '@/lib/tiktok';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { QuickViewModal } from './QuickViewModal';
+import { ProductActionMenu } from './ProductActionMenu';
 import {
   Tooltip,
   TooltipContent,
@@ -287,30 +281,8 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
           </TooltipProvider>
         </div>
 
-        {/* Admin Menu */}
-        {isAdmin && (
-          <div className="absolute bottom-3 right-3 z-20">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="secondary" className="h-7 w-7 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow hover:bg-background">
-                  <MoreVertical className="h-3.5 w-3.5 text-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                <DropdownMenuItem onClick={() => router.push(`/admin/products/${product.slug}`)}>
-                  <Edit className="mr-2 h-3.5 w-3.5" /> Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDeleteProduct} className="text-destructive">
-                  <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/admin/products')}>
-                  <Settings className="mr-2 h-3.5 w-3.5" /> Manage
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+        {/* Admin & Reseller Action Menu */}
+        <ProductActionMenu product={product} />
       </div>
 
       {/* Content Area */}

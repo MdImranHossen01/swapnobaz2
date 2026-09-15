@@ -15,14 +15,8 @@ import { addToCart } from '@/store/slices/cartSlice';
 import { toggleWishlist } from '@/store/slices/wishlistSlice';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { QuickViewModal } from './QuickViewModal';
+import { ProductActionMenu } from './ProductActionMenu';
 import {
   Tooltip,
   TooltipContent,
@@ -252,26 +246,8 @@ export default function ProductCardV3({ product: initialProduct, isFlashSale }: 
           </TooltipProvider>
         </div>
 
-        {/* Admin Overlay */}
-        {isAdmin && (
-          <div className="absolute bottom-2 right-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="outline" className="h-8 w-8 border-neutral-800 bg-black/50 text-white hover:bg-primary">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push(`/admin/products/${product.slug}`)}>
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDeleteProduct} className="text-destructive">
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+        {/* Admin & Reseller Action Menu */}
+        <ProductActionMenu product={product} />
       </div>
 
       {/* Technical Content Section */}

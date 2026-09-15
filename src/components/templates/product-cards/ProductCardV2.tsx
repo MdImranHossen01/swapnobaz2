@@ -15,14 +15,8 @@ import { addToCart } from '@/store/slices/cartSlice';
 import { toggleWishlist } from '@/store/slices/wishlistSlice';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
 import { QuickViewModal } from './QuickViewModal';
+import { ProductActionMenu } from './ProductActionMenu';
 import {
   Tooltip,
   TooltipContent,
@@ -240,30 +234,8 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
           </TooltipProvider>
         </div>
 
-        {/* Admin Menu */}
-        {isAdmin && (
-          <div className="absolute top-4 right-4 z-20">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full bg-white/50 backdrop-blur-md hover:bg-white/80">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 rounded-2xl">
-                <DropdownMenuItem onClick={() => router.push(`/admin/products/${product.slug}`)}>
-                  <Edit className="mr-2 h-4 w-4" /> Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDeleteProduct} className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/admin/products')}>
-                  <Settings className="mr-2 h-4 w-4" /> Dashboard
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+        {/* Admin & Reseller Action Menu */}
+        <ProductActionMenu product={product} className="top-4 right-4 bottom-auto" />
 
         {/* Quick Add Tab */}
         <div className={`absolute bottom-0 left-0 right-0 p-4 transition-all duration-500 transform ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>

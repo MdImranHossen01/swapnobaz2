@@ -13,6 +13,7 @@ import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { QuickViewModal } from './QuickViewModal';
+import { ProductActionMenu } from './ProductActionMenu';
 import { fbEvent } from '@/lib/fpixel';
 import { ttEvent } from '@/lib/tiktok';
 import {
@@ -257,6 +258,9 @@ export default function ProductCardV6({ product: initialProduct, isFlashSale, pr
             </Tooltip>
           </TooltipProvider>
         </div>
+
+        {/* Admin & Reseller Action Menu */}
+        <ProductActionMenu product={product} />
       </div>
 
       {/* Product Info */}

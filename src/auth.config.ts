@@ -8,6 +8,7 @@ export default {
         session.user.id = token.id as string;
         (session.user as any).role = token.role ?? 'user';
         (session.user as any).phone = token.phone as string;
+        (session.user as any).resellerId = token.resellerId as string;
         if (token.image) {
           session.user.image = token.image as string;
         }

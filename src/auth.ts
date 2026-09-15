@@ -123,6 +123,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               token.role = dbUser.role ?? 'user';
               token.phone = dbUser.phone;
               token.image = dbUser.image || user.image || token.picture;
+
+              if (dbUser.role === 'reseller') {
+                const Reseller = (await import('./models/Reseller')).default;
+                const resellerRecord = await Reseller.findOne({ userId: dbUser._id }).select('_id');
+                if (resellerRecord) {
+                  token.resellerId = resellerRecord._id.toString();
+                }
+              }
             }
           }
         } catch (error) {
