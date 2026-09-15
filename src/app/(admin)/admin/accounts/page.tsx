@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,7 @@ import {
   RefreshCw,
   Building2,
   CreditCard,
-
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -29,10 +30,17 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { MobileDataCard, MobileDataRow } from '@/components/common/MobileDataCard';
+import { TransactionForm } from '@/components/admin/TransactionForm';
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Quick Transaction Modal State (Add Money / Debit / Transfer)
+  const [txModalOpen, setTxModalOpen] = useState(false);
+  const [selectedAccountForTx, setSelectedAccountForTx] = useState<any>(null);
+  const [txModalType, setTxModalType] = useState<'income' | 'expense'>('income');
+  const [txModalTab, setTxModalTab] = useState<'journal' | 'transfer'>('journal');
 
   // New Account Modal State
   const [newAccountOpen, setNewAccountOpen] = useState(false);
@@ -56,7 +64,7 @@ export default function AccountsPage() {
     return `${year}-${month}-${day}`;
   };
 
-  // Transfer Modal State
+  // Transfer Modal State (Standalone)
   const [transferOpen, setTransferOpen] = useState(false);
   const [transferForm, setTransferForm] = useState({
     fromAccountId: '',
@@ -87,6 +95,26 @@ export default function AccountsPage() {
     fetchAccounts();
   }, []);
 
+  const handleOpenCredit = (acc: any | null) => {
+    setSelectedAccountForTx(acc);
+    setTxModalType('income');
+    setTxModalTab('journal');
+    setTxModalOpen(true);
+  };
+
+  const handleOpenDebit = (acc: any | null) => {
+    setSelectedAccountForTx(acc);
+    setTxModalType('expense');
+    setTxModalTab('journal');
+    setTxModalOpen(true);
+  };
+
+  const handleOpenTransfer = (acc?: any | null) => {
+    setSelectedAccountForTx(acc || null);
+    setTxModalTab('transfer');
+    setTxModalOpen(true);
+  };
+
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accountForm.name || !accountForm.code) {
@@ -100,26 +128,25 @@ export default function AccountsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(accountForm)
       });
-      if (res.ok) {
-        toast.success('Account created successfully');
-        setNewAccountOpen(false);
-        setAccountForm({
-          name: '',
-          code: '',
-          category: 'Bank',
-          bankName: '',
-          branchName: '',
-          accountNumber: '',
-          openingBalance: '0',
-          description: ''
-        });
-        fetchAccounts();
-      } else {
-        const err = await res.json();
-        toast.error(err.message || 'Failed to create account');
-      }
-    } catch (error) {
-      toast.error('Error creating account');
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to create account');
+
+      toast.success('Account created successfully');
+      setNewAccountOpen(false);
+      setAccountForm({
+        name: '',
+        code: '',
+        category: 'Bank',
+        bankName: '',
+        branchName: '',
+        accountNumber: '',
+        openingBalance: '0',
+        description: ''
+      });
+      fetchAccounts();
+    } catch (error: any) {
+      toast.error(error.message);
     } finally {
       setCreating(false);
     }
@@ -131,39 +158,51 @@ export default function AccountsPage() {
       toast.error('Please fill in all required transfer fields');
       return;
     }
+
+    if (transferForm.fromAccountId === transferForm.toAccountId) {
+      toast.error('Source and destination accounts must be different');
+      return;
+    }
+
     setTransferring(true);
     try {
       const res = await fetch('/api/admin/accounts/transfer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(transferForm)
+        body: JSON.stringify({
+          fromAccountId: transferForm.fromAccountId,
+          toAccountId: transferForm.toAccountId,
+          amount: Number(transferForm.amount),
+          note: transferForm.note,
+          date: transferForm.date
+        })
       });
-      if (res.ok) {
-        toast.success('Funds transferred successfully');
-        setTransferOpen(false);
-        setTransferForm({
-          fromAccountId: '',
-          toAccountId: '',
-          amount: '',
-          note: '',
-          date: todayLocal()
-        });
-        fetchAccounts();
-      } else {
-        const err = await res.json();
-        toast.error(err.message || 'Transfer failed');
-      }
-    } catch (error) {
-      toast.error('Error transferring funds');
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Transfer failed');
+
+      toast.success(data.message || 'Fund transfer successful');
+      setTransferOpen(false);
+      setTransferForm({
+        fromAccountId: '',
+        toAccountId: '',
+        amount: '',
+        note: '',
+        date: todayLocal()
+      });
+      fetchAccounts();
+    } catch (error: any) {
+      toast.error(error.message);
     } finally {
       setTransferring(false);
     }
   };
 
-  const totalBalance = accounts.reduce((acc, curr) => acc + (curr.currentBalance || 0), 0);
-  const cashAccounts = accounts.filter(a => a.category === 'Cash');
+  // Group accounts by category
   const bankAccounts = accounts.filter(a => a.category === 'Bank');
+  const cashAccounts = accounts.filter(a => a.category === 'Cash');
   const mfsAccounts = accounts.filter(a => a.category === 'MFS');
+  const totalBalance = accounts.reduce((acc, c) => acc + (c.currentBalance || 0), 0);
 
   const getAccountIcon = (category: string) => {
     switch (category) {
@@ -188,17 +227,42 @@ export default function AccountsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Button variant="outline" size="sm" onClick={() => setTransferOpen(true)} className="gap-1.5 font-bold h-9 text-xs">
+          <Button 
+            size="sm" 
+            onClick={() => handleOpenCredit(null)} 
+            className="gap-1.5 font-bold h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Credit + (Add Money)</span>
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => handleOpenTransfer(null)} 
+            className="gap-1.5 font-bold h-9 text-xs"
+          >
             <ArrowRightLeft className="h-3.5 w-3.5 text-primary" />
             <span>Transfer Funds</span>
           </Button>
 
-          <Button size="sm" onClick={() => setNewAccountOpen(true)} className="gap-1.5 font-bold h-9 text-xs">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setNewAccountOpen(true)} 
+            className="gap-1.5 font-bold h-9 text-xs"
+          >
             <Plus className="h-3.5 w-3.5" />
             <span>+ Add Account</span>
           </Button>
 
-          <Button variant="outline" size="icon" onClick={fetchAccounts} disabled={loading} className="h-9 w-9">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={fetchAccounts} 
+            disabled={loading} 
+            className="h-9 w-9"
+          >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
           </Button>
         </div>
@@ -284,12 +348,13 @@ export default function AccountsPage() {
                   <th className="p-3 text-left font-bold text-foreground">Details / Bank Info</th>
                   <th className="p-3 font-bold text-muted-foreground">Opening Balance</th>
                   <th className="p-3 font-bold text-primary text-right">Current Live Balance</th>
+                  <th className="p-3 font-bold text-foreground text-center">Quick Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
                       <div className="flex items-center justify-center gap-2">
                         <Loader2 className="h-5 w-5 animate-spin" />
                         <span>Loading accounts...</span>
@@ -329,11 +394,52 @@ export default function AccountsPage() {
                       <td className="p-3 font-bold text-right text-base text-primary">
                         ৳{Math.round(acc.currentBalance || 0).toLocaleString()}
                       </td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenCredit(acc)}
+                            className="h-7 px-2 text-[11px] font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-300 dark:border-emerald-800"
+                            title="Add Money / Credit to this account"
+                          >
+                            <Plus className="h-3 w-3 mr-0.5" /> Credit +
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenDebit(acc)}
+                            className="h-7 px-2 text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-300 dark:border-rose-800"
+                            title="Expense / Debit from this account"
+                          >
+                            Debit -
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenTransfer(acc)}
+                            className="h-7 px-2 text-[11px] font-semibold text-primary hover:bg-primary/10"
+                            title="Transfer fund from this account"
+                          >
+                            <ArrowRightLeft className="h-3 w-3 mr-0.5" /> Transfer
+                          </Button>
+                          <Link href={`/admin/ledger?search=${encodeURIComponent(acc.name)}`}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2 text-[11px] font-semibold text-muted-foreground hover:text-foreground"
+                              title="View account ledger"
+                            >
+                              <FileText className="h-3 w-3 mr-0.5" /> Ledger
+                            </Button>
+                          </Link>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-muted-foreground">No accounts found. Click '+ Add Account' to create one.</td>
+                    <td colSpan={7} className="p-6 text-center text-muted-foreground">No accounts found. Click '+ Add Account' to create one.</td>
                   </tr>
                 )}
               </tbody>
@@ -363,9 +469,46 @@ export default function AccountsPage() {
                     </Badge>
                   }
                   footer={
-                    <div className="flex items-center justify-between w-full font-bold text-xs">
-                      <span className="text-muted-foreground">Live Balance:</span>
-                      <span className="text-primary text-sm font-black">৳{Math.round(acc.currentBalance || 0).toLocaleString()}</span>
+                    <div className="space-y-2 w-full">
+                      <div className="flex items-center justify-between w-full font-bold text-xs">
+                        <span className="text-muted-foreground">Live Balance:</span>
+                        <span className="text-primary text-sm font-black">৳{Math.round(acc.currentBalance || 0).toLocaleString()}</span>
+                      </div>
+                      <div className="grid grid-cols-4 gap-1 pt-2 border-t">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenCredit(acc)}
+                          className="h-7 px-1 text-[10px] font-bold text-emerald-600 border-emerald-300"
+                        >
+                          Credit +
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenDebit(acc)}
+                          className="h-7 px-1 text-[10px] font-bold text-rose-600 border-rose-300"
+                        >
+                          Debit -
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenTransfer(acc)}
+                          className="h-7 px-1 text-[10px] font-semibold text-primary"
+                        >
+                          Transfer
+                        </Button>
+                        <Link href={`/admin/ledger?search=${encodeURIComponent(acc.name)}`} className="w-full">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-1 text-[10px] font-semibold w-full"
+                          >
+                            Ledger
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
                   }
                 >
@@ -385,6 +528,33 @@ export default function AccountsPage() {
         </CardContent>
       </Card>
 
+      {/* Quick Add Money / Debit / Transfer Dialog (Integrated TransactionForm) */}
+      <Dialog open={txModalOpen} onOpenChange={setTxModalOpen}>
+        <DialogContent className="sm:max-w-[500px] w-full">
+          <DialogHeader>
+            <DialogTitle>
+              {txModalTab === 'transfer' 
+                ? 'Transfer Funds' 
+                : txModalType === 'income' 
+                  ? (selectedAccountForTx ? `Add Money / Credit to ${selectedAccountForTx.name}` : 'Add Money / Deposit (Credit)')
+                  : (selectedAccountForTx ? `Withdraw / Debit from ${selectedAccountForTx.name}` : 'Withdraw / Expense (Debit)')}
+            </DialogTitle>
+          </DialogHeader>
+          <TransactionForm
+            key={`${selectedAccountForTx?._id}-${txModalType}-${txModalTab}`}
+            presetType={txModalType}
+            presetAccountId={selectedAccountForTx?._id}
+            presetTab={txModalTab}
+            onSuccess={(wasEdit) => {
+              fetchAccounts();
+              if (wasEdit) {
+                setTxModalOpen(false);
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Add Account Modal */}
       <Dialog open={newAccountOpen} onOpenChange={setNewAccountOpen}>
         <DialogContent className="max-w-md">
@@ -400,7 +570,7 @@ export default function AccountsPage() {
               <Label className="text-xs">Account Name *</Label>
               <Input
                 required
-                placeholder="e.g. City Bank Primary / Bkash Merchant"
+                placeholder="e.g. City Bank Primary / bKash Merchant"
                 value={accountForm.name}
                 onChange={(e) => setAccountForm(prev => ({ ...prev, name: e.target.value }))}
                 className="h-8 text-xs"
@@ -409,28 +579,31 @@ export default function AccountsPage() {
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <Label className="text-xs">Account Code *</Label>
+                <Label className="text-xs">Account Code (Unique) *</Label>
                 <Input
                   required
-                  placeholder="e.g. BANK_CITY_01"
+                  placeholder="e.g. CBL-01 / BKASH-01"
                   value={accountForm.code}
-                  onChange={(e) => setAccountForm(prev => ({ ...prev, code: e.target.value }))}
+                  onChange={(e) => setAccountForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
                   className="h-8 text-xs font-mono uppercase"
                 />
               </div>
+
               <div className="space-y-1">
-                <Label className="text-xs">Account Type *</Label>
+                <Label className="text-xs">Category *</Label>
                 <Select
                   value={accountForm.category}
                   onValueChange={(val) => val && setAccountForm(prev => ({ ...prev, category: val }))}
                 >
                   <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Category" />
+                    <SelectValue placeholder="Category">
+                      {accountForm.category || "Select Category"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Bank" className="text-xs">Bank Account</SelectItem>
-                    <SelectItem value="MFS" className="text-xs">Mobile Wallet (MFS)</SelectItem>
-                    <SelectItem value="Other" className="text-xs">Other Account</SelectItem>
+                    <SelectItem value="Cash" className="text-xs">Cash in Hand</SelectItem>
+                    <SelectItem value="MFS" className="text-xs">Mobile Financial Service (bKash/Nagad)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -441,7 +614,7 @@ export default function AccountsPage() {
                 <div className="space-y-1">
                   <Label className="text-xs">Bank Name</Label>
                   <Input
-                    placeholder="e.g. City Bank"
+                    placeholder="e.g. Dutch Bangla Bank"
                     value={accountForm.bankName}
                     onChange={(e) => setAccountForm(prev => ({ ...prev, bankName: e.target.value }))}
                     className="h-8 text-xs"
@@ -450,7 +623,7 @@ export default function AccountsPage() {
                 <div className="space-y-1">
                   <Label className="text-xs">Branch Name</Label>
                   <Input
-                    placeholder="e.g. Gulshan Branch"
+                    placeholder="e.g. Dhanmondi Branch"
                     value={accountForm.branchName}
                     onChange={(e) => setAccountForm(prev => ({ ...prev, branchName: e.target.value }))}
                     className="h-8 text-xs"
@@ -459,32 +632,35 @@ export default function AccountsPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-2">
+            {(accountForm.category === 'Bank' || accountForm.category === 'MFS') && (
               <div className="space-y-1">
-                <Label className="text-xs">Account Number / Phone</Label>
+                <Label className="text-xs">Account Number / Mobile Number</Label>
                 <Input
-                  placeholder="e.g. 11029384759"
+                  placeholder="e.g. 104.120.55421 / 01712345678"
                   value={accountForm.accountNumber}
                   onChange={(e) => setAccountForm(prev => ({ ...prev, accountNumber: e.target.value }))}
                   className="h-8 text-xs font-mono"
                 />
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Opening Balance (৳)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={accountForm.openingBalance}
-                  onChange={(e) => setAccountForm(prev => ({ ...prev, openingBalance: e.target.value }))}
-                  className="h-8 text-xs text-right"
-                />
-              </div>
+            )}
+
+            <div className="space-y-1">
+              <Label className="text-xs">Opening Balance (৳)</Label>
+              <Input
+                type="number"
+                min="0"
+                placeholder="0"
+                value={accountForm.openingBalance}
+                onChange={(e) => setAccountForm(prev => ({ ...prev, openingBalance: e.target.value }))}
+                className="h-8 text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">Initial balance when starting with this system.</p>
             </div>
 
             <div className="space-y-1">
               <Label className="text-xs">Description / Note</Label>
               <Input
-                placeholder="Optional notes about this account"
+                placeholder="Optional notes regarding this account..."
                 value={accountForm.description}
                 onChange={(e) => setAccountForm(prev => ({ ...prev, description: e.target.value }))}
                 className="h-8 text-xs"
@@ -495,7 +671,7 @@ export default function AccountsPage() {
               <Button type="button" variant="outline" size="sm" onClick={() => setNewAccountOpen(false)}>Cancel</Button>
               <Button type="submit" size="sm" disabled={creating} className="font-bold">
                 {creating ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-                Save Account
+                Create Account
               </Button>
             </DialogFooter>
           </form>
@@ -517,7 +693,10 @@ export default function AccountsPage() {
               <Label className="text-xs">From Account (Source) *</Label>
               <Select
                 value={transferForm.fromAccountId}
-                onValueChange={(val) => val && setTransferForm(prev => ({ ...prev, fromAccountId: val }))}
+                onValueChange={(val) => {
+                  const v = val || '';
+                  setTransferForm(prev => ({ ...prev, fromAccountId: v }));
+                }}
               >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Select Source Account">
@@ -542,7 +721,10 @@ export default function AccountsPage() {
               <Label className="text-xs">To Account (Destination) *</Label>
               <Select
                 value={transferForm.toAccountId}
-                onValueChange={(val) => val && setTransferForm(prev => ({ ...prev, toAccountId: val }))}
+                onValueChange={(val) => {
+                  const v = val || '';
+                  setTransferForm(prev => ({ ...prev, toAccountId: v }));
+                }}
               >
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Select Destination Account">

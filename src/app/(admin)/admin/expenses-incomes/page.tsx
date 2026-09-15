@@ -82,6 +82,13 @@ function ExpensesIncomesContent() {
     router.push(`/admin/expenses-incomes?${params.toString()}`);
   }, [searchTerm, typeFilter, dateFilter.from, dateFilter.to]);
 
+  useEffect(() => {
+    if (searchParams.get('action') === 'new') {
+      setEditingTransaction(null);
+      setIsDialogOpen(true);
+    }
+  }, [searchParams]);
+
   const fetchTransactions = async () => {
     setLoading(true);
     try {
@@ -195,7 +202,11 @@ function ExpensesIncomesContent() {
               <DialogTitle>{editingTransaction ? 'Edit' : 'Add'} Transaction</DialogTitle>
             </DialogHeader>
             <TransactionForm
+              key={editingTransaction?._id || 'new-tx'}
               initialData={editingTransaction}
+              presetType={(searchParams.get('presetType') as any) || undefined}
+              presetAccountId={searchParams.get('accountId') || undefined}
+              presetTab={(searchParams.get('tab') as any) || undefined}
               onSuccess={(wasEdit) => {
                 if (wasEdit) {
                   setIsDialogOpen(false);
