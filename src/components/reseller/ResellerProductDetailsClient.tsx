@@ -210,13 +210,13 @@ export default function ResellerProductDetailsClient({
       resellerFbEvent(subdomain, 'AddToCart', addToCartPayload);
       resellerTtEvent(subdomain, 'AddToCart', addToCartPayload);
 
-      toast.success(`${product.name} কার্টে যোগ হয়েছে!`);
+      toast.success(`${product.name} added to cart!`);
 
       if (buyNow) {
         window.location.href = '/checkout';
       }
     } catch {
-      toast.error('কার্টে যোগ করতে সমস্যা হয়েছে');
+      toast.error('Failed to add to cart');
     } finally {
       setIsAddingToCart(false);
     }
@@ -347,7 +347,7 @@ export default function ResellerProductDetailsClient({
           </div>
           <div className="flex items-center gap-2 mt-1">
             <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${displayStock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              {displayStock > 0 ? `স্টকে আছে (${displayStock} টি)` : 'স্টক শেষ'}
+              {displayStock > 0 ? `In Stock (${displayStock})` : 'Out of Stock'}
             </span>
           </div>
         </div>
@@ -359,7 +359,7 @@ export default function ResellerProductDetailsClient({
           {uniqueColors.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold uppercase tracking-wider">রং:</span>
+                <span className="text-sm font-bold uppercase tracking-wider">Color:</span>
                 <span className="text-sm text-primary font-medium">{selectedColor}</span>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -411,8 +411,8 @@ export default function ResellerProductDetailsClient({
           {uniqueSizes.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold uppercase tracking-wider">সাইজ:</span>
-                <span className="text-sm text-primary font-medium">{selectedSize || 'সাইজ নির্বাচন করুন'}</span>
+                <span className="text-sm font-bold uppercase tracking-wider">Size:</span>
+                <span className="text-sm text-primary font-medium">{selectedSize || 'Select Size'}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {uniqueSizes.map((sizeName, i) => {
@@ -488,7 +488,7 @@ export default function ResellerProductDetailsClient({
               disabled={(displayStock || 0) === 0 || isAddingToCart}
             >
               {isAddingToCart ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShoppingCart className="mr-2 h-5 w-5 hidden sm:block" />}
-              কার্টে যোগ
+              Add to Cart
             </Button>
             <Button
               size="lg"
@@ -496,15 +496,15 @@ export default function ResellerProductDetailsClient({
               onClick={() => addToResellerCart(true)}
               disabled={(displayStock || 0) === 0 || isAddingToCart}
             >
-              এখনই কিনুন
+              Buy Now
             </Button>
           </div>
 
           {/* Delivery Info */}
           <div className="rounded-xl border bg-muted/30 p-4 space-y-1.5 text-sm mt-2">
-            <p className="font-semibold flex items-center gap-2">🚚 ডেলিভারি চার্জ</p>
-            <p>ঢাকায়: <strong className="text-primary">{CURRENCY_SYMBOL}{deliveryInside}</strong></p>
-            <p>ঢাকার বাইরে: <strong className="text-primary">{CURRENCY_SYMBOL}{deliveryOutside}</strong></p>
+            <p className="font-semibold flex items-center gap-2">🚚 Delivery Charge</p>
+            <p>Inside Dhaka: <strong className="text-primary">{CURRENCY_SYMBOL}{deliveryInside}</strong></p>
+            <p>Outside Dhaka: <strong className="text-primary">{CURRENCY_SYMBOL}{deliveryOutside}</strong></p>
           </div>
         </div>
       </div>
@@ -517,13 +517,13 @@ export default function ResellerProductDetailsClient({
               value="description"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-xs md:text-sm text-muted-foreground data-[state=active]:text-foreground"
             >
-              বিবরণ
+              Description
             </TabsTrigger>
             <TabsTrigger
               value="delivery"
               className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 md:px-6 py-3 md:py-4 font-bold uppercase tracking-wider text-xs md:text-sm text-muted-foreground data-[state=active]:text-foreground"
             >
-              ডেলিভারি
+              Delivery
             </TabsTrigger>
           </TabsList>
 
@@ -534,24 +534,24 @@ export default function ResellerProductDetailsClient({
                 dangerouslySetInnerHTML={{ __html: generateHtml(product.description) }}
               />
             ) : (
-              <p className="text-muted-foreground text-sm">কোনো বিবরণ যোগ করা হয়নি।</p>
+              <p className="text-muted-foreground text-sm">No description added.</p>
             )}
           </TabsContent>
 
           <TabsContent value="delivery" className="animate-in fade-in-50 duration-500">
             <div className="max-w-md space-y-4 text-sm">
               <div className="rounded-xl border p-4 space-y-3">
-                <h3 className="font-bold text-base">📦 ডেলিভারি তথ্য</h3>
+                <h3 className="font-bold text-base">📦 Delivery Information</h3>
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-muted-foreground">ঢাকার ভেতরে</span>
+                  <span className="text-muted-foreground">Inside Dhaka</span>
                   <span className="font-bold text-primary">{CURRENCY_SYMBOL}{deliveryInside}</span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-muted-foreground">ঢাকার বাইরে</span>
+                  <span className="text-muted-foreground">Outside Dhaka</span>
                   <span className="font-bold text-primary">{CURRENCY_SYMBOL}{deliveryOutside}</span>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">সাধারণত ২-৫ কার্যদিবসের মধ্যে ডেলিভারি দেওয়া হয়।</p>
+              <p className="text-xs text-muted-foreground">Delivery usually takes 2-5 working days.</p>
             </div>
           </TabsContent>
         </Tabs>

@@ -333,8 +333,8 @@ export function ResellerCheckout({ subdomain, storeInfo }: Props) {
         {/* Right: Delivery & Payment */}
         <div className="space-y-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">চেকআউট</h1>
-            <p className="text-muted-foreground mt-2">নিচের তথ্যগুলো পূরণ করে অর্ডার সম্পন্ন করুন।</p>
+            <h1 className="text-3xl font-bold tracking-tight">Checkout</h1>
+            <p className="text-muted-foreground mt-2">Complete your order by filling in the details below.</p>
           </div>
 
           <Form {...form}>
@@ -425,9 +425,9 @@ export function ResellerCheckout({ subdomain, storeInfo }: Props) {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>বিশেষ নির্দেশনা (ঐচ্ছিক)</FormLabel>
+                        <FormLabel>Special Instructions (Optional)</FormLabel>
                         <FormControl>
-                          <Input placeholder="কোনো বিশেষ কথা থাকলে লিখুন..." {...field} className="h-11 focus-visible:ring-primary/20" />
+                          <Input placeholder="Any special notes..." {...field} className="h-11 focus-visible:ring-primary/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
