@@ -2,10 +2,16 @@ import { notFound } from 'next/navigation';
 import dbConnect from '@/lib/db';
 import Reseller from '@/models/Reseller';
 import ResellerProduct from '@/models/ResellerProduct';
-import Product from '@/models/Product';
-import Image from 'next/image';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { NavbarSelector } from '@/components/templates/Registry';
+import { FooterSelector } from '@/components/templates/ServerRegistry';
+import { SettingsProvider } from '@/components/SettingsProvider';
+import { FreeDeliveryBanner } from '@/components/storefront/FreeDeliveryBanner';
+import ResellerProductDetailsClient from '@/components/reseller/ResellerProductDetailsClient';
+import { ResellerPixels } from '@/components/reseller/ResellerPixels';
+import { ChevronRight } from 'lucide-react';
+import { ProductCard } from '@/components/storefront/ProductCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +37,7 @@ export default async function ResellerProductPage({ params }: Props) {
   const { subdomain, slug } = await params;
   await dbConnect();
 
-  const reseller = await Reseller.findOne({ subdomain, status: 'active' }).lean();
+  const reseller = await Reseller.findOne({ subdomain, status: 'active' }).lean() as any;
   if (!reseller) notFound();
 
   const productDoc = await ResellerProduct.findOne({
@@ -39,86 +45,160 @@ export default async function ResellerProductPage({ params }: Props) {
     slug,
     isPublished: true,
     isAvailableOnMother: true,
-  }).populate('productId').lean();
-  
+  }).populate({
+    path: 'productId',
+    populate: [
+      { path: 'categories' },
+      { path: 'brand' }
+    ]
+  }).lean() as any;
+
   if (!productDoc || !productDoc.productId) notFound();
 
-  const product = productDoc as any;
+  // Format product to match the shape expected by ResellerProductDetailsClient
+  const parent = productDoc.productId as any;
+  const product = {
+    _id: productDoc._id.toString(),
+    productId: parent._id ? parent._id.toString() : productDoc.productId?.toString(),
+    name: productDoc.name || parent.name || 'Product',
+    slug: productDoc.slug || parent.slug,
+    retailPrice: productDoc.retailPrice,
+    price: productDoc.retailPrice,
+    salePrice: undefined as number | undefined,
+    images: productDoc.images?.length > 0 ? productDoc.images : parent.images || [],
+    description: parent.description,
+    categories: parent.categories || [],
+    brand: parent.brand || null,
+    stock: productDoc.stock ?? parent.stock ?? 0,
+    isPublished: productDoc.isPublished,
+    isNewArrival: Boolean(parent.isNewArrival),
+    isFeatured: Boolean(parent.isFeatured),
+    ratings: parent.ratings || 0,
+    numReviews: parent.numReviews || 0,
+    variants: parent.variants || [],
+    attributes: parent.attributes || [],
+    createdAt: productDoc.createdAt || parent.createdAt,
+  };
+
+  // Related products from the same reseller store
+  let relatedProducts: any[] = [];
+  try {
+    const allCategoryIds = (parent.categories || []).map((c: any) => c._id?.toString() || c.toString()).filter(Boolean);
+    if (allCategoryIds.length > 0) {
+      const related = await ResellerProduct.find({
+        resellerId: reseller._id,
+        _id: { $ne: productDoc._id },
+        isPublished: true,
+        isAvailableOnMother: true,
+        stock: { $gt: 0 },
+      }).populate({
+        path: 'productId',
+        populate: [{ path: 'categories' }]
+      }).limit(4).lean() as any[];
+
+      relatedProducts = related
+        .filter((rp: any) => {
+          if (!rp.productId) return false;
+          const cats = (rp.productId.categories || []).map((c: any) => c._id?.toString() || c.toString());
+          return cats.some((id: string) => allCategoryIds.includes(id));
+        })
+        .map((rp: any) => {
+          const p = rp.productId || {};
+          const finalPrice = typeof rp.retailPrice === 'number' ? rp.retailPrice : (p.price ?? 0);
+          return {
+            _id: rp._id.toString(),
+            name: rp.name || p.name || 'Product',
+            slug: rp.slug || p.slug,
+            price: finalPrice,
+            salePrice: finalPrice,
+            images: rp.images?.length > 0 ? rp.images : p.images || [],
+            stock: rp.stock ?? p.stock ?? 0,
+            categories: p.categories || [],
+            isNewArrival: Boolean(p.isNewArrival),
+            isFeatured: Boolean(p.isFeatured),
+            ratings: p.ratings || 0,
+            numReviews: p.numReviews || 0,
+            variants: p.variants || [],
+          };
+        });
+    }
+  } catch (err) {
+    console.error('Error fetching related products:', err);
+  }
+
+  const themeOverrides = (reseller.themeOverrides as any) || {};
+  const navStyle = themeOverrides.navbar || 'v1';
+  const footerStyle = themeOverrides.footer || 'v1';
+  const cardStyle = themeOverrides.productCard || 'v1';
+  const deliveryInside = reseller.deliveryConfig?.insideDhaka ?? 60;
+  const deliveryOutside = reseller.deliveryConfig?.outsideDhaka ?? 120;
+  const freeDeliveryThreshold = reseller.deliveryConfig?.freeDeliveryThreshold || 0;
+
+  const settingsData = {
+    brandName: reseller.storeName,
+    logoUrl: reseller.logoUrl,
+    freeDeliveryThreshold,
+    contact: {
+      email: reseller.contact?.email,
+      phone: reseller.contact?.phone,
+      address: reseller.contact?.address,
+    },
+    socialLinks: {
+      facebook: reseller.socialLinks?.facebook,
+      whatsapp: reseller.socialLinks?.whatsapp,
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Minimal Header */}
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 h-14 flex items-center gap-4">
-          <Link href="/" className="text-sm font-semibold text-primary hover:underline">← {reseller.storeName}</Link>
-        </div>
-      </header>
+    <SettingsProvider settings={settingsData}>
+      <div className="min-h-screen bg-background font-sans flex flex-col">
+        <FreeDeliveryBanner settings={settingsData} />
+        <ResellerPixels
+          subdomain={subdomain}
+          metaPixelId={reseller.seoConfig?.metaPixelId}
+          tiktokPixelId={reseller.seoConfig?.tiktokPixelId}
+        />
+        <NavbarSelector style={navStyle} />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Images */}
-          <div className="space-y-3">
-            {product.images?.[0] ? (
-              <div className="aspect-square rounded-2xl overflow-hidden border bg-muted">
-                <Image
-                  src={product.images[0]}
-                  alt={product.name}
-                  width={600}
-                  height={600}
-                  className="w-full h-full object-cover"
-                  priority
-                />
+        <main className="flex-1 container px-4 md:px-0 mx-auto pt-4 pb-12">
+          {/* Breadcrumb */}
+          <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+            <ChevronRight className="h-3 w-3" />
+            <Link href="/shop" className="hover:text-primary transition-colors">Shop</Link>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-foreground font-medium truncate">{product.name}</span>
+          </div>
+
+          {/* Product Details */}
+          <ResellerProductDetailsClient
+            product={product}
+            subdomain={subdomain}
+            deliveryInside={deliveryInside}
+            deliveryOutside={deliveryOutside}
+          />
+
+          {/* Related Products */}
+          {relatedProducts.length > 0 && (
+            <section className="mt-20">
+              <div className="flex items-end justify-between mb-8 gap-4">
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight">আরো পণ্য দেখুন</h2>
+                  <p className="text-muted-foreground mt-1">একই ক্যাটাগরির আরো পণ্য।</p>
+                </div>
+                <Link href="/shop" className="text-sm font-bold text-primary hover:underline">সব দেখুন →</Link>
               </div>
-            ) : (
-              <div className="aspect-square rounded-2xl border bg-muted flex items-center justify-center text-6xl">📦</div>
-            )}
-            {product.images && product.images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto">
-                {product.images.slice(1, 5).map((img: string, i: number) => (
-                  <div key={i} className="w-16 h-16 rounded-lg overflow-hidden border shrink-0">
-                    <Image src={img} alt={product.name} width={64} height={64} className="w-full h-full object-cover" />
-                  </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                {relatedProducts.map((item: any) => (
+                  <ProductCard key={item._id} product={item} style={cardStyle} />
                 ))}
               </div>
-            )}
-          </div>
+            </section>
+          )}
+        </main>
 
-          {/* Details */}
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-2xl font-black leading-tight mb-2">{product.name}</h1>
-              <p className="text-3xl font-black text-primary">৳{product.retailPrice.toLocaleString()}</p>
-              {product.stock <= 5 && product.stock > 0 && (
-                <p className="text-sm text-amber-500 font-medium mt-1">⚡ মাত্র {product.stock}টি স্টকে আছে!</p>
-              )}
-              {product.stock === 0 && (
-                <p className="text-sm text-destructive font-medium mt-1">স্টক শেষ</p>
-              )}
-            </div>
-
-            {/* Add to Cart — client component */}
-            <ResellerAddToCart
-              productId={product.productId._id ? product.productId._id.toString() : product.productId.toString()}
-              resellerProductId={product._id.toString()}
-              name={product.name}
-              price={product.retailPrice}
-              image={product.images?.[0] || ''}
-              stock={product.stock}
-              subdomain={subdomain}
-              variants={product.productId.variants || []}
-            />
-
-            <div className="rounded-xl border bg-muted/30 p-4 space-y-2 text-sm">
-              <p className="font-semibold">🚚 ডেলিভারি চার্জ</p>
-              <p>ঢাকায়: <strong>৳{reseller.deliveryConfig?.insideDhaka ?? 60}</strong></p>
-              <p>ঢাকার বাইরে: <strong>৳{reseller.deliveryConfig?.outsideDhaka ?? 120}</strong></p>
-            </div>
-          </div>
-        </div>
+        <FooterSelector style={footerStyle} />
       </div>
-    </div>
+    </SettingsProvider>
   );
 }
-
-// ─── Inline client component for Add-to-Cart ─────────────────────────────────
-import { ResellerAddToCart } from '@/components/reseller/ResellerAddToCart';

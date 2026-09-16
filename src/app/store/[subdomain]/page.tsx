@@ -2,13 +2,20 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import dbConnect from '@/lib/db';
 import Reseller from '@/models/Reseller';
+import Link from 'next/link';
+import Image from 'next/image';
 import type { Metadata } from 'next';
-import { NavbarSelector, HeroSelector } from '@/components/templates/Registry';
+import { 
+  NavbarSelector, 
+  HeroSelector, 
+  CategoryShowcase, 
+  ProductCardSelector 
+} from '@/components/templates/Registry';
 import { FooterSelector } from '@/components/templates/ServerRegistry';
 import { SettingsProvider } from '@/components/SettingsProvider';
-import { CategoryShowcase } from '@/components/storefront/CategoryShowcase';
-import { ProductCarouselSection } from '@/components/storefront/ProductCarouselSection';
 import { FreeDeliveryBanner } from '@/components/storefront/FreeDeliveryBanner';
+import { ResellerPixels } from '@/components/reseller/ResellerPixels';
+import { ProductCarouselSection } from '@/components/storefront/ProductCarouselSection';
 import { Clock, ShieldOff, Store } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -247,6 +254,13 @@ export default async function ResellerStorePage({ params }: Props) {
       <div className="min-h-screen bg-background font-sans flex flex-col">
         {/* Free Delivery Announcement Bar if configured */}
         <FreeDeliveryBanner settings={settingsData} />
+
+        {/* Reseller Pixel Loader */}
+        <ResellerPixels 
+          subdomain={subdomain} 
+          metaPixelId={reseller.seoConfig?.metaPixelId} 
+          tiktokPixelId={reseller.seoConfig?.tiktokPixelId} 
+        />
 
         {/* Store Header */}
         <NavbarSelector style={navStyle} initialCategories={storeCategories} />

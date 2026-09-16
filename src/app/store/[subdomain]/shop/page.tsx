@@ -10,6 +10,7 @@ import { ShopListingSelector } from '@/components/templates/ServerRegistry';
 import { NavbarSelector } from '@/components/templates/Registry';
 import { FooterSelector } from '@/components/templates/ServerRegistry';
 import { SettingsProvider } from '@/components/SettingsProvider';
+import { ResellerPixels } from '@/components/reseller/ResellerPixels';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -120,6 +121,11 @@ export default async function ResellerShopPage({ params, searchParams }: Props) 
   return (
     <SettingsProvider settings={settingsData}>
       <div className="min-h-screen bg-background font-sans">
+        <ResellerPixels 
+          subdomain={subdomain} 
+          metaPixelId={reseller.seoConfig?.metaPixelId} 
+          tiktokPixelId={reseller.seoConfig?.tiktokPixelId} 
+        />
         <NavbarSelector style={navStyle} />
         <main className="min-h-[70vh]">
           <Suspense fallback={<ShopFallback />}>
