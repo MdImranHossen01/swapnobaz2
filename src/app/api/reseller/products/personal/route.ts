@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
@@ -210,7 +211,7 @@ export async function PATCH(request: NextRequest) {
     // Sync uploader's storefront listing price & info
     await ResellerProduct.updateOne(
       { resellerId: reseller._id, productId: product._id },
-      { 
+      {
         retailPrice: Number(product.price),
         name: product.name,
         slug: product.slug,
@@ -255,7 +256,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     await Product.deleteOne({ _id: productId });
-    await ResellerProduct.deleteMany({ productId });
+    // Only delete the owner's own ResellerProduct record.
+    // Other resellers who sourced this product will have their entries
+    // automatically hidden via isAvailableOnMother: false (set by unpublishProductFromResellers).
+    // We don't delete other resellers' records - that would break their order history.
+    await ResellerProduct.deleteOne({ resellerId: reseller._id, productId });
 
     return NextResponse.json({ success: true, message: 'Personal product deleted' });
   } catch (error: any) {

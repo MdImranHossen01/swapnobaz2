@@ -5,8 +5,13 @@ import ResellerProduct from '@/models/ResellerProduct';
 /**
  * Product Sync Engine
  * 
- * When a Mother product is created or updated, this engine propagates
- * the changes to all ResellerProduct records that reference it.
+ * When a Mother/Reseller product is created or updated, this engine propagates
+ * the changes to all ResellerProduct records that already reference it.
+ * 
+ * IMPORTANT: updateMany only updates EXISTING ResellerProduct records.
+ * It does NOT create new records, so it only affects resellers who have
+ * already explicitly added this product to their store. This is correct
+ * multi-tenant isolation behavior.
  * 
  * Fields synced: name, slug, images, stock, purchasePrice (mother price),
  * motherPrice (retail), isAvailableOnMother (published state).
