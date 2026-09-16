@@ -8,9 +8,9 @@ import type { Metadata } from 'next';
 import { 
   NavbarSelector, 
   HeroSelector, 
-  CategoryShowcase, 
   ProductCardSelector 
 } from '@/components/templates/Registry';
+import { CategoryShowcase } from '@/components/storefront/CategoryShowcase';
 import { FooterSelector } from '@/components/templates/ServerRegistry';
 import { SettingsProvider } from '@/components/SettingsProvider';
 import { FreeDeliveryBanner } from '@/components/storefront/FreeDeliveryBanner';
