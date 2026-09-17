@@ -61,6 +61,7 @@ const resellerNav = [
     icon: FileText,
     items: [
       { title: "All Orders", url: "/reseller/orders" },
+      { title: "Abandoned Carts", url: "/reseller/abandoned-carts" },
       { title: "Offers / Quotations", url: "/reseller/offers" },
       { title: "Delivery Challans", url: "/reseller/chalans" },
       { title: "Client Bills", url: "/reseller/bills" },

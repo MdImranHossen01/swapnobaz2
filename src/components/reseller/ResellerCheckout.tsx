@@ -66,9 +66,10 @@ interface Props {
     metaPixelId?: string;
     tiktokPixelId?: string;
   };
+  resellerId: string;
 }
 
-export function ResellerCheckout({ subdomain, storeInfo }: Props) {
+export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -149,6 +150,47 @@ export function ResellerCheckout({ subdomain, storeInfo }: Props) {
     window.dispatchEvent(new Event('reseller-cart-updated'));
     toast.info(`${item.name} সরানো হয়েছে`);
   };
+
+  // Abandoned Carts Tracking
+  const watchedFullName = form.watch('fullName');
+  const watchedPhone = form.watch('phone');
+  const watchedStreet = form.watch('street');
+
+  useEffect(() => {
+    if (cart.length === 0 || submitting || showSuccessModal) return;
+    if (!watchedPhone || watchedPhone.trim().length < 11 || !watchedFullName || watchedFullName.trim().length < 2) return;
+
+    const syncAbandonedCart = async () => {
+      try {
+        await fetch('/api/cart/abandoned', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fullName: watchedFullName,
+            phone: watchedPhone,
+            street: watchedStreet,
+            deliveryArea: deliveryArea,
+            resellerId: resellerId,
+            items: cart.map(item => ({
+              product: item.resellerProductId, // In reseller context, product is the ResellerProduct ID
+              name: item.name,
+              quantity: item.quantity,
+              price: item.price,
+              image: item.image,
+              color: item.color,
+              size: item.size
+            })),
+            totalAmount: total
+          })
+        });
+      } catch (error) {
+        console.error('Failed to sync abandoned cart:', error);
+      }
+    };
+
+    const timer = setTimeout(syncAbandonedCart, 2000); // 2 seconds debounce
+    return () => clearTimeout(timer);
+  }, [watchedFullName, watchedPhone, watchedStreet, deliveryArea, cart, total, submitting, showSuccessModal]);
 
   const onSubmit = async (values: CheckoutValues) => {
     if (cart.length === 0) return toast.error('কার্টে কোনো পণ্য নেই');

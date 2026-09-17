@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  Loader2, Eye, Search, ChevronDown, CheckCircle2, XCircle, Download, Copy, RefreshCcw
+  Loader2, Eye, Search, ChevronDown, CheckCircle2, XCircle, Download, Copy, RefreshCcw, MoreHorizontal, FileText, Printer, Truck
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import Swal from 'sweetalert2';
 import ResellerOrderDetailsDialog from '@/components/reseller/ResellerOrderDetailsDialog';
 
 function WhatsAppIcon(props: any) {
@@ -175,6 +176,52 @@ function OrdersContent() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     toast.success('Excel/CSV export started');
+  };
+
+  const handleDownloadInvoice = async (order: any) => {
+    try {
+      toast.info('Generating PDF invoice...');
+      const { generateInvoicePDF } = await import('@/lib/invoice-generator');
+      await generateInvoicePDF(order, null);
+    } catch (error) {
+      toast.error('Error generating invoice');
+    }
+  };
+
+  const handleLocalPrint = (id: string, type: 'invoice' | 'sticker') => {
+    const qs = `?id=${id}&type=${type}`;
+    window.open(`/admin/orders/print${qs}`, '_blank');
+  };
+
+  const handleBookCourier = async (order: any) => {
+    const result = await Swal.fire({
+      title: 'Book Courier?',
+      text: `Hand over order #${order.shortId || order._id.slice(-8)} to Courier?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#2563eb',
+      confirmButtonText: 'Yes, send now!'
+    });
+    
+    if (!result.isConfirmed) return;
+    
+    try {
+      const res = await fetch(`/api/reseller/orders/${order._id}/book-courier`, { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || `Courier booked successfully!`);
+        fetchOrders();
+      } else {
+        toast.error(data.message || 'Courier booking failed');
+      }
+    } catch (e) {
+      toast.error('Network error');
+    }
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -480,9 +527,35 @@ function OrdersContent() {
                             setSelectedOrderId(order._id);
                             setIsDetailsOpen(true);
                           }}
+                          title="View Details"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => handleDownloadInvoice(order)}>
+                                <FileText className="mr-2 h-4 w-4 text-primary" /> Download Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleLocalPrint(order._id, 'invoice')}>
+                                <Printer className="mr-2 h-4 w-4 text-primary" /> Print Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleLocalPrint(order._id, 'sticker')}>
+                                <Printer className="mr-2 h-4 w-4 text-primary" /> Print Sticker Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleBookCourier(order)} disabled={!!order.shippingDetails?.consignmentId}>
+                                <Truck className="mr-2 h-4 w-4 text-orange-500" /> Book Courier
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>

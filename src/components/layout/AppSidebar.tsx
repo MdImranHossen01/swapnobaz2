@@ -99,6 +99,10 @@ const data = {
           url: "/admin/orders",
         },
         {
+          title: "Abandoned Carts",
+          url: "/admin/abandoned-carts",
+        },
+        {
           title: "Offers / Quotations",
           url: "/admin/offers",
         },

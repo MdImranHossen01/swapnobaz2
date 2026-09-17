@@ -79,7 +79,11 @@ export default async function ResellerCheckoutPage({ params }: Props) {
         />
         <NavbarSelector style={navStyle} />
         <main className="flex-1">
-          <ResellerCheckout subdomain={subdomain} storeInfo={storeInfo} />
+          <ResellerCheckout
+            subdomain={subdomain}
+            storeInfo={storeInfo}
+            resellerId={reseller._id.toString()}
+          />
         </main>
         <FooterSelector style={footerStyle} />
       </div>

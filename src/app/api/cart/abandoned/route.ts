@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { fullName, phone, email, street, deliveryArea, items, totalAmount } = body;
+    const { fullName, phone, email, street, deliveryArea, items, totalAmount, resellerId: bodyResellerId } = body;
 
     if (!phone || !fullName || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ message: 'Missing required checkout information' }, { status: 400 });
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     // Check if an abandoned cart already exists for this phone number
     let cart = await AbandonedCart.findOne({ phone: cleanPhone });
     
-    const resellerId = items.length > 0 && items[0].uploadedBy ? items[0].uploadedBy : undefined;
+    const resellerId = bodyResellerId || (items.length > 0 && items[0].uploadedBy ? items[0].uploadedBy : undefined);
 
     if (cart) {
       // Update existing draft cart
