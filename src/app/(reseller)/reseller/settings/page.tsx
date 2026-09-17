@@ -118,7 +118,7 @@ export default function ResellerSettingsPage() {
         <TabsList className="flex flex-wrap h-auto gap-1 w-full">
           <TabsTrigger value="general" className="flex-1 min-w-[90px]">General</TabsTrigger>
           <TabsTrigger value="contact" className="flex-1 min-w-[90px]">Contact</TabsTrigger>
-          <TabsTrigger value="pickup" className="flex-1 min-w-[90px] font-semibold text-primary">Warehouse / Pickup</TabsTrigger>
+          <TabsTrigger value="pickup" className="flex-1 min-w-[90px]">Warehouse / Pickup</TabsTrigger>
           <TabsTrigger value="social" className="flex-1 min-w-[90px]">Social</TabsTrigger>
           <TabsTrigger value="domain" className="flex-1 min-w-[90px]">Domain</TabsTrigger>
           <TabsTrigger value="security" className="flex-1 min-w-[90px]">Security</TabsTrigger>
