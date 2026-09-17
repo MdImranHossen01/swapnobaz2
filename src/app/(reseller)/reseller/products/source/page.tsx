@@ -226,6 +226,7 @@ function SourceProductsContent() {
               const wholesalePrice = product.resellerPrice || product.purchasePrice || product.price || 0;
               const isSourced = product.isSourced;
               const isAdmin = product.sourceType === 'admin';
+              const resellerStore = product.uploadedBy?.storeName || product.sourceStoreName || 'Reseller';
 
               return (
                 <div
@@ -245,10 +246,20 @@ function SourceProductsContent() {
                       <Package className="h-10 w-10 absolute inset-0 m-auto text-muted-foreground" />
                     )}
                     {/* Source badge */}
-                    <div className={`absolute top-2 left-2 flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                    <div className={`absolute top-2 left-2 flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full max-w-[85%] shadow-sm ${
                       isAdmin ? 'bg-blue-600 text-white' : 'bg-purple-600 text-white'
                     }`}>
-                      {isAdmin ? <><Store className="h-2.5 w-2.5" /> Main Store</> : <><Users className="h-2.5 w-2.5" /> Reseller</>}
+                      {isAdmin ? (
+                        <>
+                          <Store className="h-2.5 w-2.5 shrink-0" />
+                          <span className="truncate">Main Store</span>
+                        </>
+                      ) : (
+                        <>
+                          <Users className="h-2.5 w-2.5 shrink-0" />
+                          <span className="truncate">Reseller: {resellerStore}</span>
+                        </>
+                      )}
                     </div>
                     {/* Sourced badge */}
                     {isSourced && (
@@ -260,9 +271,14 @@ function SourceProductsContent() {
 
                   {/* Info */}
                   <div className="p-2.5 md:p-3 flex flex-col flex-1 gap-1.5">
-                    <p className="text-[9px] md:text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
-                      {product.categories?.[0]?.name || 'Uncategorized'}
-                    </p>
+                    <div className="flex items-center justify-between gap-1 text-[9px] md:text-[10px] text-muted-foreground font-semibold">
+                      <span className="uppercase tracking-wider truncate">
+                        {product.categories?.[0]?.name || 'Uncategorized'}
+                      </span>
+                      <span className={isAdmin ? 'text-blue-600 font-bold shrink-0' : 'text-purple-600 font-bold shrink-0 truncate max-w-[110px]'}>
+                        {isAdmin ? 'Swapnobaz' : resellerStore}
+                      </span>
+                    </div>
                     <p className="text-xs md:text-sm font-bold line-clamp-2 leading-snug">{product.name}</p>
                     <p className="text-[10px] font-mono text-muted-foreground">SKU: {product.sku || '-'}</p>
 
@@ -340,7 +356,9 @@ function SourceProductsContent() {
                   <p className="font-bold text-sm line-clamp-1">{selectedProduct.name}</p>
                   <p className="text-[11px] text-muted-foreground font-mono">SKU: {selectedProduct.sku || '-'}</p>
                   <Badge className={`text-[9px] mt-1 ${selectedProduct.sourceType === 'admin' ? 'bg-blue-600' : 'bg-purple-600'}`}>
-                    {selectedProduct.sourceType === 'admin' ? 'Main Store' : 'Reseller Product'}
+                    {selectedProduct.sourceType === 'admin'
+                      ? 'Main Store (Swapnobaz)'
+                      : `Reseller: ${selectedProduct.uploadedBy?.storeName || selectedProduct.sourceStoreName || 'Reseller'}`}
                   </Badge>
                 </div>
               </div>

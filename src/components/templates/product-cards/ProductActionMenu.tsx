@@ -15,6 +15,7 @@ import {
   Loader2,
   CheckCircle2,
   ShoppingBag,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -225,6 +226,16 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
               <>
                 {!isResellerProduct ? (
                   <>
+                    <div className="px-2.5 py-1.5 text-xs bg-blue-500/10 rounded-lg mb-1">
+                      <p className="font-bold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                        <Store className="h-3.5 w-3.5 text-blue-600" />
+                        Main Store Product
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Swapnobaz Official Catalog
+                      </p>
+                    </div>
+
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
@@ -256,13 +267,13 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                   </>
                 ) : (
                   <>
-                    <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                      <p className="font-semibold text-foreground flex items-center gap-1.5">
-                        <Store className="h-3.5 w-3.5 text-purple-600" />
+                    <div className="px-2.5 py-1.5 text-xs bg-purple-500/10 rounded-lg mb-1">
+                      <p className="font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-purple-600" />
                         Reseller Product
                       </p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Uploaded by: <span className="font-bold text-foreground">{resellerStoreName || 'Reseller'}</span>
+                        Store: <span className="font-bold text-foreground">{resellerStoreName || 'Reseller'}</span>
                       </p>
                     </div>
 
@@ -298,6 +309,16 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                 {/* 2A: Reseller's own uploaded product */}
                 {isOwnProduct ? (
                   <>
+                    <div className="px-2.5 py-1.5 text-xs bg-green-500/10 rounded-lg mb-1">
+                      <p className="font-bold text-green-700 dark:text-green-300 flex items-center gap-1.5">
+                        <Store className="h-3.5 w-3.5 text-green-600" />
+                        আমার নিজস্ব প্রোডাক্ট
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Uploaded by your store
+                      </p>
+                    </div>
+
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
@@ -330,6 +351,30 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                 ) : (
                   /* 2B: Main store or shared product (Quick Add to Store) */
                   <>
+                    {/* Origin attribution Header for Reseller */}
+                    <div className={`px-2.5 py-1.5 text-xs rounded-lg mb-1 ${isResellerProduct ? 'bg-purple-500/10' : 'bg-blue-500/10'}`}>
+                      <p className={`font-bold flex items-center gap-1.5 ${isResellerProduct ? 'text-purple-700 dark:text-purple-300' : 'text-blue-700 dark:text-blue-300'}`}>
+                        {isResellerProduct ? (
+                          <>
+                            <Users className="h-3.5 w-3.5 text-purple-600" />
+                            অন্য Reseller-এর প্রোডাক্ট
+                          </>
+                        ) : (
+                          <>
+                            <Store className="h-3.5 w-3.5 text-blue-600" />
+                            Main Store প্রোডাক্ট
+                          </>
+                        )}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {isResellerProduct ? (
+                          <>Store: <span className="font-bold text-foreground">{resellerStoreName || 'Reseller'}</span></>
+                        ) : (
+                          <>উৎস: <span className="font-bold text-foreground">Swapnobaz Official</span></>
+                        )}
+                      </p>
+                    </div>
+
                     <DropdownMenuItem
                       onClick={(e) => {
                         e.stopPropagation();
@@ -403,6 +448,20 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
                 <p className="text-xs font-bold text-foreground line-clamp-2 leading-snug">
                   {product.name}
                 </p>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] py-0 px-1.5 font-semibold ${
+                      isResellerProduct
+                        ? 'border-purple-500/40 text-purple-700 dark:text-purple-300 bg-purple-500/10'
+                        : 'border-blue-500/40 text-blue-700 dark:text-blue-300 bg-blue-500/10'
+                    }`}
+                  >
+                    {isResellerProduct
+                      ? `Reseller: ${resellerStoreName || 'Reseller'}`
+                      : 'Main Store (Swapnobaz)'}
+                  </Badge>
+                </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   Main Store Price: <span className="font-semibold text-foreground">Tk {Math.round(product.price || 0)}</span>
                 </p>

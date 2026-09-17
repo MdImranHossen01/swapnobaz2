@@ -66,7 +66,13 @@ export async function GET(request: NextRequest) {
     }
 
     const [products, total] = await Promise.all([
-      Product.find(query).populate('categories', 'name slug').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+      Product.find(query)
+        .populate('categories', 'name slug')
+        .populate('uploadedBy', 'storeName subdomain logoUrl')
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
       Product.countDocuments(query),
     ]);
 
@@ -81,10 +87,16 @@ export async function GET(request: NextRequest) {
 
     let mappedProducts = products.map((product: any) => {
       const sourcedItem: any = sourcedMap.get(product._id.toString());
+      const isFromReseller = Boolean(product.uploadedBy);
+      const resellerName = typeof product.uploadedBy === 'object' && product.uploadedBy !== null
+        ? (product.uploadedBy.storeName || product.uploadedBy.name)
+        : null;
+
       return {
         ...product,
         isSourced: !!sourcedItem,
         sourceType: (!product.uploadedBy) ? 'admin' : 'reseller',
+        sourceStoreName: isFromReseller ? (resellerName || 'Reseller') : 'Main Store (Swapnobaz)',
         sourcedDetails: sourcedItem
           ? {
               _id: sourcedItem._id,
