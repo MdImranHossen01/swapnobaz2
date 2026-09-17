@@ -553,6 +553,58 @@ export async function GET(req: NextRequest) {
 
     await connectToDatabase();
 
+    // Ensure any unlinked ResellerOrders are synced to Mother Order table
+    if (fetchAll && isAdmin) {
+      try {
+        const ResellerOrder = (await import('@/models/ResellerOrder')).default;
+        const unlinked = await ResellerOrder.find({
+          $or: [{ motherOrderId: { $exists: false } }, { motherOrderId: null }]
+        }).limit(20).lean();
+
+        for (const ro of unlinked) {
+          const existingOrder = await Order.findOne({ shortId: ro.shortId });
+          if (!existingOrder) {
+            const created = await Order.create({
+              shortId: ro.shortId,
+              items: (ro.items || []).map((item: any) => ({
+                product: item.productId,
+                name: item.name,
+                quantity: item.quantity,
+                price: item.retailPrice,
+                purchasePrice: item.purchasePrice,
+                image: item.image,
+                color: item.color,
+                size: item.size,
+              })),
+              totalAmount: ro.totalAmount,
+              deliveryCharge: ro.deliveryCharge || 0,
+              shippingAddress: {
+                fullName: ro.customer?.name || 'Customer',
+                phone: ro.customer?.phone || '',
+                street: ro.customer?.address?.street || '',
+                city: ro.customer?.address?.city || '',
+                state: ro.customer?.address?.city || '',
+                division: ro.customer?.address?.division || '',
+                zipCode: ro.customer?.address?.zipCode || '0000',
+                country: 'Bangladesh',
+              },
+              paymentMethod: ro.paymentMethod || 'COD',
+              paymentStatus: ro.paymentStatus || 'Pending',
+              status: ro.status || 'Order Placed',
+              resellerId: ro.resellerId,
+              internalNote: ro.internalNote || 'Reseller Store Order',
+              createdAt: ro.createdAt,
+            });
+            await ResellerOrder.findByIdAndUpdate(ro._id, { motherOrderId: created._id });
+          } else {
+            await ResellerOrder.findByIdAndUpdate(ro._id, { motherOrderId: existingOrder._id });
+          }
+        }
+      } catch (syncErr) {
+        console.error('[Orders Backfill Error]', syncErr);
+      }
+    }
+
     let query: any = { deletedAt: null };
     if (fetchAll && isAdmin) {
       if (status && status !== 'All') {

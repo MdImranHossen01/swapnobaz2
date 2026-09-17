@@ -76,7 +76,33 @@ function OrdersContent() {
     else toast.error('Failed to update status');
   };
 
+  const [bookingLoading, setBookingLoading] = useState(false);
+
   const totalPages = Math.ceil(total / limit);
+
+  const handleBookCourier = async (orderId: string) => {
+    if (!confirm('Are you sure you want to book the courier for this order?')) return;
+    setBookingLoading(true);
+    try {
+      const res = await fetch(`/api/reseller/orders/${orderId}/book-courier`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Courier booked successfully! Tracking ID: ${data.trackingCode}`);
+        fetchOrders();
+        setSelectedOrder(null);
+      } else {
+        toast.error(data.message || 'Failed to book courier');
+      }
+    } catch (err) {
+      toast.error('An error occurred while booking courier');
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
@@ -296,6 +322,26 @@ function OrdersContent() {
                     <p className="font-semibold">৳{(item.quantity * item.price).toLocaleString()}</p>
                   </div>
                 ))}
+              </div>
+              <div className="border-t pt-3 mt-3">
+                {selectedOrder.shippingDetails?.trackingId ? (
+                  <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20">
+                    <p className="font-bold text-blue-700 text-sm mb-1">Courier Details</p>
+                    <p className="text-xs text-blue-600"><span className="font-semibold">Provider:</span> {selectedOrder.shippingDetails.courierName}</p>
+                    <p className="text-xs text-blue-600"><span className="font-semibold">Tracking ID:</span> {selectedOrder.shippingDetails.trackingId}</p>
+                    <p className="text-xs text-blue-600"><span className="font-semibold">Status:</span> {selectedOrder.shippingDetails.courierStatus}</p>
+                  </div>
+                ) : (
+                  selectedOrder.items?.every((i: any) => i.productId?.uploadedBy === selectedOrder.resellerId) && (
+                    <Button 
+                      className="w-full font-bold" 
+                      disabled={bookingLoading || selectedOrder.shippingDetails?.courierStatus === 'BOOKING_IN_PROGRESS'} 
+                      onClick={() => handleBookCourier(selectedOrder._id)}
+                    >
+                      {bookingLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Hand over to Courier'}
+                    </Button>
+                  )
+                )}
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ interface CartItem {
   image?: string;
   color?: string;
   size?: string;
+  uploadedBy?: string | null;
 }
 
 interface CartState {

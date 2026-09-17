@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { addToCart } from '@/store/slices/cartSlice';
+import { useCart } from '@/hooks/use-cart';
 import { toggleWishlist } from '@/store/slices/wishlistSlice';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
@@ -41,6 +41,7 @@ interface ProductDetailsV4ClientProps {
 
 export default function ProductDetailsV4Client({ product }: ProductDetailsV4ClientProps) {
   const dispatch = useAppDispatch();
+  const { addItem } = useCart();
   const { data: session } = useSession();
   const wishlist = useAppSelector((state) => state.wishlist.items);
   const isInWishlist = wishlist.includes(product?._id);
@@ -130,7 +131,7 @@ export default function ProductDetailsV4Client({ product }: ProductDetailsV4Clie
       return false;
     }
 
-    dispatch(addToCart({
+    const res = addItem({
       productId: product._id,
       name: product.name,
       price: displaySalePrice || displayPrice,
@@ -138,10 +139,17 @@ export default function ProductDetailsV4Client({ product }: ProductDetailsV4Clie
       quantity: quantity,
       image: activeVariant?.image || (product.variants && product.variants.length > 0 ? product.variants[0]?.image : product.images?.[0]),
       color: selectedColor || undefined,
-      size: selectedSize || undefined
-    }));
-    toast.success(`Item added to your collection`);
-    return true;
+      size: selectedSize || undefined,
+      uploadedBy: product.uploadedBy || (product.productId?.uploadedBy) || null,
+    });
+
+    if (res.success) {
+      toast.success(`Item added to your collection`);
+      return true;
+    } else {
+      toast.error(res.error);
+      return false;
+    }
   };
 
   const handleFavorite = async () => {

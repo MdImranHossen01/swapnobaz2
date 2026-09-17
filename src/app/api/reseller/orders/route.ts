@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
+import ResellerOrder from '@/models/ResellerOrder';
 import Order from '@/models/Order';
 import Reseller from '@/models/Reseller';
 
@@ -43,8 +44,16 @@ export async function GET(request: NextRequest) {
     }
 
     const [orders, total] = await Promise.all([
-      Order.find(query).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
-      Order.countDocuments(query),
+      ResellerOrder.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate({
+          path: 'items.productId',
+          select: 'uploadedBy'
+        })
+        .lean(),
+      ResellerOrder.countDocuments(query),
     ]);
 
     return NextResponse.json({ orders, total, page, limit });
@@ -67,18 +76,24 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Missing or malformed orderId' }, { status: 400 });
     }
 
-    const validStatuses = ['Order Placed', 'Confirmed', 'Paid', 'Ready for Delivery', 'Released for Delivery', 'Cancelled', 'Delivered'];
+    const validStatuses = ['Order Placed', 'Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered', 'Cancelled'];
     if (!status || !validStatuses.includes(status)) {
       return NextResponse.json({ error: 'Invalid or unsupported status' }, { status: 400 });
     }
 
-    const order = await Order.findOneAndUpdate(
+    const order = await ResellerOrder.findOneAndUpdate(
       { _id: orderId, resellerId },
       { $set: { status } },
       { new: true }
     );
 
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+
+    // If motherOrderId exists, also sync status
+    if (order.motherOrderId) {
+      await Order.findByIdAndUpdate(order.motherOrderId, { $set: { status } });
+    }
+
     return NextResponse.json({ order });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

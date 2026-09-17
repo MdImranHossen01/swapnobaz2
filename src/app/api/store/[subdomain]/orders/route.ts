@@ -4,6 +4,7 @@ import Reseller from '@/models/Reseller';
 import ResellerProduct from '@/models/ResellerProduct';
 import ResellerOrder from '@/models/ResellerOrder';
 import ResellerWalletTransaction from '@/models/ResellerWalletTransaction';
+import Order from '@/models/Order';
 
 function generateShortId() {
   return 'RS' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
@@ -160,8 +161,42 @@ export async function POST(
         customerUser = newUser;
       }
 
+      // Create Mother Order for Admin fulfillment & dispatch
+      const [motherOrder] = await Order.create([{
+        user: customerUser?._id,
+        shortId,
+        items: validatedItems.map(item => ({
+          product: item.productId,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.retailPrice,
+          purchasePrice: item.purchasePrice,
+          image: item.image,
+          color: item.color,
+          size: item.size,
+        })),
+        totalAmount: calculatedTotalAmount,
+        deliveryCharge: calculatedDeliveryCharge,
+        shippingAddress: {
+          fullName: customer.name,
+          phone: customer.phone,
+          street: customer.address?.street || '',
+          city: customer.address?.city || '',
+          state: customer.address?.city || '',
+          division: customer.address?.division || '',
+          zipCode: customer.address?.zipCode || '0000',
+          country: 'Bangladesh',
+        },
+        paymentMethod: paymentMethod || 'COD',
+        paymentStatus: 'Pending',
+        status: 'Order Placed',
+        resellerId: reseller._id,
+        internalNote: notes || `Reseller Order (${reseller.storeName})`,
+      }], { session: sessionConn });
+
       const [order] = await ResellerOrder.create([{
         resellerId: reseller._id,
+        motherOrderId: motherOrder._id,
         customer,
         items: validatedItems,
         subtotal: calculatedSubtotal,

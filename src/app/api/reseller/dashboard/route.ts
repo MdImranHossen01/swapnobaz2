@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
     let recentOrders: any[] = [];
     let recentTransactions: any[] = [];
     try {
-      const Order = (await import('@/models/Order')).default;
-      recentOrders = await Order.find({ resellerId: (reseller as any)._id }).sort({ createdAt: -1 }).limit(5).lean();
+      const ResellerOrder = (await import('@/models/ResellerOrder')).default;
+      recentOrders = await ResellerOrder.find({ resellerId: (reseller as any)._id }).sort({ createdAt: -1 }).limit(5).lean();
     } catch {}
     try {
       const ResellerWalletTransaction = (await import('@/models/ResellerWalletTransaction')).default;

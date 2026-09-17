@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -219,26 +220,26 @@ export default function ResellerSettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label>Hub / Shop Name</Label>
-                  <Input 
-                    value={pickup.hubName} 
-                    onChange={e => setPickup(p => ({ ...p, hubName: e.target.value }))} 
-                    placeholder="e.g. Barishal Main Warehouse / Outlet" 
+                  <Input
+                    value={pickup.hubName}
+                    onChange={e => setPickup(p => ({ ...p, hubName: e.target.value }))}
+                    placeholder="e.g. Barishal Main Warehouse / Outlet"
                   />
                 </div>
                 <div className="space-y-1">
                   <Label>Contact Person Name</Label>
-                  <Input 
-                    value={pickup.contactPerson} 
-                    onChange={e => setPickup(p => ({ ...p, contactPerson: e.target.value }))} 
-                    placeholder="e.g. Md. Imran" 
+                  <Input
+                    value={pickup.contactPerson}
+                    onChange={e => setPickup(p => ({ ...p, contactPerson: e.target.value }))}
+                    placeholder="e.g. Md. Imran"
                   />
                 </div>
                 <div className="space-y-1 md:col-span-2">
                   <Label>Pickup Contact Phone (Courier Rider Calls here)</Label>
-                  <Input 
-                    value={pickup.phone} 
-                    onChange={e => setPickup(p => ({ ...p, phone: e.target.value }))} 
-                    placeholder="017XXXXXXXX" 
+                  <Input
+                    value={pickup.phone}
+                    onChange={e => setPickup(p => ({ ...p, phone: e.target.value }))}
+                    placeholder="017XXXXXXXX"
                   />
                 </div>
               </div>
@@ -301,11 +302,11 @@ export default function ResellerSettingsPage() {
 
               <div className="space-y-1">
                 <Label>Full Pickup Address (Road, House, Landmark)</Label>
-                <Textarea 
-                  value={pickup.address} 
-                  onChange={e => setPickup(p => ({ ...p, address: e.target.value }))} 
-                  rows={2} 
-                  placeholder="e.g. Holding 124, Rupatoli Bus Stand, Barishal Sadar" 
+                <Textarea
+                  value={pickup.address}
+                  onChange={e => setPickup(p => ({ ...p, address: e.target.value }))}
+                  rows={2}
+                  placeholder="e.g. Holding 124, Rupatoli Bus Stand, Barishal Sadar"
                 />
               </div>
               <Button onClick={() => save({ pickupAddress: pickup })} disabled={saving}>

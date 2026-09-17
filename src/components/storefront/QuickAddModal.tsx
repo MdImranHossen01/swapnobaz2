@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { ShoppingCart } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useAppDispatch } from '@/store/hooks';
-import { addToCart } from '@/store/slices/cartSlice';
+import { useCart } from '@/hooks/use-cart';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { fbEvent } from '@/lib/fpixel';
@@ -25,6 +25,7 @@ interface QuickAddModalProps {
 
 export function QuickAddModal({ product, isOpen, onClose }: QuickAddModalProps) {
   const dispatch = useAppDispatch();
+  const { addItem } = useCart();
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
@@ -102,7 +103,7 @@ export function QuickAddModal({ product, isOpen, onClose }: QuickAddModalProps) 
     const displayPrice = activeVariant?.price || product.price;
     const displaySalePrice = activeVariant?.salePrice || product.salePrice;
 
-    dispatch(addToCart({
+    const res = addItem({
       productId: product._id,
       name: product.name,
       price: (displaySalePrice !== undefined && displaySalePrice !== null) ? displaySalePrice : displayPrice,
@@ -110,24 +111,29 @@ export function QuickAddModal({ product, isOpen, onClose }: QuickAddModalProps) 
       quantity: 1,
       image: activeVariant?.images?.[0] || activeVariant?.image || product.images?.[0],
       color: selectedColor || undefined,
-      size: selectedSize || undefined
-    }));
+      size: selectedSize || undefined,
+      uploadedBy: product.uploadedBy || (product.productId?.uploadedBy) || null,
+    });
 
-    // Track AddToCart
-    const addToCartPayload = {
-      content_name: product.name,
-      content_category: product.categories?.[0]?.name || 'Uncategorized',
-      content_ids: [product._id],
-      content_type: 'product',
-      value: displaySalePrice || displayPrice,
-      currency: 'BDT',
-      quantity: 1
-    };
-    fbEvent('AddToCart', addToCartPayload);
-    ttEvent('AddToCart', addToCartPayload);
+    if (res.success) {
+      // Track AddToCart
+      const addToCartPayload = {
+        content_name: product.name,
+        content_category: product.categories?.[0]?.name || 'Uncategorized',
+        content_ids: [product._id],
+        content_type: 'product',
+        value: displaySalePrice || displayPrice,
+        currency: 'BDT',
+        quantity: 1
+      };
+      fbEvent('AddToCart', addToCartPayload);
+      ttEvent('AddToCart', addToCartPayload);
 
-    toast.success(`${product.name} added to cart`);
-    onClose();
+      toast.success(`${product.name} added to cart`);
+      onClose();
+    } else {
+      toast.error(res.error);
+    }
   };
 
   return (
