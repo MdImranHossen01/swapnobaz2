@@ -18,7 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Truck, CreditCard, Globe, X, BarChart3, Settings2, Zap, ShieldCheck, CheckCircle2, XCircle, AlertCircle, Send, RefreshCcw, TrendingUp, ExternalLink } from 'lucide-react';
+import { Loader2, Truck, CreditCard, Globe, X, BarChart3, Settings2, Zap, ShieldCheck, CheckCircle2, XCircle, AlertCircle, RefreshCcw, TrendingUp, ExternalLink } from 'lucide-react';
 
 // X (Twitter) logo — not in this version of lucide-react, using inline SVG
 const XLogoIcon = ({ className }: { className?: string }) => (
@@ -110,27 +110,11 @@ type TrackingStatus = {
   ga: { configured: boolean; gaId: string | null };
 } | null;
 
-type TestResult = {
-  success: boolean;
-  eventId?: string;
-  error?: string;
-  response?: unknown;
-  pixelId?: string;
-} | undefined;
-
-type TestResults = {
-  facebook?: TestResult;
-  tiktok?: TestResult;
-} | null;
-
 export default function MarketingSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [trackingStatus, setTrackingStatus] = useState<TrackingStatus>(null);
   const [trackingStatusLoading, setTrackingStatusLoading] = useState(false);
-  const [testResults, setTestResults] = useState<TestResults>(null);
-  const [testFiring, setTestFiring] = useState(false);
-  const [testEventName, setTestEventName] = useState('PageView');
 
   const form = useForm<MarketingSettingsFormValues>({
     resolver: zodResolver(marketingSettingsSchema) as any,
@@ -294,29 +278,6 @@ export default function MarketingSettingsPage() {
     }
   }, []);
 
-  // Fire a test server-side tracking event
-  const fireTestEvent = async (platform: 'facebook' | 'tiktok' | 'both') => {
-    setTestFiring(true);
-    setTestResults(null);
-    try {
-      const res = await fetch('/api/admin/marketing/server-tracking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ platform, eventName: testEventName }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setTestResults(data.results);
-        toast.success(`Test event "${testEventName}" fired to ${platform}`);
-      } else {
-        toast.error(data.error || 'Test event failed');
-      }
-    } catch {
-      toast.error('Network error firing test event');
-    } finally {
-      setTestFiring(false);
-    }
-  };
 
   const onSubmit = async (values: MarketingSettingsFormValues) => {
     setSubmitting(true);
@@ -901,101 +862,6 @@ export default function MarketingSettingsPage() {
                   <p className="text-xs text-muted-foreground">Click the tab or Refresh Status to load configuration.</p>
                 )}
               </div>
-
-              {/* Test Event Firing Panel */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Send className="h-4 w-4 text-primary" /> Fire Test Server-Side Event
-                  </CardTitle>
-                  <CardDescription>
-                    Send a test event directly from the server to Facebook CAPI and/or TikTok Events API.
-                    This bypasses the browser entirely — useful for validating credentials without a live user session.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase opacity-60">Event Name</label>
-                      <select
-                        value={testEventName}
-                        onChange={(e) => setTestEventName(e.target.value)}
-                        className="w-full h-10 rounded-lg border px-3 text-sm bg-background"
-                      >
-                        {['PageView','ViewContent','AddToCart','AddToWishlist','InitiateCheckout','Purchase','Lead','Search'].map(ev => (
-                          <option key={ev} value={ev}>{ev}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={() => fireTestEvent('facebook')}
-                      disabled={testFiring || !trackingStatus?.facebook?.configured}
-                      variant="outline"
-                      className="h-10"
-                    >
-                      {testFiring ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                      Test Facebook CAPI
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => fireTestEvent('tiktok')}
-                      disabled={testFiring || !trackingStatus?.tiktok?.configured}
-                      variant="outline"
-                      className="h-10"
-                    >
-                      {testFiring ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
-                      Test TikTok API
-                    </Button>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => fireTestEvent('both')}
-                    disabled={testFiring || (!trackingStatus?.facebook?.configured && !trackingStatus?.tiktok?.configured)}
-                    className="w-full"
-                  >
-                    {testFiring ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Zap className="h-4 w-4 mr-2" />}
-                    Fire to All Configured Platforms
-                  </Button>
-
-                  {/* Test Results */}
-                  {testResults && (
-                    <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-                      <p className="text-xs font-bold uppercase opacity-60">Test Results</p>
-                      {(['facebook', 'tiktok'] as const).map(platform => {
-                        const result = testResults[platform];
-                        if (!result) return null;
-                        return (
-                          <div key={platform} className={`rounded-lg p-3 border text-xs font-mono ${
-                            result.success ? 'bg-primary/10 border-primary/20' : 'bg-destructive/10 border-destructive/20'
-                          }`}>
-                            <div className="flex items-center gap-2 mb-1">
-                              {result.success ? (
-                                <CheckCircle2 className="h-3 w-3 text-primary" />
-                              ) : (
-                                <XCircle className="h-3 w-3 text-destructive" />
-                              )}
-                              <span className="font-bold capitalize">{platform}: {result.success ? 'Event Accepted' : 'Failed'}</span>
-                            </div>
-                            {result.eventId && <p className="opacity-60">Event ID: {result.eventId}</p>}
-                            {result.error && <p className="text-destructive">{result.error}</p>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  <div className="rounded-lg border p-4 bg-primary/5 space-y-1">
-                    <p className="text-xs font-bold">📌 How Server-Side Tracking works:</p>
-                    <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Browser fires a Pixel event + sends it to <code>/api/facebook/event</code></li>
-                      <li>Server re-sends the same event ID to Facebook CAPI for deduplication</li>
-                      <li>Facebook uses the highest-quality match (browser + server) for attribution</li>
-                      <li>This doubles event match quality without double-counting conversions</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
 
               {/* Security notice */}
               <Card className="border-amber-500/20 bg-amber-500/5">
