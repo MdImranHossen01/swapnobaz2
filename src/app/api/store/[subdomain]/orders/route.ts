@@ -235,6 +235,7 @@ export async function POST(
 
         const [fOrder] = await ResellerOrder.create([{
           resellerId: uploaderId,
+          motherOrderId: motherOrder._id,
           customer,
           items: fItems,
           subtotal: uploaderSubtotal,
