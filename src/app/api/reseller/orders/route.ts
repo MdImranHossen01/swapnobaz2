@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [orders, total] = await Promise.all([
+    const [orders, total, statusAggregation] = await Promise.all([
       ResellerOrder.find(query)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
@@ -54,9 +54,30 @@ export async function GET(request: NextRequest) {
         })
         .lean(),
       ResellerOrder.countDocuments(query),
+      ResellerOrder.aggregate([
+        { $match: { resellerId } },
+        { $group: { _id: "$status", count: { $sum: 1 } } }
+      ])
     ]);
 
-    return NextResponse.json({ orders, total, page, limit });
+    const statusCounts = {
+      all: 0, placed: 0, confirmed: 0, processing: 0, ready: 0, released: 0, delivered: 0, cancelled: 0
+    };
+
+    statusAggregation.forEach(item => {
+      statusCounts.all += item.count;
+      switch(item._id) {
+        case 'Order Placed': statusCounts.placed = item.count; break;
+        case 'Confirmed': statusCounts.confirmed = item.count; break;
+        case 'Processing': statusCounts.processing = item.count; break;
+        case 'Ready for Delivery': statusCounts.ready = item.count; break;
+        case 'Released for Delivery': statusCounts.released = item.count; break;
+        case 'Delivered': statusCounts.delivered = item.count; break;
+        case 'Cancelled': statusCounts.cancelled = item.count; break;
+      }
+    });
+
+    return NextResponse.json({ orders, total, page, limit, statusCounts });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

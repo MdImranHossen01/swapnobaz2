@@ -84,6 +84,8 @@ export async function POST(req: NextRequest) {
 
     // Check if an abandoned cart already exists for this phone number
     let cart = await AbandonedCart.findOne({ phone: cleanPhone });
+    
+    const resellerId = items.length > 0 && items[0].uploadedBy ? items[0].uploadedBy : undefined;
 
     if (cart) {
       // Update existing draft cart
@@ -93,6 +95,7 @@ export async function POST(req: NextRequest) {
       cart.deliveryArea = deliveryArea || cart.deliveryArea;
       cart.items = items;
       cart.totalAmount = totalAmount;
+      if (resellerId) cart.resellerId = resellerId;
       if (userId) cart.user = userId as any;
       
       await cart.save();
@@ -100,6 +103,7 @@ export async function POST(req: NextRequest) {
       // Create new draft cart
       cart = await AbandonedCart.create({
         user: userId || undefined,
+        resellerId: resellerId || undefined,
         fullName: fullName.trim(),
         phone: cleanPhone,
         email: email?.trim(),

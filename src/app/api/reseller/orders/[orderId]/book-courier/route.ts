@@ -162,7 +162,14 @@ export async function POST(
         order.status = 'Ready for Delivery';
         await order.save();
 
-        // Also update the reseller order to reflect the status
+        // Also update the reseller order to reflect the status and tracking
+        resellerOrder.shippingDetails = {
+          courierName,
+          trackingId: result.tracking_code,
+          consignmentId: result.consignment_id,
+          trackingUrl: result.tracking_url,
+          courierStatus: result.status,
+        };
         resellerOrder.status = 'Ready for Delivery';
         await resellerOrder.save();
 

@@ -9,13 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  Loader2, Eye, Search, RefreshCcw, ChevronDown,
+  Loader2, Eye, Search, RefreshCcw, ChevronDown, CheckCircle2, XCircle
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from 'date-fns';
 import { toast } from 'sonner';
+import ResellerOrderDetailsDialog from '@/components/reseller/ResellerOrderDetailsDialog';
 
 const STATUS_OPTIONS = [
   'Order Placed', 'Confirmed', 'Processing',
@@ -32,33 +33,89 @@ const statusColorMap: Record<string, string> = {
   'Cancelled': 'bg-red-500/10 text-red-600',
 };
 
+// Fraud check badge component
+function FraudCheckBadge({ phone }: { phone: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!phone) return;
+    const fetchFraud = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/courier/fraud-check?phone=${phone}`);
+        if (res.ok) {
+          const json = await res.json();
+          setData(json);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFraud();
+  }, [phone]);
+
+  if (loading) {
+    return <span className="inline-flex items-center text-[10px] text-muted-foreground ml-2"><Loader2 className="h-3 w-3 animate-spin mr-1"/></span>;
+  }
+
+  if (!data) return null;
+
+  return (
+    <span 
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ml-2 border ${
+        data.successRatio >= 80 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+        data.successRatio >= 50 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
+        'bg-red-50 text-red-700 border-red-200'
+      }`}
+      title={`Delivered: ${data.delivered} | Cancelled: ${data.cancelled}`}
+    >
+      {data.successRatio >= 80 ? <CheckCircle2 className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
+      {data.successRatio}% Success
+    </span>
+  );
+}
+
+
 function OrdersContent() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [statusCounts, setStatusCounts] = useState<any>({});
+  
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [dateFilter, setDateFilter] = useState({ from: '', to: '' });
+  
   const [page, setPage] = useState(1);
-  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const limit = 20;
+
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) });
       if (search) params.set('search', search);
-      if (statusFilter) params.set('status', statusFilter);
+      if (statusFilter !== 'All') params.set('status', statusFilter);
+      if (dateFilter.from) params.set('from', dateFilter.from);
+      if (dateFilter.to) params.set('to', dateFilter.to);
+      
       const res = await fetch(`/api/reseller/orders?${params}`);
       if (res.ok) {
         const d = await res.json();
         setOrders(d.orders || []);
         setTotal(d.total || 0);
+        setStatusCounts(d.statusCounts || {});
       }
     } catch { toast.error('Failed to fetch orders'); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchOrders(); }, [page, statusFilter]);
+  useEffect(() => { fetchOrders(); }, [page, statusFilter, dateFilter]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,33 +133,7 @@ function OrdersContent() {
     else toast.error('Failed to update status');
   };
 
-  const [bookingLoading, setBookingLoading] = useState(false);
-
   const totalPages = Math.ceil(total / limit);
-
-  const handleBookCourier = async (orderId: string) => {
-    if (!confirm('Are you sure you want to book the courier for this order?')) return;
-    setBookingLoading(true);
-    try {
-      const res = await fetch(`/api/reseller/orders/${orderId}/book-courier`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        toast.success(`Courier booked successfully! Tracking ID: ${data.trackingCode}`);
-        fetchOrders();
-        setSelectedOrder(null);
-      } else {
-        toast.error(data.message || 'Failed to book courier');
-      }
-    } catch (err) {
-      toast.error('An error occurred while booking courier');
-    } finally {
-      setBookingLoading(false);
-    }
-  };
 
   return (
     <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
@@ -112,32 +143,99 @@ function OrdersContent() {
           <p className="text-xs md:text-sm text-muted-foreground">Manage your store orders ({total} total)</p>
         </div>
         <Button variant="outline" size="sm" className="h-9 self-start sm:self-auto" onClick={fetchOrders} disabled={loading}>
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4 mr-2" />}
+          Reload
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-2 px-1 md:px-0">
-        <form onSubmit={handleSearch} className="flex gap-2 flex-1">
-          <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input className="pl-8 h-9 text-xs md:text-sm" placeholder="Search by order ID, phone..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <Button type="submit" variant="outline" size="sm" className="h-9 text-xs">Search</Button>
+      {/* Advanced Filters */}
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-3 bg-card p-3 rounded-md border shadow-sm px-1 md:px-3">
+        <form onSubmit={handleSearch} className="relative flex-1 w-full md:max-w-md">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search by order ID, name, phone..." 
+            value={search} 
+            onChange={(e) => setSearch(e.target.value)} 
+            className="pl-8 h-9 text-sm"
+          />
         </form>
-        <DropdownMenu>
-          <DropdownMenuTrigger render={
-            <Button variant="outline" className="min-w-[130px] h-9 text-xs justify-between">
-              {statusFilter || 'All Status'} <ChevronDown className="h-4 w-4 ml-1" />
-            </Button>
-          } />
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => { setStatusFilter(''); setPage(1); }}>All Status</DropdownMenuItem>
-            {STATUS_OPTIONS.map(s => (
-              <DropdownMenuItem key={s} onClick={() => { setStatusFilter(s); setPage(1); }}>{s}</DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+        <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-md border w-full md:w-auto h-10">
+          <Input
+            type="date"
+            className="h-8 w-full md:w-36 border-none bg-transparent focus-visible:ring-0"
+            value={dateFilter.from}
+            onChange={(e) => {
+              setDateFilter(prev => ({ ...prev, from: e.target.value }));
+              setPage(1);
+            }}
+          />
+          <span className="text-muted-foreground text-xs">to</span>
+          <Input
+            type="date"
+            className="h-8 w-full md:w-36 border-none bg-transparent focus-visible:ring-0"
+            value={dateFilter.to}
+            onChange={(e) => {
+              setDateFilter(prev => ({ ...prev, to: e.target.value }));
+              setPage(1);
+            }}
+          />
+        </div>
+
+        {(statusFilter !== 'All' || dateFilter.from || dateFilter.to || search) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setStatusFilter('All');
+              setDateFilter({ from: '', to: '' });
+              setSearch('');
+              setPage(1);
+            }}
+            className="text-xs text-muted-foreground hover:text-primary shrink-0"
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+
+      {/* Status Tabs Row (Desktop only) */}
+      <div className="hidden md:grid md:grid-cols-8 gap-2 pb-2 border-b">
+        {[
+          { label: 'All', value: 'All', count: statusCounts.all },
+          { label: 'Placed', value: 'Order Placed', count: statusCounts.placed },
+          { label: 'Confirmed', value: 'Confirmed', count: statusCounts.confirmed },
+          { label: 'Processing', value: 'Processing', count: statusCounts.processing },
+          { label: 'Ready', value: 'Ready for Delivery', count: statusCounts.ready },
+          { label: 'Released', value: 'Released for Delivery', count: statusCounts.released },
+          { label: 'Delivered', value: 'Delivered', count: statusCounts.delivered },
+          { label: 'Cancelled', value: 'Cancelled', count: statusCounts.cancelled }
+        ].map((status) => {
+          const isActive = statusFilter === status.value;
+          return (
+            <button
+              key={status.value}
+              onClick={() => {
+                setStatusFilter(status.value);
+                setPage(1);
+              }}
+              className={`w-full py-2 text-xs font-semibold rounded-md transition-all duration-200 text-center truncate flex items-center justify-center gap-1.5 ${
+                isActive
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-background hover:bg-muted text-muted-foreground border border-input'
+              }`}
+            >
+              <span>{status.label}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                isActive 
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-muted text-muted-foreground border'
+              }`}>
+                {status.count ?? 0}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Table & Cards */}
@@ -169,11 +267,24 @@ function OrdersContent() {
               ) : (
                 orders.map(order => (
                   <TableRow key={order._id} className="hover:bg-muted/30 transition-colors">
-                    <TableCell className="font-mono font-bold text-primary">{order.shortId}</TableCell>
+                    <TableCell>
+                      <button 
+                        onClick={() => {
+                          setSelectedOrderId(order._id);
+                          setIsDetailsOpen(true);
+                        }}
+                        className="font-mono font-bold text-primary hover:underline"
+                      >
+                        {order.shortId}
+                      </button>
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-semibold text-sm">{order.customer?.name}</p>
-                        <p className="text-xs text-muted-foreground">{order.customer?.phone}</p>
+                        <p className="text-xs text-muted-foreground flex items-center">
+                          {order.customer?.phone}
+                          <FraudCheckBadge phone={order.customer?.phone} />
+                        </p>
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -189,15 +300,23 @@ function OrdersContent() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:text-primary" onClick={() => setSelectedOrder(order)}>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-8 w-8 hover:text-primary" 
+                          onClick={() => {
+                            setSelectedOrderId(order._id);
+                            setIsDetailsOpen(true);
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <DropdownMenu>
-                          <DropdownMenuTrigger render={
+                          <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0 text-xs">
                               <ChevronDown className="h-4 w-4" />
                             </Button>
-                          } />
+                          </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             {STATUS_OPTIONS.map(s => (
                               <DropdownMenuItem key={s} onClick={() => updateStatus(order._id, s)}
@@ -232,7 +351,15 @@ function OrdersContent() {
               <div key={order._id} className="p-3 bg-card border rounded-lg shadow-sm space-y-2.5">
                 <div className="flex items-start justify-between gap-2 border-b pb-2">
                   <div>
-                    <span className="font-mono font-bold text-xs text-primary block">#{order.shortId}</span>
+                    <button 
+                      onClick={() => {
+                        setSelectedOrderId(order._id);
+                        setIsDetailsOpen(true);
+                      }}
+                      className="font-mono font-bold text-xs text-primary block hover:underline"
+                    >
+                      #{order.shortId}
+                    </button>
                     <span className="text-[10px] text-muted-foreground">
                       {format(new Date(order.createdAt), 'dd MMM yyyy, hh:mm a')}
                     </span>
@@ -245,7 +372,10 @@ function OrdersContent() {
                 <div className="flex items-start justify-between text-xs">
                   <div>
                     <p className="font-semibold text-foreground">{order.customer?.name}</p>
-                    <p className="text-[11px] text-muted-foreground">{order.customer?.phone}</p>
+                    <p className="text-[11px] text-muted-foreground flex items-center">
+                      {order.customer?.phone}
+                      <FraudCheckBadge phone={order.customer?.phone} />
+                    </p>
                   </div>
                   <div className="text-right">
                     <span className="text-[10px] text-muted-foreground block">{order.items?.length || 0} items</span>
@@ -260,11 +390,11 @@ function OrdersContent() {
 
                 <div className="flex items-center justify-between gap-1 pt-1 border-t">
                   <DropdownMenu>
-                    <DropdownMenuTrigger render={
+                    <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="h-7 text-xs px-2">
                         Status <ChevronDown className="h-3 w-3 ml-1" />
                       </Button>
-                    } />
+                    </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                       {STATUS_OPTIONS.map(s => (
                         <DropdownMenuItem key={s} onClick={() => updateStatus(order._id, s)}
@@ -275,7 +405,15 @@ function OrdersContent() {
                     </DropdownMenuContent>
                   </DropdownMenu>
 
-                  <Button variant="outline" size="sm" className="h-7 text-xs px-2.5" onClick={() => setSelectedOrder(order)}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 text-xs px-2.5" 
+                    onClick={() => {
+                      setSelectedOrderId(order._id);
+                      setIsDetailsOpen(true);
+                    }}
+                  >
                     <Eye className="h-3 w-3 mr-1" /> Details
                   </Button>
                 </div>
@@ -294,59 +432,13 @@ function OrdersContent() {
         </div>
       )}
 
-      {/* Order Detail Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3" onClick={() => setSelectedOrder(null)}>
-          <div className="bg-card rounded-2xl shadow-xl max-w-lg w-full max-h-[85vh] overflow-y-auto p-4 md:p-6" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4 border-b pb-2">
-              <h3 className="font-bold text-base md:text-lg">Order #{selectedOrder.shortId}</h3>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setSelectedOrder(null)}>✕</Button>
-            </div>
-            <div className="space-y-3 text-xs md:text-sm">
-              <div className="grid grid-cols-2 gap-2">
-                <div><p className="text-muted-foreground text-[11px]">Customer</p><p className="font-semibold">{selectedOrder.customer?.name}</p></div>
-                <div><p className="text-muted-foreground text-[11px]">Phone</p><p className="font-semibold">{selectedOrder.customer?.phone}</p></div>
-                <div className="col-span-2"><p className="text-muted-foreground text-[11px]">Address</p><p className="font-semibold">{selectedOrder.customer?.address}</p></div>
-                <div><p className="text-muted-foreground text-[11px]">Status</p><Badge className={`text-[10px] ${statusColorMap[selectedOrder.status] || ''}`}>{selectedOrder.status}</Badge></div>
-                <div><p className="text-muted-foreground text-[11px]">Total</p><p className="font-black text-primary">৳{selectedOrder.totalAmount?.toLocaleString()}</p></div>
-                <div className="col-span-2 bg-green-500/10 p-2 rounded"><p className="text-muted-foreground text-[11px]">Your Commission</p><p className="font-bold text-green-600 text-sm">৳{selectedOrder.resellerCommission?.toLocaleString() || 0}</p></div>
-              </div>
-              <div className="border-t pt-3">
-                <p className="font-bold mb-2 text-xs md:text-sm">Items ({selectedOrder.items?.length})</p>
-                {selectedOrder.items?.map((item: any, i: number) => (
-                  <div key={i} className="flex justify-between items-center py-1.5 border-b last:border-0">
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-[11px] text-muted-foreground">Qty: {item.quantity} × ৳{item.price}</p>
-                    </div>
-                    <p className="font-semibold">৳{(item.quantity * item.price).toLocaleString()}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="border-t pt-3 mt-3">
-                {selectedOrder.shippingDetails?.trackingId ? (
-                  <div className="bg-blue-500/10 p-3 rounded-lg border border-blue-500/20">
-                    <p className="font-bold text-blue-700 text-sm mb-1">Courier Details</p>
-                    <p className="text-xs text-blue-600"><span className="font-semibold">Provider:</span> {selectedOrder.shippingDetails.courierName}</p>
-                    <p className="text-xs text-blue-600"><span className="font-semibold">Tracking ID:</span> {selectedOrder.shippingDetails.trackingId}</p>
-                    <p className="text-xs text-blue-600"><span className="font-semibold">Status:</span> {selectedOrder.shippingDetails.courierStatus}</p>
-                  </div>
-                ) : (
-                  selectedOrder.items?.every((i: any) => i.productId?.uploadedBy === selectedOrder.resellerId) && (
-                    <Button 
-                      className="w-full font-bold" 
-                      disabled={bookingLoading || selectedOrder.shippingDetails?.courierStatus === 'BOOKING_IN_PROGRESS'} 
-                      onClick={() => handleBookCourier(selectedOrder._id)}
-                    >
-                      {bookingLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Hand over to Courier'}
-                    </Button>
-                  )
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Improved Order Details Dialog */}
+      <ResellerOrderDetailsDialog 
+        orderId={selectedOrderId} 
+        open={isDetailsOpen} 
+        onOpenChange={setIsDetailsOpen} 
+      />
+
     </div>
   );
 }

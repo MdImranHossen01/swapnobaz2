@@ -140,6 +140,19 @@ export async function POST(
         order.status = 'Ready for Delivery';
         await order.save();
 
+        // Sync shipping details to ResellerOrder if applicable
+        const mongoose = require('mongoose');
+        const ResellerOrder = mongoose.models.ResellerOrder || mongoose.model('ResellerOrder');
+        await ResellerOrder.updateMany(
+          { motherOrderId: order._id },
+          { 
+            $set: { 
+              shippingDetails: order.shippingDetails,
+              status: 'Ready for Delivery'
+            }
+          }
+        );
+
         return NextResponse.json({ 
           message: `${courierName} booked successfully`, 
           trackingCode: result.tracking_code 
