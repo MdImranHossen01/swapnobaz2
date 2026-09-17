@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
@@ -62,7 +62,7 @@ export function AIChatbot() {
     return parts.length > 0 ? parts : content;
   };
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hi there! I am your Swapnobaz AI assistant. How can I help you today?' },
+    { role: 'assistant', content: 'Assalamu Alaikum! I am your Swapnobaz AI assistant. How can I help you explore our products, track orders, or assist with reseller dropshipping today?' },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -416,8 +416,8 @@ export default function NavbarV4() {
             {/* Icons/Action Row (Right) */}
             <div className="flex items-center justify-end gap-1 flex-1 max-w-[320px]">
 
-              {/* Theme Toggle (Left of group) */}
-              <div className="hidden sm:block">
+              {/* Theme Toggle */}
+              <div>
                 <ModeToggle />
               </div>
 
