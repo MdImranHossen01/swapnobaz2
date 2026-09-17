@@ -147,6 +147,8 @@ function OrdersContent() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchParams.get('search') || '');
+  const [resellers, setResellers] = useState<any[]>([]);
+  const [resellerFilter, setResellerFilter] = useState(searchParams.get('resellerId') || 'all');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
   const [dateFilter, setDateFilter] = useState({
     from: searchParams.get('from') || '',
@@ -187,13 +189,16 @@ function OrdersContent() {
     if (dateFilter.to) {
       params.set('to', dateFilter.to);
     }
+    if (resellerFilter !== 'all') {
+      params.set('resellerId', resellerFilter);
+    }
 
     const currentQuery = searchParams.toString();
     const newQuery = params.toString();
     if (currentQuery !== newQuery) {
       router.push(`/admin/orders?${newQuery}`);
     }
-  }, [currentPage, statusFilter, debouncedSearchTerm, dateFilter.from, dateFilter.to]);
+  }, [currentPage, statusFilter, debouncedSearchTerm, dateFilter.from, dateFilter.to, resellerFilter]);
 
   const handleDownloadInvoice = async (order: any) => {
     try {
@@ -234,7 +239,8 @@ function OrdersContent() {
         search: debouncedSearchTerm,
         status: statusFilter,
         from: dateFilter.from,
-        to: dateFilter.to
+        to: dateFilter.to,
+        resellerId: resellerFilter
       });
       const res = await fetch(`/api/orders?${queryParams.toString()}`);
       if (!res.ok) {
@@ -262,7 +268,19 @@ function OrdersContent() {
 
   useEffect(() => {
     fetchOrders(currentPage);
-  }, [currentPage, debouncedSearchTerm, statusFilter, dateFilter.from, dateFilter.to]);
+  }, [currentPage, debouncedSearchTerm, statusFilter, dateFilter.from, dateFilter.to, resellerFilter]);
+
+  // Fetch resellers for filter
+  useEffect(() => {
+    fetch('/api/admin/resellers')
+      .then(res => res.json())
+      .then(data => {
+        if (data.resellers) {
+          setResellers(data.resellers);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     const pageFromParams = Math.max(1, parseInt(searchParams.get('page') || '1'));
@@ -281,6 +299,10 @@ function OrdersContent() {
     const toFromParams = searchParams.get('to') || '';
     if (fromFromParams !== dateFilter.from || toFromParams !== dateFilter.to) {
       setDateFilter({ from: fromFromParams, to: toFromParams });
+    }
+    const resellerFromParams = searchParams.get('resellerId') || 'all';
+    if (resellerFromParams !== resellerFilter) {
+      setResellerFilter(resellerFromParams);
     }
   }, [searchParams]);
 
@@ -605,6 +627,46 @@ function OrdersContent() {
           />
         </div>
 
+        <div className="w-full md:w-48 shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-10 w-full justify-between px-3 font-normal">
+                <span className="truncate">
+                  {resellerFilter === 'all' 
+                    ? 'All Resellers' 
+                    : resellers.find(r => r._id === resellerFilter)?.storeName || 'Unknown Reseller'}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-[200px] max-h-[300px] overflow-y-auto">
+              <DropdownMenuGroup>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setResellerFilter('all');
+                    setCurrentPage(1);
+                  }}
+                  className={resellerFilter === 'all' ? "bg-accent font-bold" : ""}
+                >
+                  All Resellers
+                </DropdownMenuItem>
+                {resellers.map((r) => (
+                  <DropdownMenuItem
+                    key={r._id}
+                    onClick={() => {
+                      setResellerFilter(r._id);
+                      setCurrentPage(1);
+                    }}
+                    className={resellerFilter === r._id ? "bg-accent font-bold" : ""}
+                  >
+                    {r.storeName}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <div className="block md:hidden w-full sm:w-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -922,6 +984,11 @@ function OrdersContent() {
                             Note: {order.internalNote}
                           </div>
                         )}
+                        {order.resellerId && typeof order.resellerId === 'object' && order.resellerId.storeName && (
+                          <div className="mt-1 text-[9px] bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 font-bold whitespace-nowrap max-w-[200px] truncate" title={order.resellerId.storeName}>
+                            Store: {order.resellerId.storeName}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="font-bold">৳{Math.round(order.totalAmount ?? 0)}</TableCell>
@@ -1129,6 +1196,17 @@ function OrdersContent() {
                       </Badge>
                     ))}
                   </div>
+
+                  {order.internalNote && (
+                    <div className="text-[10px] bg-yellow-50 dark:bg-yellow-950/20 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded border border-yellow-200/50 font-medium whitespace-pre-line">
+                      Note: {order.internalNote}
+                    </div>
+                  )}
+                  {order.resellerId && typeof order.resellerId === 'object' && order.resellerId.storeName && (
+                    <div className="text-[9px] bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 font-bold truncate">
+                      Store: {order.resellerId.storeName}
+                    </div>
+                  )}
 
                   {/* Card Bottom Actions */}
                   <div className="flex items-center justify-between pt-2 border-t gap-1">

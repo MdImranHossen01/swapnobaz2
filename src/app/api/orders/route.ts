@@ -550,6 +550,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || '';
     const fromDate = searchParams.get('from') || '';
     const toDate = searchParams.get('to') || '';
+    const resellerId = searchParams.get('resellerId') || '';
 
     await connectToDatabase();
 
@@ -609,6 +610,9 @@ export async function GET(req: NextRequest) {
     if (fetchAll && isAdmin) {
       if (status && status !== 'All') {
         query.status = status;
+      }
+      if (resellerId && resellerId !== 'all') {
+        query.resellerId = resellerId;
       }
       if (fromDate || toDate) {
         query.createdAt = {};
@@ -696,7 +700,7 @@ export async function GET(req: NextRequest) {
       ordersQuery = ordersQuery.skip((page - 1) * limit).limit(limit);
     }
 
-    const orders = await ordersQuery.populate('user', 'name email');
+    const orders = await ordersQuery.populate('user', 'name email').populate('resellerId', 'storeName domain subDomain');
 
     let processedOrders = orders;
     if (fetchAll && isAdmin) {
