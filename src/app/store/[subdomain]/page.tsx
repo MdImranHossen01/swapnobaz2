@@ -5,10 +5,10 @@ import Reseller from '@/models/Reseller';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
-import { 
-  NavbarSelector, 
-  HeroSelector, 
-  ProductCardSelector 
+import {
+  NavbarSelector,
+  HeroSelector,
+  ProductCardSelector
 } from '@/components/templates/Registry';
 import { CategoryShowcase } from '@/components/storefront/CategoryShowcase';
 import { FooterSelector } from '@/components/templates/ServerRegistry';
@@ -64,7 +64,7 @@ export default async function ResellerStorePage({ params }: Props) {
           <h1 className="text-2xl font-black text-gray-800 mb-2">{reseller.storeName}</h1>
           <p className="text-sm font-semibold text-yellow-600 mb-3">🕐 অনুমোদনের অপেক্ষায়</p>
           <p className="text-gray-500 text-sm">
-            এই স্টোরটি শীঘ্রই চালু হবে। সুপার অ্যাডমিন অনুমোদনের পর স্টোরটি সক্রিয় হবে।
+            এই স্টোরটি শীঘ্রই চালু হবে। অ্যাডমিন অনুমোদনের পর স্টোরটি সক্রিয় হবে।
           </p>
           <div className="mt-6 pt-4 border-t border-gray-100">
             <a href="https://swapnobaz.com" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
@@ -121,8 +121,8 @@ export default async function ResellerStorePage({ params }: Props) {
 
   const products = (rawProducts || []).map((rp: any) => {
     const parent = rp.productId || {};
-    const finalPrice = typeof rp.retailPrice === 'number' && !isNaN(rp.retailPrice) 
-      ? rp.retailPrice 
+    const finalPrice = typeof rp.retailPrice === 'number' && !isNaN(rp.retailPrice)
+      ? rp.retailPrice
       : (typeof parent.price === 'number' ? parent.price : 0);
     return {
       _id: rp._id.toString(),
@@ -219,27 +219,27 @@ export default async function ResellerStorePage({ params }: Props) {
 
   const dynamicBanners = resellerBanners.length > 0
     ? resellerBanners.map((b: any) => ({
-        title: b.title || storeName,
+      title: b.title || storeName,
+      subtitle: description || `Shop at ${storeName}`,
+      image: b.image,
+      link: b.link || b.primaryBtnLink || '/shop',
+      primaryBtnText: b.primaryBtnText || 'সব পণ্য দেখুন',
+      primaryBtnLink: b.link || b.primaryBtnLink || '/shop',
+      secondaryBtnText: `🚚 ঢাকার ভেতরে ৳${deliveryInside} | 📦 ঢাকার বাইরে ৳${deliveryOutside}`,
+      secondaryBtnLink: '/shop'
+    }))
+    : [
+      {
+        title: storeName,
         subtitle: description || `Shop at ${storeName}`,
-        image: b.image,
-        link: b.link || b.primaryBtnLink || '/shop',
-        primaryBtnText: b.primaryBtnText || 'সব পণ্য দেখুন',
-        primaryBtnLink: b.link || b.primaryBtnLink || '/shop',
+        image: logo || undefined,
+        link: '/shop',
+        primaryBtnText: 'সব পণ্য দেখুন',
+        primaryBtnLink: '/shop',
         secondaryBtnText: `🚚 ঢাকার ভেতরে ৳${deliveryInside} | 📦 ঢাকার বাইরে ৳${deliveryOutside}`,
         secondaryBtnLink: '/shop'
-      }))
-    : [
-        {
-          title: storeName,
-          subtitle: description || `Shop at ${storeName}`,
-          image: logo || undefined,
-          link: '/shop',
-          primaryBtnText: 'সব পণ্য দেখুন',
-          primaryBtnLink: '/shop',
-          secondaryBtnText: `🚚 ঢাকার ভেতরে ৳${deliveryInside} | 📦 ঢাকার বাইরে ৳${deliveryOutside}`,
-          secondaryBtnLink: '/shop'
-        }
-      ];
+      }
+    ];
 
   const themeOverrides = (reseller.themeOverrides as any) || {};
   const navStyle = themeOverrides.navbar || 'v1';
@@ -256,10 +256,10 @@ export default async function ResellerStorePage({ params }: Props) {
         <FreeDeliveryBanner settings={settingsData} />
 
         {/* Reseller Pixel Loader */}
-        <ResellerPixels 
-          subdomain={subdomain} 
-          metaPixelId={reseller.seoConfig?.metaPixelId} 
-          tiktokPixelId={reseller.seoConfig?.tiktokPixelId} 
+        <ResellerPixels
+          subdomain={subdomain}
+          metaPixelId={reseller.seoConfig?.metaPixelId}
+          tiktokPixelId={reseller.seoConfig?.tiktokPixelId}
         />
 
         {/* Store Header */}
