@@ -110,7 +110,7 @@ export default function ResellerDashboard() {
           <Clock className="h-5 w-5 text-yellow-600 mt-0.5 shrink-0" />
           <div>
             <p className="font-bold text-xs md:text-sm">অনুমোদনের অপেক্ষায়</p>
-            <p className="text-xs text-muted-foreground">আপনার রিসেলার একাউন্ট পর্যালোচনা করা হচ্ছে। সুপার অ্যাডমিন অনুমোদনের পর আপনার স্টোর সক্রিয় হবে।</p>
+            <p className="text-xs text-muted-foreground">আপনার রিসেলার একাউন্ট পর্যালোচনা করা হচ্ছে। অ্যাডমিন অনুমোদনের পর আপনার স্টোর সক্রিয় হবে।</p>
           </div>
         </div>
       )}
