@@ -128,6 +128,21 @@ export function ResellerSidebar({
               </TabsTrigger>
             </NavGroup>
 
+            {/* Wallet & Payouts Group */}
+            <NavGroup
+              title="Wallet & Payouts"
+              icon={Wallet}
+              isOpen={expandedGroups.financial}
+              onToggle={() => toggleGroup('financial')}
+            >
+              <TabsTrigger
+                value="wallet"
+                className="w-full justify-start gap-2 px-3 py-2 rounded-lg font-bold text-xs text-muted-foreground hover:text-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary shadow-none transition-all text-left"
+              >
+                ● ওয়ালেট ও পেআউট
+              </TabsTrigger>
+            </NavGroup>
+
             {/* Product Management Group */}
             <NavGroup
               title="Product Management"
@@ -172,21 +187,6 @@ export function ResellerSidebar({
                     {recentOrdersCount}
                   </Badge>
                 )}
-              </TabsTrigger>
-            </NavGroup>
-
-            {/* Wallet & Payouts Group */}
-            <NavGroup
-              title="Wallet & Payouts"
-              icon={Wallet}
-              isOpen={expandedGroups.financial}
-              onToggle={() => toggleGroup('financial')}
-            >
-              <TabsTrigger
-                value="wallet"
-                className="w-full justify-start gap-2 px-3 py-2 rounded-lg font-bold text-xs text-muted-foreground hover:text-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary shadow-none transition-all text-left"
-              >
-                ● ওয়ালেট ও পেআউট
               </TabsTrigger>
             </NavGroup>
 

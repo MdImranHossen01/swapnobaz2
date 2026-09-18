@@ -88,6 +88,8 @@ export default function ResellerOrderDetailsDialog({
           },
           internalNote: orderData.internalNote || '',
           customerNote: orderData.customerNote || '',
+          status: orderData.status || 'Order Placed',
+          paymentStatus: orderData.paymentStatus || 'Pending',
         });
 
         if (orderData?.customer?.phone) {
@@ -167,6 +169,8 @@ export default function ResellerOrderDetailsDialog({
             },
             internalNote: updatedData.internalNote || '',
             customerNote: updatedData.customerNote || '',
+            status: updatedData.status || 'Order Placed',
+            paymentStatus: updatedData.paymentStatus || 'Pending',
           });
         }
       } else {
@@ -389,6 +393,40 @@ export default function ResellerOrderDetailsDialog({
                         className="w-full text-sm p-2 border rounded-lg"
                       />
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Order & Payment Status */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold uppercase text-muted-foreground">Order & Payment Status</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Order Status</label>
+                    <select
+                      value={editForm.status || 'Order Placed'}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                      className="w-full text-sm p-2 border rounded-lg bg-background"
+                    >
+                      <option value="Order Placed">Order Placed</option>
+                      <option value="Confirmed">Confirmed</option>
+                      <option value="Paid">Paid</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Payment Status</label>
+                    <select
+                      value={editForm.paymentStatus || 'Pending'}
+                      onChange={(e) => setEditForm({ ...editForm, paymentStatus: e.target.value })}
+                      className="w-full text-sm p-2 border rounded-lg bg-background"
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="Paid">Paid</option>
+                      <option value="Failed">Failed</option>
+                    </select>
                   </div>
                 </div>
               </div>

@@ -224,6 +224,42 @@ function OrdersContent() {
     }
   };
 
+  const updateStatus = async (id: string, status: string, extraData: any = {}) => {
+    try {
+      const res = await fetch(`/api/reseller/orders/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, ...extraData }),
+      });
+
+      if (res.ok) {
+        toast.success(`Order updated successfully`);
+        fetchOrders();
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.message || 'Failed to update order');
+      }
+    } catch (error) {
+      toast.error('Error updating order');
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: 'Cancel Order?',
+      text: "Are you sure you want to cancel this order?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, cancel it!',
+    });
+
+    if (result.isConfirmed) {
+      await updateStatus(orderId, 'Cancelled');
+    }
+  };
+
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -567,6 +603,22 @@ function OrdersContent() {
                                 <Truck className="mr-2 h-4 w-4 text-orange-500" /> Book Courier
                               </DropdownMenuItem>
                             </DropdownMenuGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>
+                                Confirm
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>
+                                Mark Paid
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleCancelOrder(order._id)}>
+                                Cancel Order
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -638,17 +690,47 @@ function OrdersContent() {
                     {order.paymentStatus || 'Pending'}
                   </Badge>
                   
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="h-8 text-xs px-3"
-                    onClick={() => {
-                      setSelectedOrderId(order._id);
-                      setIsDetailsOpen(true);
-                    }}
-                  >
-                    <Eye className="h-3 w-3 mr-1" /> View
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 text-xs px-2.5">
+                          <MoreHorizontal className="h-3.5 w-3.5 mr-1" /> Actions
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem onClick={() => handleDownloadInvoice(order)}>
+                            <FileText className="mr-2 h-4 w-4 text-primary" /> Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleLocalPrint(order._id, 'sticker')}>
+                            <Printer className="mr-2 h-4 w-4 text-primary" /> Sticker
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleBookCourier(order)} disabled={!!order.shippingDetails?.consignmentId}>
+                            <Truck className="mr-2 h-4 w-4 text-orange-500" /> Book Courier
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                          <DropdownMenuLabel>Status</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>Confirm</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>Mark Paid</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleCancelOrder(order._id)}>Cancel Order</DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-8 text-xs px-3 font-semibold"
+                      onClick={() => {
+                        setSelectedOrderId(order._id);
+                        setIsDetailsOpen(true);
+                      }}
+                    >
+                      <Eye className="h-3 w-3 mr-1" /> View
+                    </Button>
+                  </div>
                 </div>
               </div>
             );

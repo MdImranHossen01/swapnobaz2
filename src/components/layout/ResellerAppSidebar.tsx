@@ -46,6 +46,13 @@ const resellerNav = [
     ],
   },
   {
+    title: "Wallet & Payouts",
+    icon: Wallet,
+    items: [
+      { title: "Wallet & Payouts", url: "/reseller/wallet" },
+    ],
+  },
+  {
     title: "Product Management",
     icon: ShoppingBag,
     items: [
@@ -62,9 +69,6 @@ const resellerNav = [
     items: [
       { title: "All Orders", url: "/reseller/orders" },
       { title: "Abandoned Carts", url: "/reseller/abandoned-carts" },
-      { title: "Offers / Quotations", url: "/reseller/offers" },
-      { title: "Delivery Challans", url: "/reseller/chalans" },
-      { title: "Client Bills", url: "/reseller/bills" },
       { title: "Expenses & Incomes", url: "/reseller/expenses-incomes" },
       { title: "Accounts Ledger", url: "/reseller/ledger" },
     ],
@@ -90,13 +94,6 @@ const resellerNav = [
       { title: "Coupons", url: "/reseller/coupons" },
       { title: "Store Settings", url: "/reseller/settings" },
       { title: "Marketing & Tracking", url: "/reseller/marketing" },
-    ],
-  },
-  {
-    title: "Wallet & Payouts",
-    icon: Wallet,
-    items: [
-      { title: "Wallet & Payouts", url: "/reseller/wallet" },
     ],
   },
 ]

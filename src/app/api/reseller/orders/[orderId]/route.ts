@@ -66,12 +66,15 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { customer, internalNote, customerNote } = body;
+    const { customer, internalNote, customerNote, status, paymentStatus } = body;
 
     const order = await ResellerOrder.findOne({ _id: orderId, resellerId: reseller._id });
     if (!order) {
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
+
+    const allowedStatuses = ['Order Placed', 'Confirmed', 'Paid', 'Ready for Delivery', 'Released for Delivery', 'Delivered', 'Cancelled'];
+    const allowedPaymentStatuses = ['Pending', 'Paid', 'Failed'];
 
     // Update customer info if provided
     if (customer) {
@@ -86,6 +89,27 @@ export async function PATCH(
           zipCode: customer.address.zipCode !== undefined ? customer.address.zipCode : order.customer.address?.zipCode || '',
         };
       }
+    }
+
+    // Update status if provided
+    if (status) {
+      if (!allowedStatuses.includes(status)) {
+        return NextResponse.json({ message: `Invalid status: ${status}` }, { status: 400 });
+      }
+      order.status = status;
+      if (status === 'Cancelled') {
+        order.commissionStatus = 'cancelled';
+      } else if (order.commissionStatus === 'cancelled') {
+        order.commissionStatus = 'pending';
+      }
+    }
+
+    // Update paymentStatus if provided
+    if (paymentStatus) {
+      if (!allowedPaymentStatuses.includes(paymentStatus)) {
+        return NextResponse.json({ message: `Invalid payment status: ${paymentStatus}` }, { status: 400 });
+      }
+      order.paymentStatus = paymentStatus;
     }
 
     // Update notes if provided
@@ -109,8 +133,26 @@ export async function PATCH(
         }
       }
       if (customerNote !== undefined) motherUpdate.customerNote = customerNote;
+      if (status) motherUpdate.status = status;
+      if (paymentStatus) motherUpdate.paymentStatus = paymentStatus;
       
-      await Order.findByIdAndUpdate(order.motherOrderId, { $set: motherUpdate });
+      const updatedMother = await Order.findByIdAndUpdate(order.motherOrderId, { $set: motherUpdate }, { new: true });
+
+      // Handle product sales counting on Mother Order
+      if (['Confirmed', 'Paid', 'Delivered'].includes(status || '') && updatedMother && !updatedMother.isSalesCounted) {
+        try {
+          const Product = (await import('@/models/Product')).default;
+          for (const item of updatedMother.items) {
+            await Product.updateOne(
+              { _id: item.product },
+              { $inc: { totalSales: item.quantity } }
+            );
+          }
+          await Order.findByIdAndUpdate(order.motherOrderId, { isSalesCounted: true });
+        } catch (salesErr) {
+          console.error('[Reseller Order Sales Count Error]', salesErr);
+        }
+      }
     }
 
     return NextResponse.json({
