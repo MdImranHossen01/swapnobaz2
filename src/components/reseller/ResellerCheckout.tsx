@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import {
   Loader2, ShoppingBag, CheckCircle2, Truck, CreditCard,
-  Plus, Minus, X, ArrowRight, PartyPopper, XCircle
+  Plus, Minus, X, ArrowRight, PartyPopper, XCircle, Award
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { normalizePhoneNumber } from '@/lib/utils';
@@ -45,6 +45,7 @@ interface CartItem {
   resellerProductId: string;
   name: string;
   price: number;
+  originalPrice?: number;
   image: string;
   quantity: number;
   color?: string;
@@ -57,6 +58,12 @@ interface Props {
     storeName: string;
     deliveryInside: number;
     deliveryOutside: number;
+    freeDeliveryThreshold?: number;
+    loyaltyConfig?: {
+      isEnabled: boolean;
+      activationThreshold: number;
+      rewardPercentage: number;
+    };
     paymentConfig?: {
       bkash?: { number: string; active: boolean };
       nagad?: { number: string; active: boolean };
@@ -76,6 +83,16 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
   const [showFailModal, setShowFailModal] = useState(false);
   const [orderId, setOrderId] = useState('');
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
+
+  // Loyalty & Wallet state
+  const [customerProfile, setCustomerProfile] = useState<any>(null);
+  const [useWallet, setUseWallet] = useState(false);
+
   const form = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
     mode: 'onChange',
@@ -84,6 +101,9 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
 
   const deliveryArea = form.watch('deliveryArea');
   const paymentMethod = form.watch('paymentMethod');
+  const watchedPhone = form.watch('phone');
+  const watchedFullName = form.watch('fullName');
+  const watchedStreet = form.watch('street');
 
   useEffect(() => {
     const cartKey = `rscart_${subdomain}`;
@@ -102,9 +122,39 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
     return () => window.removeEventListener('reseller-cart-updated', loadCart);
   }, [subdomain]);
 
-  // Fire InitiateCheckout when cart loads (if has items)
+  // Fetch customer loyalty and profile when phone number is entered
   useEffect(() => {
-    if (cart.length === 0) return;
+    if (!watchedPhone || watchedPhone.trim().length < 11) {
+      setCustomerProfile(null);
+      return;
+    }
+
+    const fetchLoyalty = async () => {
+      try {
+        const res = await fetch(`/api/store/${subdomain}/customer-loyalty?phone=${encodeURIComponent(watchedPhone.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.customer) {
+            setCustomerProfile(data.customer);
+          } else {
+            setCustomerProfile(null);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching loyalty details:', err);
+      }
+    };
+
+    const timer = setTimeout(fetchLoyalty, 600);
+    return () => clearTimeout(timer);
+  }, [watchedPhone, subdomain]);
+
+  // Fire InitiateCheckout when cart loads (with user details)
+  const hasTrackedInitiate = useRef(false);
+  useEffect(() => {
+    if (cart.length === 0 || hasTrackedInitiate.current) return;
+    hasTrackedInitiate.current = true;
+
     const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
     const payload = {
       content_ids: cart.map(i => i.resellerProductId),
@@ -113,14 +163,87 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
       currency: 'BDT',
       num_items: cart.reduce((s, i) => s + i.quantity, 0),
     };
-    resellerFbEvent(subdomain, 'InitiateCheckout', payload);
-    resellerTtEvent(subdomain, 'InitiateCheckout', payload);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart.length > 0]);
+    const userData = {
+      ph: watchedPhone,
+      em: customerProfile?.email,
+      country: 'bd'
+    };
+    resellerFbEvent(subdomain, 'InitiateCheckout', payload, userData);
+    resellerTtEvent(subdomain, 'InitiateCheckout', payload, userData);
+  }, [cart, subdomain, watchedPhone, customerProfile?.email]);
 
-  const deliveryCharge = deliveryArea === 'inside' ? storeInfo.deliveryInside : storeInfo.deliveryOutside;
+  // Pricing calculations
   const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
-  const total = subtotal + deliveryCharge;
+  const freeDeliveryThreshold = storeInfo.freeDeliveryThreshold || 0;
+  const isFreeDelivery = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
+  const deliveryCharge = isFreeDelivery
+    ? 0
+    : (deliveryArea === 'inside' ? storeInfo.deliveryInside : storeInfo.deliveryOutside);
+
+  const totalProductDiscount = cart.reduce((s, i) => {
+    if (i.originalPrice && i.originalPrice > i.price) {
+      return s + (i.originalPrice - i.price) * i.quantity;
+    }
+    return s;
+  }, 0);
+
+  const baseTotal = subtotal + deliveryCharge;
+  const totalAfterCoupon = Math.max(0, baseTotal - couponDiscount);
+
+  // Loyalty calculations
+  const loyaltyConfig = storeInfo.loyaltyConfig || { isEnabled: false, activationThreshold: 5000, rewardPercentage: 5 };
+  const walletBalance = customerProfile?.walletBalance || 0;
+  const walletAmountToUse = (useWallet && walletBalance > 0) ? Math.min(walletBalance, totalAfterCoupon) : 0;
+  const finalTotal = Math.max(0, totalAfterCoupon - walletAmountToUse);
+
+  // Calculate potential reward
+  let potentialReward = 0;
+  if (loyaltyConfig.isEnabled) {
+    const isAlreadyActive = customerProfile?.isLoyaltyActive;
+    const willBeActive = isAlreadyActive || (totalAfterCoupon >= (loyaltyConfig.activationThreshold || 5000));
+    if (willBeActive) {
+      const payableAmount = totalAfterCoupon - walletAmountToUse;
+      potentialReward = Math.floor(payableAmount * ((loyaltyConfig.rewardPercentage || 5) / 100));
+    }
+  }
+
+  // Handle Coupon Apply
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('দয়া করে একটি কুপন কোড লিখুন');
+      return;
+    }
+    setApplyingCoupon(true);
+    try {
+      const res = await fetch(`/api/store/${subdomain}/coupons/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          totalAmount: subtotal
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCouponDiscount(data.discountAmount);
+        setAppliedCoupon(data.code);
+        toast.success(`কুপন "${data.code}" সফলভাবে যুক্ত হয়েছে! ৳${data.discountAmount} ছাড় পেয়েছেন`);
+      } else {
+        toast.error(data.message || 'ভুল বা মেয়াদোত্তীর্ণ কুপন কোড');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'কুপন যাচাই করতে সমস্যা হয়েছে');
+    } finally {
+      setApplyingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponCode('');
+    toast.info('কুপন সরানো হয়েছে');
+  };
 
   const updateQuantity = (item: CartItem, delta: number) => {
     const cartKey = `rscart_${subdomain}`;
@@ -152,10 +275,6 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
   };
 
   // Abandoned Carts Tracking
-  const watchedFullName = form.watch('fullName');
-  const watchedPhone = form.watch('phone');
-  const watchedStreet = form.watch('street');
-
   useEffect(() => {
     if (cart.length === 0 || submitting || showSuccessModal) return;
     if (!watchedPhone || watchedPhone.trim().length < 11 || !watchedFullName || watchedFullName.trim().length < 2) return;
@@ -172,7 +291,7 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
             deliveryArea: deliveryArea,
             resellerId: resellerId,
             items: cart.map(item => ({
-              product: item.resellerProductId, // In reseller context, product is the ResellerProduct ID
+              product: item.resellerProductId,
               name: item.name,
               quantity: item.quantity,
               price: item.price,
@@ -180,7 +299,7 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
               color: item.color,
               size: item.size
             })),
-            totalAmount: total
+            totalAmount: finalTotal
           })
         });
       } catch (error) {
@@ -188,9 +307,9 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
       }
     };
 
-    const timer = setTimeout(syncAbandonedCart, 2000); // 2 seconds debounce
+    const timer = setTimeout(syncAbandonedCart, 2000);
     return () => clearTimeout(timer);
-  }, [watchedFullName, watchedPhone, watchedStreet, deliveryArea, cart, total, submitting, showSuccessModal]);
+  }, [watchedFullName, watchedPhone, watchedStreet, deliveryArea, cart, finalTotal, submitting, showSuccessModal, resellerId]);
 
   const onSubmit = async (values: CheckoutValues) => {
     if (cart.length === 0) return toast.error('কার্টে কোনো পণ্য নেই');
@@ -204,13 +323,18 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
           customer: {
             name: values.fullName,
             phone: normalizedPhone,
-            address: { street: values.street, city: deliveryArea === 'inside' ? 'Dhaka' : 'Outside Dhaka' },
+            email: customerProfile?.email || `${normalizedPhone}@store.com`,
+            address: { street: values.street, city: values.deliveryArea === 'inside' ? 'Dhaka' : 'Outside Dhaka' },
           },
           items: cart,
           deliveryArea: values.deliveryArea,
           deliveryCharge,
           subtotal,
-          totalAmount: total,
+          couponCode: appliedCoupon || undefined,
+          couponDiscountAmount: couponDiscount,
+          useWallet,
+          walletAmountUsed,
+          totalAmount: finalTotal,
           paymentMethod: values.paymentMethod,
           notes: values.notes,
         }),
@@ -218,6 +342,31 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
 
       const data = await res.json();
       if (res.ok) {
+        const orderShortId = data.shortId || data.orderId;
+        const nameParts = (values.fullName || '').trim().split(/\s+/);
+
+        const purchasePayload = {
+          order_id: orderShortId,
+          content_ids: cart.map(i => i.resellerProductId),
+          contents: cart.map(i => ({ id: i.resellerProductId, quantity: i.quantity, item_price: i.price })),
+          value: finalTotal,
+          currency: 'BDT',
+          num_items: cart.reduce((s, i) => s + i.quantity, 0),
+        };
+
+        const purchaseUserData = {
+          em: customerProfile?.email || `${normalizedPhone}@store.com`,
+          ph: normalizedPhone,
+          fn: nameParts[0] || '',
+          ln: nameParts.slice(1).join(' ') || '',
+          ct: values.deliveryArea === 'inside' ? 'Dhaka' : 'Outside Dhaka',
+          country: 'bd'
+        };
+
+        // Fire Pixel & CAPI events with exact deduplication
+        resellerFbEvent(subdomain, 'Purchase', purchasePayload, purchaseUserData, orderShortId);
+        resellerTtEvent(subdomain, 'Purchase', purchasePayload, purchaseUserData, orderShortId);
+
         if (values.paymentMethod === 'stripe') {
           const stripeRes = await fetch('/api/payment/stripe/checkout', {
             method: 'POST',
@@ -226,17 +375,6 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
           });
           const stripeData = await stripeRes.json();
           if (stripeRes.ok && stripeData.url) {
-            // Track Purchase before redirect
-            const purchasePayload = {
-              order_id: data.orderId,
-              content_ids: cart.map(i => i.resellerProductId),
-              contents: cart.map(i => ({ id: i.resellerProductId, quantity: i.quantity, item_price: i.price })),
-              value: total,
-              currency: 'BDT',
-              num_items: cart.reduce((s, i) => s + i.quantity, 0),
-            };
-            resellerFbEvent(subdomain, 'Purchase', purchasePayload);
-            resellerTtEvent(subdomain, 'Purchase', purchasePayload);
             localStorage.removeItem(`rscart_${subdomain}`);
             setCart([]);
             window.location.href = stripeData.url;
@@ -245,158 +383,131 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
             toast.error(stripeData.error || 'স্ট্রাইপ পেমেন্ট শুরু করতে ব্যর্থ হয়েছে');
           }
         } else {
-          // Track Purchase
-          const purchasePayload = {
-            order_id: data.shortId || data.orderId,
-            content_ids: cart.map(i => i.resellerProductId),
-            contents: cart.map(i => ({ id: i.resellerProductId, quantity: i.quantity, item_price: i.price })),
-            value: total,
-            currency: 'BDT',
-            num_items: cart.reduce((s, i) => s + i.quantity, 0),
-          };
-          resellerFbEvent(subdomain, 'Purchase', purchasePayload);
-          resellerTtEvent(subdomain, 'Purchase', purchasePayload);
           localStorage.removeItem(`rscart_${subdomain}`);
           setCart([]);
-          setOrderId(data.shortId || data.orderId || '');
+          setOrderId(orderShortId);
           setShowSuccessModal(true);
         }
       } else {
-        toast.error(data.error || 'অর্ডার দিতে সমস্যা হয়েছে');
+        toast.error(data.error || 'অর্ডার করতে সমস্যা হয়েছে');
+        setShowFailModal(true);
       }
     } catch {
       toast.error('নেটওয়ার্ক সমস্যা হয়েছে');
+      setShowFailModal(true);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const watchedFields = form.watch();
-  const isPhoneValid = /^(?:01)[3-9]\d{8}$/.test(watchedFields.phone || '');
-  const isAddressValid = (watchedFields.street || '').trim().length >= 5;
-  const isNameValid = (watchedFields.fullName || '').trim().length >= 2;
-  const isFormValid = !!(isNameValid && isPhoneValid && isAddressValid && watchedFields.deliveryArea);
-
-  // Empty cart state
-  if (cart.length === 0 && !showSuccessModal) return (
-    <div className="container min-h-[70vh] flex flex-col items-center justify-center gap-6 py-20 text-center">
-      <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-        <ShoppingBag className="w-12 h-12 text-muted-foreground" />
-      </div>
-      <div className="space-y-2">
-        <h2 className="text-2xl font-black tracking-tight">আপনার কার্ট খালি!</h2>
-        <p className="text-muted-foreground text-sm max-w-xs">
-          চেকআউট করতে আগে কিছু পণ্য কার্টে যোগ করুন।
-        </p>
-      </div>
-      <Link href="/shop">
-        <Button className="rounded-full px-8 h-11 font-bold">
-          শপে যান <ArrowRight className="ml-2 h-4 w-4" />
+  if (cart.length === 0 && !showSuccessModal) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center max-w-md">
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+          <ShoppingBag className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h2 className="text-xl font-bold mb-2">আপনার কার্ট খালি</h2>
+        <p className="text-muted-foreground text-sm mb-6">চেকআউট করতে প্রথমে কার্টে কিছু পণ্য যোগ করুন।</p>
+        <Button asChild className="w-full">
+          <Link href="/">শপিং শুরু করুন</Link>
         </Button>
-      </Link>
-    </div>
-  );
+      </div>
+    );
+  }
 
   return (
-    <div className="container px-4 md:px-6 py-6 md:py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start">
-
-        {/* Left: Cart Summary */}
-        <div className="block lg:sticky lg:top-24 self-start space-y-6">
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        {/* Left Column: Cart Items */}
+        <div className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
                 <ShoppingBag className="h-5 w-5 text-primary" />
                 আপনার অর্ডারকৃত পণ্যসমূহ ({cart.reduce((s, i) => s + i.quantity, 0)})
               </CardTitle>
               <CardDescription>যে পণ্যগুলো আপনি কিনতে যাচ্ছেন।</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="max-h-[500px] overflow-y-auto space-y-4 pr-2 -mr-2">
-                {cart.map((item, index) => (
-                  <div key={`${item.resellerProductId}_${item.color || ''}_${item.size || ''}_${index}`} className="flex gap-4 items-start relative group">
-                    <div className="h-16 w-16 rounded-md border bg-muted flex-shrink-0 relative overflow-hidden">
-                      {item.image && (
-                        <Image src={item.image} alt={item.name || 'Product'} width={64} height={64} className="h-full w-full object-cover" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex justify-between items-start gap-2 w-full min-w-0">
-                        <div className="flex flex-col pr-4 min-w-0 flex-1">
-                          <p className="text-sm font-bold truncate" title={item.name}>{item.name}</p>
-                          {(item.color || item.size) && (
-                            <p className="text-[10px] text-muted-foreground font-medium">
-                              {[item.color, item.size].filter(Boolean).join(' / ')}
-                            </p>
-                          )}
-                        </div>
-                        <button
-                          onClick={() => removeItem(item)}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1 -mt-1 -mr-1"
-                          aria-label={`Remove ${item.name}`}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center border rounded-full bg-muted/50 scale-90 -ml-2">
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item, -1)}
-                            className="h-7 w-7 flex items-center justify-center hover:bg-muted rounded-full transition-colors"
-                          >
-                            <Minus className="h-3 w-3" />
-                          </button>
-                          <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item, 1)}
-                            className="h-7 w-7 flex items-center justify-center hover:bg-muted rounded-full transition-colors"
-                          >
-                            <Plus className="h-3 w-3" />
-                          </button>
-                        </div>
-                        <p className="text-sm font-bold text-primary">৳{Math.round(item.price * item.quantity)}</p>
-                      </div>
-                    </div>
+            <CardContent className="space-y-3">
+              {cart.map((item, idx) => (
+                <div key={idx} className="flex gap-3 py-2 border-b last:border-0 items-center">
+                  <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                    {item.image ? (
+                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">ছবি নেই</div>
+                    )}
                   </div>
-                ))}
-              </div>
-              <Separator />
-              <div className="flex justify-between items-center pt-2">
-                <span className="text-base font-bold">Items Total</span>
-                <span className="text-xl font-black text-primary">৳{Math.round(subtotal)}</span>
-              </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{item.name}</p>
+                    {(item.color || item.size) && (
+                      <p className="text-xs text-muted-foreground">
+                        {[item.color, item.size].filter(Boolean).join(' / ')}
+                      </p>
+                    )}
+                    <p className="text-sm font-bold text-primary mt-0.5">৳{item.price}</p>
+                  </div>
+                  <div className="flex items-center gap-1 border rounded-lg p-0.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => updateQuantity(item, -1)}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="text-xs font-bold w-5 text-center">{item.quantity}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => updateQuantity(item, 1)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    onClick={() => removeItem(item)}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ))}
             </CardContent>
+            <CardFooter className="pt-2 border-t flex justify-between">
+              <span className="text-sm text-muted-foreground">আইটেম সাবটোটাল</span>
+              <span className="font-bold text-base">৳{subtotal}</span>
+            </CardFooter>
           </Card>
         </div>
 
-        {/* Right: Delivery & Payment */}
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Checkout</h1>
-            <p className="text-muted-foreground mt-2">Complete your order by filling in the details below.</p>
-          </div>
-
+        {/* Right Column: Checkout Form & Pricing Summary */}
+        <div className="space-y-4">
           <Form {...form}>
-            <form id="checkout-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {/* Customer Info Card */}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-xl">
-                    <Truck className="h-6 w-6 text-primary" />
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Truck className="h-5 w-5 text-primary" />
                     ডেলিভারি তথ্য
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-3">
                   <FormField
                     control={form.control}
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>পূর্ণ নাম</FormLabel>
+                        <FormLabel>আপনার নাম *</FormLabel>
                         <FormControl>
-                          <Input placeholder="আপনার পূর্ণ নাম লিখুন" {...field} className="h-11 focus-visible:ring-primary/20" />
+                          <Input placeholder="সম্পূর্ণ নাম লিখুন" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -407,9 +518,9 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>মোবাইল নম্বর</FormLabel>
+                        <FormLabel>মোবাইল নম্বর *</FormLabel>
                         <FormControl>
-                          <Input placeholder="যেমন: 017XXXXXXXX" {...field} className="h-11 focus-visible:ring-primary/20" />
+                          <Input placeholder="01XXXXXXXXX" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -419,28 +530,28 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                     control={form.control}
                     name="deliveryArea"
                     render={({ field }) => (
-                      <FormItem className="space-y-3">
-                        <FormLabel className="font-bold">ডেলিভারি এলাকা</FormLabel>
+                      <FormItem className="space-y-2">
+                        <FormLabel>ডেলিভারি এলাকা *</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
-                            value={field.value}
-                            className="flex flex-row space-x-6 pt-1"
+                            defaultValue={field.value}
+                            className="flex flex-col sm:flex-row gap-3"
                           >
-                            <FormItem className="flex items-center space-x-2 space-y-0 cursor-pointer">
+                            <FormItem className="flex items-center space-x-2 space-y-0 border rounded-lg p-3 flex-1 cursor-pointer hover:bg-muted/50 transition-colors">
                               <FormControl>
                                 <RadioGroupItem value="inside" />
                               </FormControl>
-                              <FormLabel className="font-medium cursor-pointer text-sm">
-                                ঢাকার ভিতরে — ৳{storeInfo.deliveryInside}
+                              <FormLabel className="font-normal cursor-pointer text-xs sm:text-sm">
+                                ঢাকার ভিতরে — {isFreeDelivery ? <span className="text-green-600 font-bold">ফ্রি</span> : `৳${storeInfo.deliveryInside}`}
                               </FormLabel>
                             </FormItem>
-                            <FormItem className="flex items-center space-x-2 space-y-0 cursor-pointer">
+                            <FormItem className="flex items-center space-x-2 space-y-0 border rounded-lg p-3 flex-1 cursor-pointer hover:bg-muted/50 transition-colors">
                               <FormControl>
                                 <RadioGroupItem value="outside" />
                               </FormControl>
-                              <FormLabel className="font-medium cursor-pointer text-sm">
-                                ঢাকার বাইরে — ৳{storeInfo.deliveryOutside}
+                              <FormLabel className="font-normal cursor-pointer text-xs sm:text-sm">
+                                ঢাকার বাইরে — {isFreeDelivery ? <span className="text-green-600 font-bold">ফ্রি</span> : `৳${storeInfo.deliveryOutside}`}
                               </FormLabel>
                             </FormItem>
                           </RadioGroup>
@@ -454,9 +565,9 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                     name="street"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>সম্পূর্ণ ঠিকানা</FormLabel>
+                        <FormLabel>সম্পূর্ণ ঠিকানা *</FormLabel>
                         <FormControl>
-                          <Input placeholder="গ্রাম/বাসা নং, রোড নং, এলাকা, থানা, জেলা" {...field} className="h-11 focus-visible:ring-primary/20" />
+                          <Input placeholder="গ্রাম/বাসা নং, রোড নং, এলাকা, থানা, জেলা" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -467,9 +578,9 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Special Instructions (Optional)</FormLabel>
+                        <FormLabel>বিশেষ নির্দেশনা (ঐচ্ছিক)</FormLabel>
                         <FormControl>
-                          <Input placeholder="Any special notes..." {...field} className="h-11 focus-visible:ring-primary/20" />
+                          <Input placeholder="ডেলিভারি সংক্রান্ত কোনো নির্দেশনা থাকলে লিখুন" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -478,26 +589,133 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                 </CardContent>
               </Card>
 
-              {/* Order Details Card */}
+              {/* Order Details Breakdown Card */}
               <Card>
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <CardTitle className="text-lg">Order Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Coupon Section */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Coupon Code"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        disabled={!!appliedCoupon || applyingCoupon}
+                        className="h-10 text-xs uppercase"
+                      />
+                      {appliedCoupon ? (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={removeCoupon}
+                          className="h-10 px-3"
+                        >
+                          Remove
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => applyCoupon()}
+                          disabled={applyingCoupon || !couponCode}
+                          className="h-10 px-4"
+                        >
+                          {applyingCoupon ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Apply'}
+                        </Button>
+                      )}
+                    </div>
+                    {appliedCoupon && (
+                      <p className="text-[11px] text-green-600 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Coupon "{appliedCoupon}" active!
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Loyalty / Customer Token Application */}
+                  {loyaltyConfig.isEnabled && customerProfile && walletBalance > 0 && (
+                    <div className="p-3 rounded-lg border bg-primary/5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="reseller-wallet-use"
+                            checked={useWallet}
+                            onChange={(e) => setUseWallet(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <label htmlFor="reseller-wallet-use" className="text-xs font-bold cursor-pointer">
+                            লয়্যালটি রিওয়ার্ড ব্যালেন্স ব্যবহার করুন
+                          </label>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] font-bold text-green-600 bg-green-50">
+                          উপলব্ধ: ৳{walletBalance}
+                        </Badge>
+                      </div>
+                      {useWallet && (
+                        <p className="text-[10px] text-muted-foreground pl-6">
+                          অর্ডারে ৳{walletAmountToUse} টোকেন ডিসকাউন্ট হিসেবে অ্যাডজাস্ট করা হয়েছে।
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <Separator />
+
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span>৳{Math.round(subtotal)}</span>
+                      <span>৳{Math.round(subtotal + totalProductDiscount)}</span>
+                    </div>
+                    {totalProductDiscount > 0 && (
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Product Discount</span>
+                        <span>- ৳{Math.round(totalProductDiscount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Coupon Discount</span>
+                      <span className={couponDiscount > 0 ? "text-green-600 font-bold" : ""}>
+                        - ৳{Math.round(couponDiscount)}
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shipping</span>
-                      <span className="text-primary font-bold">৳{deliveryCharge}</span>
+                      <span className={isFreeDelivery ? "text-green-600 font-black" : "text-primary font-bold"}>
+                        {isFreeDelivery ? 'FREE' : `৳${deliveryCharge}`}
+                      </span>
                     </div>
+                    {isFreeDelivery && (
+                      <p className="text-[10px] text-green-600 font-bold text-right -mt-1">
+                        Free shipping applied (Order ≥ ৳{freeDeliveryThreshold})
+                      </p>
+                    )}
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Loyalty Discount</span>
+                      <span className={walletAmountToUse > 0 ? "text-primary font-bold" : ""}>
+                        - ৳{Math.round(walletAmountToUse)}
+                      </span>
+                    </div>
+
                     <Separator className="mt-4" />
+
                     <div className="flex justify-between text-lg font-black pt-2">
                       <span>Final Total</span>
-                      <span className="text-primary">৳{Math.round(total)}</span>
+                      <span className="text-primary">৳{Math.round(finalTotal)}</span>
                     </div>
+
+                    {potentialReward > 0 && (
+                      <div className="mt-4 p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                        <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+                          <Award className="h-3.5 w-3.5" /> Loyalty Perk
+                        </p>
+                        <p className="text-xs font-bold">
+                          এই অর্ডার সম্পন্ন হলে আপনি <span className="text-primary font-black">৳{potentialReward}</span> রিওয়ার্ড টোকেন পাবেন!
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -579,21 +797,21 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                 <CardFooter className="pt-2 border-t flex flex-col gap-3">
                   <Button
                     type="submit"
-                    className={`w-full h-14 rounded-full font-black uppercase tracking-widest text-sm transition-all ${
-                      isFormValid
-                        ? 'bg-primary shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95'
-                        : 'bg-muted text-muted-foreground cursor-not-allowed opacity-70'
-                    }`}
-                    disabled={submitting || !isFormValid}
+                    className="w-full text-base py-6 font-bold"
+                    disabled={submitting}
                   >
-                    {submitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <CheckCircle2 className="mr-2 h-5 w-5" />}
-                    অর্ডার নিশ্চিত করুন — ৳{Math.round(total)}
+                    {submitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        অর্ডার প্রসেস হচ্ছে...
+                      </>
+                    ) : (
+                      <>
+                        অর্ডার সম্পন্ন করুন — ৳{Math.round(finalTotal)}
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </>
+                    )}
                   </Button>
-                  {!isFormValid && (
-                    <p className="text-[10px] font-bold text-muted-foreground text-center w-full uppercase tracking-widest">
-                      অর্ডার সম্পন্ন করতে ডেলিভারি তথ্য পূরণ করুন
-                    </p>
-                  )}
                 </CardFooter>
               </Card>
             </form>
@@ -601,75 +819,57 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
         </div>
       </div>
 
-      {/* ✅ Order Success Modal */}
+      {/* Success Modal */}
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="max-w-md p-0 overflow-hidden border-0 shadow-2xl">
-          <div className="flex flex-col items-center text-center p-8 gap-6">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center border-4 border-green-500/20 shadow-xl shadow-green-500/20 animate-in zoom-in-50 duration-500">
-                <PartyPopper className="w-12 h-12 text-green-500" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4 text-white" />
-              </div>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+              <PartyPopper className="h-8 w-8 text-green-600 dark:text-green-400" />
             </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black tracking-tight">অর্ডার সফল হয়েছে!</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                আপনার অর্ডারটি সফলভাবে গ্রহণ করা হয়েছে। আমরা শীঘ্রই আপনার সাথে যোগাযোগ করবো।
+            <DialogTitle className="text-xl font-bold text-center">
+              অর্ডার সফলভাবে গৃহীত হয়েছে!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2 text-sm text-muted-foreground">
+            <p>আপনার অর্ডারের জন্য ধন্যবাদ। আমাদের টিম শীঘ্রই আপনার সাথে যোগাযোগ করবে।</p>
+            {orderId && (
+              <div className="bg-muted p-3 rounded-lg font-mono font-bold text-foreground text-base">
+                অর্ডার আইডি: #{orderId}
+              </div>
+            )}
+            {potentialReward > 0 && (
+              <p className="text-xs text-green-600 font-bold">
+                🎉 এই অর্ডার ডেলিভারি সম্পন্ন হলে আপনার একাউন্টে ৳{potentialReward} লয়্যালটি টোকেন জমা হবে!
               </p>
-              {orderId && (
-                <p className="text-xs font-mono bg-muted px-3 py-1.5 rounded-full inline-block text-muted-foreground">
-                  Order ID: <span className="font-bold text-foreground">#{orderId.slice(-8).toUpperCase()}</span>
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-3 w-full pt-2">
-              <Button
-                onClick={() => { setShowSuccessModal(false); window.location.href = '/shop'; }}
-                className="w-full h-11 rounded-full font-bold shadow-lg shadow-primary/20"
-              >
-                <ShoppingBag className="w-4 h-4 mr-2" />
-                আরো শপিং করুন
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => { setShowSuccessModal(false); window.location.href = '/'; }}
-                className="w-full h-11 rounded-full font-bold"
-              >
-                হোমে ফিরে যান <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </div>
+            )}
           </div>
+          <DialogFooter className="sm:justify-center">
+            <Button asChild className="w-full sm:w-auto">
+              <Link href="/">আরও শপিং করুন</Link>
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* ❌ Payment Failed Modal */}
+      {/* Fail Modal */}
       <Dialog open={showFailModal} onOpenChange={setShowFailModal}>
-        <DialogContent className="max-w-md p-0 overflow-hidden border-0 shadow-2xl">
-          <div className="flex flex-col items-center text-center p-8 gap-6">
-            <div className="w-24 h-24 rounded-full bg-destructive/10 flex items-center justify-center border-4 border-destructive/20 shadow-xl shadow-destructive/20 animate-in zoom-in-50 duration-500">
-              <XCircle className="w-12 h-12 text-destructive" />
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+              <XCircle className="h-8 w-8 text-destructive" />
             </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black tracking-tight text-destructive">পেমেন্ট ব্যর্থ হয়েছে</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                আপনার পেমেন্ট সম্পন্ন হয়নি। পুনরায় চেষ্টা করুন অথবা COD বেছে নিন।
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 w-full pt-2">
-              <Button onClick={() => setShowFailModal(false)} className="w-full h-11 rounded-full font-bold">
-                পুনরায় চেষ্টা করুন
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => { setShowFailModal(false); window.location.href = '/shop'; }}
-                className="w-full h-11 rounded-full font-bold"
-              >
-                শপে ফিরে যান
-              </Button>
-            </div>
+            <DialogTitle className="text-xl font-bold text-center text-destructive">
+              অর্ডার সম্পন্ন করা যায়নি
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 text-sm text-muted-foreground">
+            <p>একটি সমস্যা হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন অথবা সরাসরি আমাদের সাথে যোগাযোগ করুন।</p>
           </div>
+          <DialogFooter className="sm:justify-center">
+            <Button variant="outline" onClick={() => setShowFailModal(false)}>
+              আবার চেষ্টা করুন
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

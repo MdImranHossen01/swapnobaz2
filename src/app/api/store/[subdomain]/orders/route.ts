@@ -3,8 +3,10 @@ import dbConnect from '@/lib/db';
 import Reseller from '@/models/Reseller';
 import ResellerProduct from '@/models/ResellerProduct';
 import ResellerOrder from '@/models/ResellerOrder';
+import ResellerCoupon from '@/models/ResellerCoupon';
 import ResellerWalletTransaction from '@/models/ResellerWalletTransaction';
 import Order from '@/models/Order';
+import WalletTransaction from '@/models/WalletTransaction';
 
 function generateShortId() {
   return 'RS' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2, 5).toUpperCase();
@@ -13,7 +15,7 @@ function generateShortId() {
 /**
  * POST /api/store/[subdomain]/orders
  * Places an order on a reseller's storefront.
- * Calculates commissions and queues the order for Mother routing.
+ * Calculates commissions, handles coupons, loyalty tokens, and queues the order for Mother routing.
  */
 export async function POST(
   request: NextRequest,
@@ -29,7 +31,7 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { customer, items, paymentMethod, notes, deliveryArea } = body;
+    const { customer, items, paymentMethod, notes, deliveryArea, couponCode, useWallet } = body;
 
     if (!customer?.name || !customer?.phone || !customer?.address?.street) {
       return NextResponse.json({ error: 'Customer details incomplete' }, { status: 400 });
@@ -56,10 +58,10 @@ export async function POST(
 
     for (const item of items) {
       const qty = parseInt(item.quantity, 10);
-      if (isNaN(qty) || qty <= 0 || !Number.isInteger(qty)) continue; // Reject non-positive or invalid quantity
+      if (isNaN(qty) || qty <= 0 || !Number.isInteger(qty)) continue;
 
       const rp = rpMap.get(String(item.resellerProductId));
-      if (!rp) continue; // Skip unavailable products
+      if (!rp) continue;
 
       if (rp.stock < qty) {
         return NextResponse.json({ error: `Requested quantity for "${rp.name}" exceeds available stock. Only ${rp.stock} left.` }, { status: 400 });
@@ -85,7 +87,6 @@ export async function POST(
 
       validatedItems.push(validatedItem);
 
-      // If product belongs to another reseller, group it for their fulfillment order
       if (uploaderId && uploaderId !== reseller._id.toString()) {
         if (!uploaderItemsMap.has(uploaderId)) {
           uploaderItemsMap.set(uploaderId, []);
@@ -97,8 +98,8 @@ export async function POST(
 
         uploaderItemsMap.get(uploaderId)!.push({
           ...validatedItem,
-          retailPrice: rp.purchasePrice, // Cost price of reseller A is the selling price of uploader B
-          purchasePrice: uploaderRp?.purchasePrice || rp.purchasePrice, // uploader's true cost price, falling back to reseller A's cost price
+          retailPrice: rp.purchasePrice,
+          purchasePrice: uploaderRp?.purchasePrice || rp.purchasePrice,
         });
       }
     }
@@ -107,7 +108,7 @@ export async function POST(
       return NextResponse.json({ error: 'No valid items found' }, { status: 400 });
     }
 
-    // Recompute subtotal, deliveryCharge, and totalAmount
+    // Recompute subtotal, deliveryCharge, and base total
     const calculatedSubtotal = validatedItems.reduce((sum, item) => sum + item.retailPrice * item.quantity, 0);
 
     const insideCharge = reseller.deliveryConfig?.insideDhaka ?? 60;
@@ -119,7 +120,7 @@ export async function POST(
       calculatedDeliveryCharge = 0;
     }
 
-    const calculatedTotalAmount = calculatedSubtotal + calculatedDeliveryCharge;
+    let baseTotal = calculatedSubtotal + calculatedDeliveryCharge;
 
     const shortId = generateShortId();
 
@@ -134,7 +135,7 @@ export async function POST(
     sessionConn.startTransaction();
 
     try {
-      // Find or auto-create customer user account
+      // 1. Find or auto-create customer user account
       let customerUser = await User.findOne({
         $or: [
           ...(normalizedPhone ? [{ phone: normalizedPhone }] : []),
@@ -150,6 +151,7 @@ export async function POST(
           email: customer.email ? customer.email.toLowerCase().trim() : `${normalizedPhone}@store.com`,
           phone: normalizedPhone,
           role: 'user',
+          registeredVia: reseller._id,
           addresses: [{
             street: customer.address?.street || '',
             city: customer.address?.city || '',
@@ -161,7 +163,84 @@ export async function POST(
         customerUser = newUser;
       }
 
-      // Create Mother Order for Admin fulfillment & dispatch
+      // 2. Validate Coupon if provided
+      let couponDiscountAmount = 0;
+      let appliedCouponCode: string | undefined = undefined;
+
+      if (couponCode && typeof couponCode === 'string') {
+        const cleanCode = couponCode.trim().toUpperCase();
+        const foundCoupon = await ResellerCoupon.findOne({
+          resellerId: reseller._id,
+          code: cleanCode,
+          isActive: true,
+          expiryDate: { $gt: new Date() }
+        }).session(sessionConn);
+
+        if (foundCoupon) {
+          const meetsMin = !foundCoupon.minPurchase || calculatedSubtotal >= foundCoupon.minPurchase;
+          const meetsLimit = !foundCoupon.usageLimit || foundCoupon.usedCount < foundCoupon.usageLimit;
+
+          if (meetsMin && meetsLimit) {
+            if (foundCoupon.discountType === 'fixed') {
+              couponDiscountAmount = foundCoupon.discountValue;
+            } else {
+              couponDiscountAmount = Math.floor(calculatedSubtotal * (foundCoupon.discountValue / 100));
+            }
+            couponDiscountAmount = Math.min(couponDiscountAmount, calculatedSubtotal);
+            appliedCouponCode = cleanCode;
+
+            // Increment usage count atomically
+            foundCoupon.usedCount += 1;
+            await foundCoupon.save({ session: sessionConn });
+          }
+        }
+      }
+
+      const totalAfterCoupon = Math.max(0, baseTotal - couponDiscountAmount);
+
+      // 3. Handle Wallet / Loyalty Tokens deduction
+      let walletAmountUsed = 0;
+      let walletTxId = '';
+      let earnedRewardAmount = 0;
+
+      const loyaltyConfig = reseller.loyaltyConfig || { isEnabled: false, activationThreshold: 5000, rewardPercentage: 5 };
+
+      if (customerUser) {
+        if (useWallet && customerUser.walletBalance > 0) {
+          walletAmountUsed = Math.min(customerUser.walletBalance, totalAfterCoupon);
+          customerUser.walletBalance -= walletAmountUsed;
+          await customerUser.save({ session: sessionConn });
+
+          const [walletTx] = await WalletTransaction.create([{
+            userId: customerUser._id,
+            amount: walletAmountUsed,
+            type: 'spent',
+            status: 'completed',
+            description: `Used tokens for reseller order ${shortId}`,
+          }], { session: sessionConn });
+
+          walletTxId = walletTx._id.toString();
+        }
+
+        // Calculate potential reward if reseller loyalty is enabled
+        if (loyaltyConfig.isEnabled) {
+          const isAlreadyActive = customerUser.isSubscriptionActive;
+          const willBeActive = isAlreadyActive || (totalAfterCoupon >= (loyaltyConfig.activationThreshold || 5000));
+
+          if (willBeActive) {
+            if (!isAlreadyActive) {
+              customerUser.isSubscriptionActive = true;
+              await customerUser.save({ session: sessionConn });
+            }
+            const payableAmount = totalAfterCoupon - walletAmountUsed;
+            earnedRewardAmount = Math.floor(payableAmount * ((loyaltyConfig.rewardPercentage || 5) / 100));
+          }
+        }
+      }
+
+      const calculatedFinalTotal = Math.max(0, totalAfterCoupon - walletAmountUsed);
+
+      // 4. Create Mother Order for Admin fulfillment & dispatch
       const [motherOrder] = await Order.create([{
         user: customerUser?._id,
         shortId,
@@ -175,8 +254,12 @@ export async function POST(
           color: item.color,
           size: item.size,
         })),
-        totalAmount: calculatedTotalAmount,
+        totalAmount: calculatedFinalTotal,
         deliveryCharge: calculatedDeliveryCharge,
+        couponCode: appliedCouponCode,
+        couponDiscountAmount: couponDiscountAmount,
+        walletAmountUsed,
+        earnedRewardAmount,
         shippingAddress: {
           fullName: customer.name,
           phone: customer.phone,
@@ -194,6 +277,7 @@ export async function POST(
         internalNote: notes || `Reseller Order (${reseller.storeName})`,
       }], { session: sessionConn });
 
+      // 5. Create Reseller Order
       const [order] = await ResellerOrder.create([{
         resellerId: reseller._id,
         motherOrderId: motherOrder._id,
@@ -201,7 +285,9 @@ export async function POST(
         items: validatedItems,
         subtotal: calculatedSubtotal,
         deliveryCharge: calculatedDeliveryCharge,
-        totalAmount: calculatedTotalAmount,
+        couponCode: appliedCouponCode,
+        couponDiscount: couponDiscountAmount,
+        totalAmount: calculatedFinalTotal,
         paymentMethod: paymentMethod || 'COD',
         paymentStatus: 'Pending',
         status: 'Order Placed',
@@ -211,10 +297,18 @@ export async function POST(
         shortId,
       }], { session: sessionConn });
 
+      // Link wallet transaction if any
+      if (walletTxId) {
+        await WalletTransaction.findOneAndUpdate(
+          { _id: walletTxId },
+          { orderId: motherOrder._id },
+          { session: sessionConn }
+        );
+      }
 
       // Update reseller stats (atomic)
       await Reseller.findByIdAndUpdate(reseller._id, {
-        $inc: { totalOrders: 1, totalRevenue: calculatedTotalAmount },
+        $inc: { totalOrders: 1, totalRevenue: calculatedFinalTotal },
       }, { session: sessionConn });
 
       // Create pending commission ledger entry
@@ -227,13 +321,13 @@ export async function POST(
         status: 'pending',
       }], { session: sessionConn });
 
-      // Create Fulfillment Orders for other resellers who uploaded these products
+      // Create Fulfillment Orders for other resellers if applicable
       let fIndex = 1;
       for (const [uploaderId, fItems] of uploaderItemsMap.entries()) {
         const uploaderSubtotal = fItems.reduce((sum, item) => sum + item.retailPrice * item.quantity, 0);
         const uploaderCommission = fItems.reduce((sum, item) => sum + (item.retailPrice - item.purchasePrice) * item.quantity, 0);
 
-        const [fOrder] = await ResellerOrder.create([{
+        await ResellerOrder.create([{
           resellerId: uploaderId,
           motherOrderId: motherOrder._id,
           customer,
@@ -249,21 +343,7 @@ export async function POST(
           internalNote: `Fulfillment for Order ${shortId}`,
           shortId: `${shortId}-F${fIndex}`,
         }], { session: sessionConn });
-
         fIndex++;
-
-        await Reseller.findByIdAndUpdate(uploaderId, {
-          $inc: { totalOrders: 1, totalRevenue: uploaderSubtotal },
-        }, { session: sessionConn });
-
-        await ResellerWalletTransaction.create([{
-          resellerId: uploaderId,
-          type: 'commission_earned',
-          amount: uploaderCommission,
-          orderId: fOrder._id,
-          description: `Fulfillment commission from order ${shortId}`,
-          status: 'pending',
-        }], { session: sessionConn });
       }
 
       await sessionConn.commitTransaction();
@@ -271,56 +351,23 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        orderId: order._id.toString(),
-        shortId,
-        message: 'Order placed successfully',
+        orderId: order._id,
+        shortId: order.shortId,
+        totalAmount: calculatedFinalTotal,
+        couponDiscountAmount,
+        walletAmountUsed,
+        earnedRewardAmount
       });
-    } catch (txnError) {
+
+    } catch (txError: any) {
       await sessionConn.abortTransaction();
       sessionConn.endSession();
-      throw txnError;
+      console.error('Transaction error in reseller order creation:', txError);
+      return NextResponse.json({ error: txError.message || 'Failed to place order' }, { status: 500 });
     }
+
   } catch (error: any) {
-    console.error('[Reseller Order API]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error placing reseller order:', error);
+    return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });
   }
-}
-
-/**
- * GET /api/store/[subdomain]/orders
- * Returns order status for a customer (by phone + shortId).
- */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ subdomain: string }> }
-) {
-  const { subdomain } = await params;
-  const { searchParams } = request.nextUrl;
-  const shortId = searchParams.get('shortId');
-  const phone = searchParams.get('phone');
-
-  if (!shortId || !phone) {
-    return NextResponse.json({ error: 'shortId and phone required' }, { status: 400 });
-  }
-
-  await dbConnect();
-  const reseller = await Reseller.findOne({ subdomain });
-  if (!reseller) return NextResponse.json({ error: 'Store not found' }, { status: 404 });
-
-  const order = await ResellerOrder.findOne({
-    resellerId: reseller._id,
-    shortId,
-    'customer.phone': phone,
-  }).lean();
-
-  if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-
-  return NextResponse.json({
-    shortId: order.shortId,
-    status: order.status,
-    items: order.items,
-    totalAmount: order.totalAmount,
-    createdAt: order.createdAt,
-    shippingDetails: order.shippingDetails,
-  });
 }

@@ -37,10 +37,14 @@ export default async function ResellerCheckoutPage({ params }: Props) {
   const globalSettings = await GlobalSettings.findOne().sort({ updatedAt: -1 }).lean() as any;
   const stripeActive = globalSettings?.paymentConfig?.activeMethod === 'stripe';
 
+  const freeDeliveryThreshold = reseller.deliveryConfig?.freeDeliveryThreshold || 0;
+
   const storeInfo = {
     storeName: reseller.storeName,
     deliveryInside: reseller.deliveryConfig?.insideDhaka ?? 60,
     deliveryOutside: reseller.deliveryConfig?.outsideDhaka ?? 120,
+    freeDeliveryThreshold,
+    loyaltyConfig: reseller.loyaltyConfig || { isEnabled: false, activationThreshold: 5000, rewardPercentage: 5 },
     paymentConfig: reseller.paymentConfig as any,
     stripeActive,
     // Pass pixel IDs so ResellerCheckout can fire Purchase events
