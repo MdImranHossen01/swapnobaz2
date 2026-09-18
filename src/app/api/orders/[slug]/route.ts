@@ -75,7 +75,9 @@ export async function PATCH(
       couponDiscountAmount,
       walletAmountUsed,
       items,
-      internalNote
+      internalNote,
+      customerNote,
+      systemNote
     } = body;
 
     const conn = await connectToDatabase();
@@ -101,6 +103,8 @@ export async function PATCH(
 
       const updateData: any = {};
       if (internalNote !== undefined) updateData.internalNote = internalNote;
+      if (customerNote !== undefined) updateData.customerNote = customerNote;
+      if (systemNote !== undefined) updateData.systemNote = systemNote;
       if (status) {
         if (!allowedStatuses.includes(status)) {
           await dbSession.abortTransaction();

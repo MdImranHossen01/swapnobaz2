@@ -274,7 +274,9 @@ export async function POST(
         paymentStatus: 'Pending',
         status: 'Order Placed',
         resellerId: reseller._id,
-        internalNote: notes || `Reseller Order (${reseller.storeName})`,
+        customerNote: notes || '',
+        internalNote: '',
+        systemNote: `Reseller Order (${reseller.storeName})`,
       }], { session: sessionConn })) as any[];
 
       // 5. Create Reseller Order
@@ -293,7 +295,9 @@ export async function POST(
         status: 'Order Placed',
         resellerCommission: totalCommission,
         commissionStatus: 'pending',
-        internalNote: notes || '',
+        customerNote: notes || '',
+        internalNote: '',
+        systemNote: `Storefront Order (${reseller.storeName})`,
         shortId,
       }], { session: sessionConn })) as any[];
 
@@ -340,7 +344,9 @@ export async function POST(
           status: 'Order Placed',
           resellerCommission: uploaderCommission,
           commissionStatus: 'pending',
-          internalNote: `Fulfillment for Order ${shortId}`,
+          customerNote: notes || '',
+          internalNote: '',
+          systemNote: `Fulfillment for Order ${shortId}`,
           shortId: `${shortId}-F${fIndex}`,
         }], { session: sessionConn });
         fIndex++;

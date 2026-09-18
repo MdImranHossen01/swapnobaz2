@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Mail, Phone, MapPin, CreditCard, Calendar, Truck, ExternalLink, FileText, Printer, Trash2, PlusCircle, Edit, X } from 'lucide-react';
+import { Loader2, Mail, Phone, MapPin, CreditCard, Calendar, Truck, ExternalLink, FileText, Printer, Trash2, PlusCircle, Edit, X, MessageSquare, Lock, Tag } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { toast } from 'sonner';
 import { generateInvoicePDF } from '@/lib/invoice-generator';
@@ -135,7 +135,9 @@ export default function OrderDetailsDialog({
             purchasePrice: item.purchasePrice || 0
           })) : [],
           status: orderData.status || 'Order Placed',
-          internalNote: orderData.internalNote || ''
+          internalNote: orderData.internalNote || '',
+          customerNote: orderData.customerNote || '',
+          systemNote: orderData.systemNote || ''
         });
       } catch (error: any) {
         if (error.name !== 'AbortError') {
@@ -255,7 +257,9 @@ export default function OrderDetailsDialog({
               purchasePrice: item.purchasePrice || 0
             })) : [],
             status: updatedData.status || 'Order Placed',
-            internalNote: updatedData.internalNote || ''
+            internalNote: updatedData.internalNote || '',
+            customerNote: updatedData.customerNote || '',
+            systemNote: updatedData.systemNote || ''
           });
         }
       } else {
@@ -640,15 +644,31 @@ export default function OrderDetailsDialog({
 
                 <Separator />
 
-                {/* Internal Note */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-bold uppercase text-muted-foreground">Internal Note (Admin/Manager)</h3>
-                  <textarea 
-                    value={editForm.internalNote || ''} 
-                    onChange={(e) => setEditForm({ ...editForm, internalNote: e.target.value })}
-                    className="w-full text-sm p-2 border rounded h-20 resize-y" 
-                    placeholder="Enter customer specific internal notes here..."
-                  />
+                {/* Customer Note & Internal Note in Edit Mode */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-bold uppercase text-sky-700 dark:text-sky-400 flex items-center gap-1.5">
+                      <MessageSquare className="h-4 w-4" /> Customer Note
+                    </h3>
+                    <textarea 
+                      value={editForm.customerNote || ''} 
+                      onChange={(e) => setEditForm({ ...editForm, customerNote: e.target.value })}
+                      className="w-full text-sm p-2 border rounded-lg h-20 resize-y bg-sky-50/50 dark:bg-sky-950/20 border-sky-200 dark:border-sky-900" 
+                      placeholder="Delivery instructions from customer..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-bold uppercase text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                      <Lock className="h-4 w-4" /> Internal Note (Admin/Staff)
+                    </h3>
+                    <textarea 
+                      value={editForm.internalNote || ''} 
+                      onChange={(e) => setEditForm({ ...editForm, internalNote: e.target.value })}
+                      className="w-full text-sm p-2 border rounded-lg h-20 resize-y bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900" 
+                      placeholder="Private internal notes for staff..."
+                    />
+                  </div>
                 </div>
 
                 <Separator />
@@ -1006,13 +1026,39 @@ export default function OrderDetailsDialog({
               )}
             </div>
 
-            {/* Internal Note */}
-            {order.internalNote && (
+            {/* Note Sections: Customer Note, Internal Note, System Note */}
+            {(order.customerNote || order.internalNote || order.systemNote) && (
               <>
                 <Separator />
-                <div className="space-y-2 bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg border border-yellow-200/50">
-                  <h4 className="text-xs font-bold uppercase text-amber-800 dark:text-amber-300">Internal Note (Admin/Manager)</h4>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{order.internalNote}</p>
+                <div className="space-y-3">
+                  {order.customerNote && (
+                    <div className="bg-sky-50 dark:bg-sky-950/30 p-3 rounded-lg border border-sky-200 dark:border-sky-900 space-y-1">
+                      <h4 className="text-xs font-bold uppercase text-sky-800 dark:text-sky-300 flex items-center gap-1.5">
+                        <MessageSquare className="h-3.5 w-3.5" /> Customer Delivery Note
+                      </h4>
+                      <p className="text-sm text-sky-900 dark:text-sky-200 whitespace-pre-wrap">{order.customerNote}</p>
+                    </div>
+                  )}
+
+                  {order.internalNote && (
+                    <div className="bg-amber-50 dark:bg-amber-950/30 p-3 rounded-lg border border-amber-200/60 dark:border-amber-900 space-y-1">
+                      <h4 className="text-xs font-bold uppercase text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                        <Lock className="h-3.5 w-3.5" /> Internal Note (Admin/Staff Private)
+                      </h4>
+                      <p className="text-sm text-amber-900 dark:text-amber-200 whitespace-pre-wrap">{order.internalNote}</p>
+                    </div>
+                  )}
+
+                  {order.systemNote && (
+                    <div className="bg-muted/40 p-2.5 rounded-lg border border-border flex items-center justify-between text-xs">
+                      <span className="font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <Tag className="h-3.5 w-3.5" /> System Info:
+                      </span>
+                      <span className="font-mono font-medium text-foreground bg-background px-2 py-0.5 rounded border border-border">
+                        {order.systemNote}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </>
             )}

@@ -59,6 +59,8 @@ export interface IOrder extends Document {
     transactionId?: string;
   };
   internalNote?: string;
+  customerNote?: string;
+  systemNote?: string;
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
@@ -131,6 +133,8 @@ const OrderSchema: Schema<IOrder> = new Schema(
       transactionId: { type: String },
     },
     internalNote: { type: String, default: '' },
+    customerNote: { type: String, default: '' },
+    systemNote: { type: String, default: '' },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true }

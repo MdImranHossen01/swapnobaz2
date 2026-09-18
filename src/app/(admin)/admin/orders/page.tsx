@@ -979,9 +979,22 @@ function OrdersContent() {
                             </Badge>
                           ))}
                         </div>
+                        {/* Customer Note */}
+                        {order.customerNote && (
+                          <div className="mt-1 text-[10px] bg-sky-50 dark:bg-sky-950/20 text-sky-800 dark:text-sky-300 px-1.5 py-0.5 rounded border border-sky-200/50 font-medium whitespace-pre-line max-w-[200px]" title={`Customer Note: ${order.customerNote}`}>
+                            💬 Customer: {order.customerNote}
+                          </div>
+                        )}
+                        {/* Internal Note */}
                         {order.internalNote && (
-                          <div className="mt-1 text-[10px] bg-yellow-50 dark:bg-yellow-950/20 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded border border-yellow-200/50 font-medium whitespace-pre-line max-w-[200px]" title={order.internalNote}>
-                            Note: {order.internalNote}
+                          <div className="mt-1 text-[10px] bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded border border-amber-200/50 font-medium whitespace-pre-line max-w-[200px]" title={`Internal Note: ${order.internalNote}`}>
+                            🔒 Staff: {order.internalNote}
+                          </div>
+                        )}
+                        {/* System Note */}
+                        {order.systemNote && (
+                          <div className="mt-1 text-[9px] bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded border border-border font-mono max-w-[200px] truncate" title={`System Info: ${order.systemNote}`}>
+                            ⚙️ {order.systemNote}
                           </div>
                         )}
                         {order.resellerId && typeof order.resellerId === 'object' && order.resellerId.storeName && (
@@ -1197,9 +1210,19 @@ function OrdersContent() {
                     ))}
                   </div>
 
+                  {order.customerNote && (
+                    <div className="text-[10px] bg-sky-50 dark:bg-sky-950/20 text-sky-800 dark:text-sky-300 px-1.5 py-0.5 rounded border border-sky-200/50 font-medium whitespace-pre-line">
+                      💬 Customer: {order.customerNote}
+                    </div>
+                  )}
                   {order.internalNote && (
-                    <div className="text-[10px] bg-yellow-50 dark:bg-yellow-950/20 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded border border-yellow-200/50 font-medium whitespace-pre-line">
-                      Note: {order.internalNote}
+                    <div className="text-[10px] bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 px-1.5 py-0.5 rounded border border-amber-200/50 font-medium whitespace-pre-line">
+                      🔒 Staff: {order.internalNote}
+                    </div>
+                  )}
+                  {order.systemNote && (
+                    <div className="text-[9px] bg-muted/60 text-muted-foreground px-1.5 py-0.5 rounded border border-border font-mono truncate">
+                      ⚙️ {order.systemNote}
                     </div>
                   )}
                   {order.resellerId && typeof order.resellerId === 'object' && order.resellerId.storeName && (

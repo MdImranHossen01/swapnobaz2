@@ -483,9 +483,22 @@ function OrdersContent() {
                             </div>
                           );
                         })}
+                        {/* Customer Note */}
+                        {order.customerNote && (
+                          <div className="text-[10px] bg-sky-50 dark:bg-sky-950/20 text-sky-800 dark:text-sky-300 p-1.5 rounded-sm border border-sky-200 dark:border-sky-900/50 mt-1 whitespace-pre-wrap flex items-start gap-1">
+                            <span className="font-bold">💬 Customer:</span> {order.customerNote}
+                          </div>
+                        )}
+                        {/* Reseller Internal Note */}
                         {order.internalNote && (
-                          <div className="text-[10px] bg-yellow-50 dark:bg-yellow-950/20 text-yellow-800 dark:text-yellow-400 p-1.5 rounded-sm border border-yellow-200 dark:border-yellow-900/50 mt-1 whitespace-pre-wrap">
-                            <span className="font-bold">Note:</span> {order.internalNote}
+                          <div className="text-[10px] bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 p-1.5 rounded-sm border border-amber-200 dark:border-amber-900/50 mt-1 whitespace-pre-wrap flex items-start gap-1">
+                            <span className="font-bold">🔒 Private:</span> {order.internalNote}
+                          </div>
+                        )}
+                        {/* System Note / Fulfillment */}
+                        {order.systemNote && (
+                          <div className="text-[10px] bg-muted/60 text-muted-foreground p-1 rounded-sm border border-border mt-1 font-mono flex items-center gap-1">
+                            <span>⚙️</span> {order.systemNote}
                           </div>
                         )}
                       </div>

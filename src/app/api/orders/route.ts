@@ -58,8 +58,10 @@ const orderSchema = z.object({
   deliveryCharge: z.number().min(0).nullish(),
   useWallet: z.boolean().nullish().default(false),
   couponCode: z.string().nullish(),
+  customerNote: z.string().nullish(),
   internalNote: z.string().nullish(),
   notes: z.string().nullish(),
+  systemNote: z.string().nullish(),
   manualPaymentDetails: z.object({
     methodName: z.string().optional(),
     senderNumber: z.string().optional(),
@@ -457,7 +459,9 @@ export async function POST(req: NextRequest) {
           status: 'Order Placed',
           transactionId: paymentMethod === 'Online' ? `ORDER-${crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 16)}` : undefined,
           shortId: crypto.randomBytes(4).toString('hex').toUpperCase(),
-          internalNote: (validation.data as any).internalNote || (validation.data as any).notes || undefined,
+          customerNote: (validation.data as any).customerNote || (validation.data as any).notes || undefined,
+          internalNote: (validation.data as any).internalNote || undefined,
+          systemNote: (validation.data as any).systemNote || undefined,
           manualPaymentDetails,
         },
       ],
@@ -596,7 +600,9 @@ export async function GET(req: NextRequest) {
               paymentStatus: ro.paymentStatus || 'Pending',
               status: ro.status || 'Order Placed',
               resellerId: ro.resellerId,
-              internalNote: ro.internalNote || 'Reseller Store Order',
+              customerNote: ro.customerNote || '',
+              internalNote: ro.internalNote || '',
+              systemNote: ro.systemNote || 'Reseller Store Order',
               createdAt: ro.createdAt,
             });
             await ResellerOrder.findByIdAndUpdate(ro._id, { motherOrderId: created._id });

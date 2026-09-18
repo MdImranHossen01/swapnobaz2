@@ -55,6 +55,8 @@ export interface IResellerOrder extends Document {
     courierStatus?: string;
   };
   internalNote?: string;
+  customerNote?: string;
+  systemNote?: string;
   shortId?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -119,6 +121,8 @@ const ResellerOrderSchema: Schema<IResellerOrder> = new Schema(
       courierStatus: { type: String },
     },
     internalNote: { type: String, default: '' },
+    customerNote: { type: String, default: '' },
+    systemNote: { type: String, default: '' },
     shortId: { type: String, unique: true, sparse: true, index: true },
   },
   { timestamps: true }

@@ -169,7 +169,8 @@ export async function POST(req: NextRequest) {
         paymentStatus: 'Pending',
         status: 'Order Placed',
         resellerId: reseller._id,
-        internalNote: `Recovered from Abandoned Cart by Reseller (${reseller.storeName})`,
+        systemNote: `Recovered from Abandoned Cart by Reseller (${reseller.storeName})`,
+        internalNote: '',
       }], { session: sessionConn });
 
       const customerDetails = {
@@ -198,7 +199,8 @@ export async function POST(req: NextRequest) {
         resellerCommission: totalCommission,
         commissionStatus: 'pending',
         shortId,
-        internalNote: 'Recovered from Abandoned Cart',
+        systemNote: 'Recovered from Abandoned Cart',
+        internalNote: '',
       }], { session: sessionConn });
 
       // Delete the abandoned cart
