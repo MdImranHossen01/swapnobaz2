@@ -58,6 +58,8 @@ const orderSchema = z.object({
   deliveryCharge: z.number().min(0).nullish(),
   useWallet: z.boolean().nullish().default(false),
   couponCode: z.string().nullish(),
+  internalNote: z.string().nullish(),
+  notes: z.string().nullish(),
   manualPaymentDetails: z.object({
     methodName: z.string().optional(),
     senderNumber: z.string().optional(),
@@ -455,6 +457,7 @@ export async function POST(req: NextRequest) {
           status: 'Order Placed',
           transactionId: paymentMethod === 'Online' ? `ORDER-${crypto.randomUUID().replace(/-/g, '').toUpperCase().slice(0, 16)}` : undefined,
           shortId: crypto.randomBytes(4).toString('hex').toUpperCase(),
+          internalNote: (validation.data as any).internalNote || (validation.data as any).notes || undefined,
           manualPaymentDetails,
         },
       ],

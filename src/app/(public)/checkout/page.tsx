@@ -57,6 +57,7 @@ const checkoutSchema = z.object({
   paymentMethod: z.enum(['COD', 'Online', 'Manual'], {
     message: 'Select a payment method'
   }),
+  notes: z.string().optional(),
 });
 
 type CheckoutValues = z.infer<typeof checkoutSchema>;
@@ -93,6 +94,7 @@ function CheckoutContent() {
       street: '',
       deliveryArea: 'inside',
       paymentMethod: 'COD',
+      notes: '',
     },
   });
 
@@ -389,6 +391,7 @@ function CheckoutContent() {
         deliveryCharge: deliveryCharge,
         useWallet: useWallet,
         couponCode: appliedCoupon || undefined,
+        internalNote: values.notes || undefined,
         manualPaymentDetails: values.paymentMethod === 'Manual' ? {
           methodName: selectedMethod?.id,
           senderNumber: manualDetails.senderNumber,
@@ -800,6 +803,19 @@ function CheckoutContent() {
                         <FormLabel>সম্পূর্ণ ঠিকানা</FormLabel>
                         <FormControl>
                           <Input placeholder="গ্রাম/বাসা নং, রোড নং, এলাকা, থানা, জেলা" {...field} className="h-11 focus-visible:ring-primary/20" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>বিশেষ নির্দেশনা (ঐচ্ছিক)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ডেলিভারি সংক্রান্ত কোনো নির্দেশনা থাকলে লিখুন" {...field} className="h-11 focus-visible:ring-primary/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

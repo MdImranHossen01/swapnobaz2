@@ -35,6 +35,7 @@ const checkoutSchema = z.object({
   street: z.string().min(5, 'ঠিকানা আবশ্যক'),
   deliveryArea: z.enum(['inside', 'outside']),
   paymentMethod: z.string().min(1),
+  notes: z.string().optional(),
 });
 
 type CheckoutValues = z.infer<typeof checkoutSchema>;
@@ -95,7 +96,7 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
   const form = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
     mode: 'onChange',
-    defaultValues: { deliveryArea: 'outside', paymentMethod: 'COD' },
+    defaultValues: { deliveryArea: 'outside', paymentMethod: 'COD', notes: '' },
   });
 
   const deliveryArea = form.watch('deliveryArea');
@@ -335,6 +336,7 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
           walletAmountUsed: walletAmountToUse,
           totalAmount: finalTotal,
           paymentMethod: values.paymentMethod,
+          notes: values.notes,
         }),
       });
 
@@ -566,6 +568,19 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                         <FormLabel>সম্পূর্ণ ঠিকানা</FormLabel>
                         <FormControl>
                           <Input placeholder="গ্রাম/বাসা নং, রোড নং, এলাকা, থানা, জেলা" {...field} className="h-11 focus-visible:ring-primary/20" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>বিশেষ নির্দেশনা (ঐচ্ছিক)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ডেলিভারি সংক্রান্ত কোনো নির্দেশনা থাকলে লিখুন" {...field} className="h-11 focus-visible:ring-primary/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
