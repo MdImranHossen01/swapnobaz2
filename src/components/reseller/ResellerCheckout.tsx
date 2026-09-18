@@ -35,7 +35,6 @@ const checkoutSchema = z.object({
   street: z.string().min(5, 'ঠিকানা আবশ্যক'),
   deliveryArea: z.enum(['inside', 'outside']),
   paymentMethod: z.string().min(1),
-  notes: z.string().optional(),
 });
 
 type CheckoutValues = z.infer<typeof checkoutSchema>;
@@ -336,7 +335,6 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
           walletAmountUsed: walletAmountToUse,
           totalAmount: finalTotal,
           paymentMethod: values.paymentMethod,
-          notes: values.notes,
         }),
       });
 
@@ -499,15 +497,15 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                     ডেলিভারি তথ্য
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-4">
                   <FormField
                     control={form.control}
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>আপনার নাম *</FormLabel>
+                        <FormLabel>পূর্ণ নাম</FormLabel>
                         <FormControl>
-                          <Input placeholder="সম্পূর্ণ নাম লিখুন" {...field} />
+                          <Input placeholder="আপনার পূর্ণ নাম লিখুন" {...field} className="h-11 focus-visible:ring-primary/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -518,9 +516,9 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                     name="phone"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>মোবাইল নম্বর *</FormLabel>
+                        <FormLabel>মোবাইল নম্বর</FormLabel>
                         <FormControl>
-                          <Input placeholder="01XXXXXXXXX" {...field} />
+                          <Input placeholder="যেমন: 017XXXXXXXX" {...field} className="h-11 focus-visible:ring-primary/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -531,7 +529,7 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                     name="deliveryArea"
                     render={({ field }) => (
                       <FormItem className="space-y-2">
-                        <FormLabel>ডেলিভারি এলাকা *</FormLabel>
+                        <FormLabel>ডেলিভারি এলাকা</FormLabel>
                         <FormControl>
                           <RadioGroup
                             onValueChange={field.onChange}
@@ -565,22 +563,9 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                     name="street"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>সম্পূর্ণ ঠিকানা *</FormLabel>
+                        <FormLabel>সম্পূর্ণ ঠিকানা</FormLabel>
                         <FormControl>
-                          <Input placeholder="গ্রাম/বাসা নং, রোড নং, এলাকা, থানা, জেলা" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>বিশেষ নির্দেশনা (ঐচ্ছিক)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="ডেলিভারি সংক্রান্ত কোনো নির্দেশনা থাকলে লিখুন" {...field} />
+                          <Input placeholder="গ্রাম/বাসা নং, রোড নং, এলাকা, থানা, জেলা" {...field} className="h-11 focus-visible:ring-primary/20" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -669,12 +654,10 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
                       <span className="text-muted-foreground">Subtotal</span>
                       <span>৳{Math.round(subtotal + totalProductDiscount)}</span>
                     </div>
-                    {totalProductDiscount > 0 && (
-                      <div className="flex justify-between text-sm text-green-600">
-                        <span>Product Discount</span>
-                        <span>- ৳{Math.round(totalProductDiscount)}</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Product Discount</span>
+                      <span>- ৳{Math.round(totalProductDiscount)}</span>
+                    </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Coupon Discount</span>
                       <span className={couponDiscount > 0 ? "text-green-600 font-bold" : ""}>
