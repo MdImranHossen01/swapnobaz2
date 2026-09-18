@@ -333,7 +333,7 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
           couponCode: appliedCoupon || undefined,
           couponDiscountAmount: couponDiscount,
           useWallet,
-          walletAmountUsed,
+          walletAmountUsed: walletAmountToUse,
           totalAmount: finalTotal,
           paymentMethod: values.paymentMethod,
           notes: values.notes,
