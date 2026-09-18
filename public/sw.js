@@ -1,4 +1,4 @@
-const CACHE_NAME = 'Swapnobaz-cache-v1';
+const CACHE_NAME = 'Swapnobaz-cache-v2';
 const OFFLINE_URL = '/offline';
 
 const ASSETS_TO_CACHE = [
@@ -12,8 +12,6 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Service Worker: Caching critical assets');
-      // Use a more resilient approach: cache what we can, don't fail everything if one fails
       return Promise.allSettled(
         ASSETS_TO_CACHE.map(url =>
           cache.add(url).catch(err => console.error(`Failed to cache ${url}:`, err))
@@ -30,7 +28,6 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -48,9 +45,9 @@ self.addEventListener('fetch', (event) => {
   // Skip non-http schemes
   if (!['http:', 'https:'].includes(url.protocol)) return;
 
-  // 1. API Requests - Network Only
-  if (url.pathname.startsWith('/api/')) {
-    return; // Let browser handle it normally
+  // 1. API & Admin Requests - Bypass Service Worker Completely
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin')) {
+    return; // Let browser handle it normally without SW interception
   }
 
   // 2. Next.js Static Assets (Hashed/Immutable) - Cache First
@@ -64,6 +61,8 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cacheCopy));
           }
           return networkResponse;
+        }).catch(() => {
+          return new Response('', { status: 404, statusText: 'Not Found' });
         });
       })
     );
@@ -71,7 +70,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   // 3. Navigation Requests (HTML) - Network First
-  // This is critical to avoid "stale HTML pointing to old chunks"
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -89,7 +87,6 @@ self.addEventListener('fetch', (event) => {
               if (offlineResponse) return offlineResponse;
               return caches.match('/').then((homeResponse) => {
                 if (homeResponse) return homeResponse;
-                // Serve a generic fallback instead of letting the browser fail with an unstyled error page
                 return new Response(
                   `<!DOCTYPE html>
                   <html lang="en">
@@ -127,7 +124,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 4. Everything else - Stale-while-revalidate
+  // 4. Everything else - Stale-while-revalidate with graceful fallback
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
@@ -136,9 +133,8 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cacheCopy));
         }
         return networkResponse;
-      }).catch((error) => {
-        if (cachedResponse) return cachedResponse;
-        throw error;
+      }).catch(() => {
+        return cachedResponse || new Response(null, { status: 404 });
       });
 
       return cachedResponse || fetchPromise;
