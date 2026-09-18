@@ -55,7 +55,6 @@ export default async function ResellerCheckoutPage({ params }: Props) {
   const themeOverrides = (reseller.themeOverrides as any) || {};
   const navStyle = themeOverrides.navbar || 'v1';
   const footerStyle = themeOverrides.footer || 'v1';
-  const freeDeliveryThreshold = reseller.deliveryConfig?.freeDeliveryThreshold || 0;
 
   const settingsData = {
     brandName: reseller.storeName,

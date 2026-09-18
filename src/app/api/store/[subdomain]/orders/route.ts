@@ -146,7 +146,7 @@ export async function POST(
       }).session(sessionConn);
 
       if (!customerUser && normalizedPhone) {
-        const [newUser] = await User.create([{
+        const [newUser] = (await User.create([{
           name: customer.name,
           email: customer.email ? customer.email.toLowerCase().trim() : `${normalizedPhone}@store.com`,
           phone: normalizedPhone,
@@ -159,7 +159,7 @@ export async function POST(
             country: 'Bangladesh',
             isDefault: true
           }]
-        }], { session: sessionConn });
+        }], { session: sessionConn })) as any[];
         customerUser = newUser;
       }
 
@@ -211,13 +211,13 @@ export async function POST(
           customerUser.walletBalance -= walletAmountUsed;
           await customerUser.save({ session: sessionConn });
 
-          const [walletTx] = await WalletTransaction.create([{
+          const [walletTx] = (await WalletTransaction.create([{
             userId: customerUser._id,
             amount: walletAmountUsed,
             type: 'spent',
             status: 'completed',
             description: `Used tokens for reseller order ${shortId}`,
-          }], { session: sessionConn });
+          }], { session: sessionConn })) as any[];
 
           walletTxId = walletTx._id.toString();
         }
@@ -241,7 +241,7 @@ export async function POST(
       const calculatedFinalTotal = Math.max(0, totalAfterCoupon - walletAmountUsed);
 
       // 4. Create Mother Order for Admin fulfillment & dispatch
-      const [motherOrder] = await Order.create([{
+      const [motherOrder] = (await Order.create([{
         user: customerUser?._id,
         shortId,
         items: validatedItems.map(item => ({
@@ -275,10 +275,10 @@ export async function POST(
         status: 'Order Placed',
         resellerId: reseller._id,
         internalNote: notes || `Reseller Order (${reseller.storeName})`,
-      }], { session: sessionConn });
+      }], { session: sessionConn })) as any[];
 
       // 5. Create Reseller Order
-      const [order] = await ResellerOrder.create([{
+      const [order] = (await ResellerOrder.create([{
         resellerId: reseller._id,
         motherOrderId: motherOrder._id,
         customer,
@@ -295,7 +295,7 @@ export async function POST(
         commissionStatus: 'pending',
         internalNote: notes || '',
         shortId,
-      }], { session: sessionConn });
+      }], { session: sessionConn })) as any[];
 
       // Link wallet transaction if any
       if (walletTxId) {

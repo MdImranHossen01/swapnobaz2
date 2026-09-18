@@ -14,6 +14,8 @@ export interface IUser extends Document {
   resetPasswordExpires?: Date;
   isSubscriptionActive: boolean;
   walletBalance: number;
+  registeredVia?: mongoose.Types.ObjectId;
+  resellerId?: mongoose.Types.ObjectId;
   addresses: {
     street?: string;
     division?: string;
@@ -58,6 +60,8 @@ const UserSchema: Schema<IUser> = new Schema(
     lastActive: { type: Date, default: Date.now },
     isSubscriptionActive: { type: Boolean, default: false },
     walletBalance: { type: Number, default: 0, min: 0 },
+    registeredVia: { type: Schema.Types.ObjectId, ref: 'Reseller' },
+    resellerId: { type: Schema.Types.ObjectId, ref: 'Reseller' },
     addresses: [
       {
         street: { type: String },
