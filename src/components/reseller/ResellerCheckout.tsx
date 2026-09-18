@@ -416,10 +416,10 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* Left Column: Cart Items */}
-        <div className="space-y-4">
+    <div className="container mx-auto px-4 py-6 md:py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start">
+        {/* Left Column: Cart Items (Desktop Sticky) */}
+        <div className="block lg:sticky lg:top-24 self-start space-y-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">

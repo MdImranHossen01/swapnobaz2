@@ -615,7 +615,7 @@ function CheckoutContent() {
   );
 
   return (
-    <div className="container px-4 md:px-6 py-6 md:py-12">
+    <div className="container mx-auto px-4 py-6 md:py-10">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start">
         {/* Left Side: Order Summary (Desktop Sticky, Mobile Top) */}
         <div className="block lg:sticky lg:top-24 self-start space-y-6">
