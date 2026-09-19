@@ -40,7 +40,7 @@ export async function generateInvoicePDF(orderOrOrders: any | any[], settings: a
 
     const items = Array.isArray(order.items) ? order.items : [];
     const subtotalRaw = items.reduce((acc: number, item: any) => {
-      const price = Number(item.price) || 0;
+      const price = item.price !== undefined ? Number(item.price) : Number(item.retailPrice) || 0;
       const quantity = Number(item.quantity) || 0;
       return acc + price * quantity;
     }, 0);
@@ -48,9 +48,15 @@ export async function generateInvoicePDF(orderOrOrders: any | any[], settings: a
     const deliveryCharge = order.deliveryCharge !== undefined
       ? Number(order.deliveryCharge) || 0
       : Math.max(0, (Number(order.totalAmount) || 0) - subtotal);
-    const couponDiscount = Number(order.couponDiscountAmount) || 0;
+    const couponDiscount = Number(order.couponDiscountAmount || order.couponDiscount) || 0;
     const walletUsed = Number(order.walletAmountUsed) || 0;
-    const totalAmount = Math.round(order.totalAmount - couponDiscount - walletUsed);
+    const totalAmount = order.totalAmount !== undefined ? Number(order.totalAmount) : Math.round(subtotal + deliveryCharge - couponDiscount - walletUsed);
+
+    const customerName = order.shippingAddress?.fullName || order.customer?.name || "Customer";
+    const customerStreet = order.shippingAddress?.street || order.customer?.address?.street || "";
+    const customerCity = order.shippingAddress?.city || order.customer?.address?.city || "";
+    const customerZip = order.shippingAddress?.zipCode || order.customer?.address?.zipCode || "";
+    const customerPhone = order.shippingAddress?.phone || order.customer?.phone || "";
 
     return `
       <div class="invoice-container" style="${index < orders.length - 1 ? 'page-break-after: always; break-after: page;' : ''}">
@@ -70,10 +76,10 @@ export async function generateInvoicePDF(orderOrOrders: any | any[], settings: a
         <div class="details-grid">
           <div class="bill-to">
             <h3>Bill To</h3>
-            <p><strong>${order.shippingAddress?.fullName || "Customer"}</strong></p>
-            ${order.shippingAddress?.street ? `<p>${order.shippingAddress.street}</p>` : ''}
-            <p>${order.shippingAddress?.city || ""}${order.shippingAddress?.zipCode ? `, ${order.shippingAddress.zipCode}` : ""}</p>
-            <p>Phone: ${order.shippingAddress?.phone || ""}</p>
+            <p><strong>${customerName}</strong></p>
+            ${customerStreet ? `<p>${customerStreet}</p>` : ''}
+            <p>${customerCity}${customerZip ? `, ${customerZip}` : ""}</p>
+            <p>Phone: ${customerPhone}</p>
           </div>
           <div class="order-info">
             <h3>Order Info</h3>
@@ -107,7 +113,9 @@ export async function generateInvoicePDF(orderOrOrders: any | any[], settings: a
             </tr>
           </thead>
           <tbody>
-            ${items.map((item: any, idx: number) => `
+            ${items.map((item: any, idx: number) => {
+              const unitPrice = item.price !== undefined ? Number(item.price) : Number(item.retailPrice) || 0;
+              return `
               <tr>
                 <td>${idx + 1}</td>
                 <td>
@@ -115,10 +123,11 @@ export async function generateInvoicePDF(orderOrOrders: any | any[], settings: a
                   ${item.color || item.size ? `<br><small style="color: var(--muted-foreground)">Color: ${item.color || 'N/A'} | Size: ${item.size || 'N/A'}</small>` : ''}
                 </td>
                 <td class="text-center">${item.quantity}</td>
-                <td class="text-right">৳${Math.round(item.price)}</td>
-                <td class="text-right">৳${Math.round(item.price * item.quantity)}</td>
+                <td class="text-right">৳${Math.round(unitPrice)}</td>
+                <td class="text-right">৳${Math.round(unitPrice * item.quantity)}</td>
               </tr>
-            `).join('')}
+            `;
+            }).join('')}
           </tbody>
         </table>
 

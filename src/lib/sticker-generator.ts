@@ -91,6 +91,12 @@ export async function printStickerInvoice(orderOrOrders: any | any[], settings: 
     const trackingUrl = order.shippingDetails?.trackingUrl || `https://steadfast.com.bd/t/${consignmentId}`;
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(trackingUrl)}`;
 
+    const recipientName = order.shippingAddress?.fullName || order.customer?.name || 'Customer';
+    const recipientPhone = order.shippingAddress?.phone || order.customer?.phone || '';
+    const recipientStreet = order.shippingAddress?.street || order.customer?.address?.street || '';
+    const recipientCity = order.shippingAddress?.city || order.customer?.address?.city || 'N/A';
+    const recipientState = order.shippingAddress?.state || order.customer?.address?.division || recipientCity;
+
     return `
       <div class="sticker-container" style="${index < orders.length - 1 ? 'page-break-after: always; break-after: page;' : ''}">
         <div>
@@ -115,14 +121,14 @@ export async function printStickerInvoice(orderOrOrders: any | any[], settings: 
             <div class="info-table">
               <div class="table-header">${courierName} Courier</div>
               <div class="table-row">
-                <div class="table-cell table-cell-bold">P: ${order.shippingAddress?.city || 'N/A'}</div>
+                <div class="table-cell table-cell-bold">P: ${recipientCity}</div>
               </div>
               <div class="table-row">
-                <div class="table-cell">D: ${order.shippingAddress?.state || order.shippingAddress?.city || 'N/A'}</div>
+                <div class="table-cell">D: ${recipientState}</div>
               </div>
               <div class="table-row">
                 <div class="table-cell table-cell-bold" style="background-color: #f3f4f6;">
-                  ${order.shippingAddress?.city || 'N/A'}
+                  ${recipientCity}
                 </div>
               </div>
               <div class="table-row">
@@ -138,9 +144,9 @@ export async function printStickerInvoice(orderOrOrders: any | any[], settings: 
           </div>
 
           <div class="recipient-details">
-            <div class="recipient-name">${order.shippingAddress?.fullName || 'Customer'}</div>
-            <div class="recipient-phone">${order.shippingAddress?.phone || ''}</div>
-            <div>${order.shippingAddress?.street || ''}, ${order.shippingAddress?.city || ''}</div>
+            <div class="recipient-name">${recipientName}</div>
+            <div class="recipient-phone">${recipientPhone}</div>
+            <div>${recipientStreet ? `${recipientStreet}, ` : ''}${recipientCity}</div>
           </div>
         </div>
 

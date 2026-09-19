@@ -19,6 +19,8 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
 import ResellerOrderDetailsDialog from '@/components/reseller/ResellerOrderDetailsDialog';
+import { generateInvoicePDF } from '@/lib/invoice-generator';
+import { printStickerInvoice } from '@/lib/sticker-generator';
 
 function WhatsAppIcon(props: any) {
   return (
@@ -90,6 +92,8 @@ function OrdersContent() {
 
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
+  const [reseller, setReseller] = useState<any>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -111,7 +115,28 @@ function OrdersContent() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchOrders(); }, [page, statusFilter, dateFilter]);
+  useEffect(() => {
+    fetchOrders();
+    Promise.all([
+      fetch('/api/settings').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/reseller/settings').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([settingsData, resellerData]) => {
+      if (settingsData) setSettings(settingsData);
+      if (resellerData?.reseller) setReseller(resellerData.reseller);
+    });
+  }, [page, statusFilter, dateFilter]);
+
+  const getResellerBranding = () => {
+    return {
+      brandName: reseller?.storeName || settings?.brandName || 'Swapnobaz',
+      siteName: reseller?.storeName || settings?.siteName || settings?.brandName || 'Swapnobaz',
+      contact: {
+        phone: reseller?.phone || settings?.contact?.phone || '',
+        email: reseller?.email || settings?.contact?.email || '',
+        address: reseller?.address || settings?.contact?.address || '',
+      }
+    };
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -181,16 +206,45 @@ function OrdersContent() {
   const handleDownloadInvoice = async (order: any) => {
     try {
       toast.info('Generating PDF invoice...');
-      const { generateInvoicePDF } = await import('@/lib/invoice-generator');
-      await generateInvoicePDF(order, null);
+      await generateInvoicePDF(order, getResellerBranding(), 'download');
     } catch (error) {
-      toast.error('Error generating invoice');
+      console.error('Invoice error:', error);
+      toast.error('Failed to generate PDF invoice');
     }
   };
 
-  const handleLocalPrint = (id: string, type: 'invoice' | 'sticker') => {
-    const qs = `?id=${id}&type=${type}`;
-    window.open(`/admin/orders/print${qs}`, '_blank');
+  const handlePrint = async (orderOrIds: any) => {
+    try {
+      const toPrint = Array.isArray(orderOrIds)
+        ? orders.filter(o => orderOrIds.includes(o._id))
+        : typeof orderOrIds === 'object' ? [orderOrIds] : orders.filter(o => o._id === orderOrIds);
+      if (toPrint.length === 0) {
+        toast.error('No orders found to print');
+        return;
+      }
+      toast.info(`Generating ${toPrint.length > 1 ? toPrint.length + ' invoices' : 'invoice'}...`);
+      await generateInvoicePDF(toPrint, getResellerBranding(), 'print');
+    } catch (error) {
+      console.error('Print invoice error:', error);
+      toast.error('Failed to print invoice');
+    }
+  };
+
+  const handlePrintStickers = async (orderOrIds: any) => {
+    try {
+      const toPrint = Array.isArray(orderOrIds)
+        ? orders.filter(o => orderOrIds.includes(o._id))
+        : typeof orderOrIds === 'object' ? [orderOrIds] : orders.filter(o => o._id === orderOrIds);
+      if (toPrint.length === 0) {
+        toast.error('No orders found to print');
+        return;
+      }
+      toast.info('Preparing sticker invoice...');
+      await printStickerInvoice(toPrint, getResellerBranding());
+    } catch (error) {
+      console.error('Print sticker error:', error);
+      toast.error('Failed to print sticker');
+    }
   };
 
   const handleBookCourier = async (order: any) => {
@@ -593,10 +647,10 @@ function OrdersContent() {
                               <DropdownMenuItem onClick={() => handleDownloadInvoice(order)}>
                                 <FileText className="mr-2 h-4 w-4 text-primary" /> Download Invoice
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleLocalPrint(order._id, 'invoice')}>
+                              <DropdownMenuItem onClick={() => handlePrint(order)}>
                                 <Printer className="mr-2 h-4 w-4 text-primary" /> Print Invoice
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleLocalPrint(order._id, 'sticker')}>
+                              <DropdownMenuItem onClick={() => handlePrintStickers(order)}>
                                 <Printer className="mr-2 h-4 w-4 text-primary" /> Print Sticker Invoice
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleBookCourier(order)} disabled={!!order.shippingDetails?.consignmentId}>
@@ -700,15 +754,27 @@ function OrdersContent() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuGroup>
                           <DropdownMenuItem onClick={() => handleDownloadInvoice(order)}>
-                            <FileText className="mr-2 h-4 w-4 text-primary" /> Invoice
+                            <FileText className="mr-2 h-4 w-4 text-primary" /> Download Invoice
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleLocalPrint(order._id, 'sticker')}>
-                            <Printer className="mr-2 h-4 w-4 text-primary" /> Sticker
+                          <DropdownMenuItem onClick={() => handlePrint(order)}>
+                            <Printer className="mr-2 h-4 w-4 text-primary" /> Print Invoice
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePrintStickers(order)}>
+                            <Printer className="mr-2 h-4 w-4 text-primary" /> Print Sticker Invoice
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleBookCourier(order)} disabled={!!order.shippingDetails?.consignmentId}>
                             <Truck className="mr-2 h-4 w-4 text-orange-500" /> Book Courier
                           </DropdownMenuItem>
                         </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
+                          <DropdownMenuLabel>Status</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>Confirm</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>Mark Paid</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleCancelOrder(order._id)}>Cancel Order</DropdownMenuItem>
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                           <DropdownMenuLabel>Status</DropdownMenuLabel>
