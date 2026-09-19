@@ -197,7 +197,7 @@ export async function PATCH(request: NextRequest) {
           slug: product.slug,
           images: product.images ?? [],
           stock: product.stock ?? 0,
-          purchasePrice: product.purchasePrice ?? 0,
+          purchasePrice: product.resellerPrice || product.purchasePrice || 0,
           motherPrice: product.price ?? 0,
           isAvailableOnMother: product.isPublished ?? true,
           syncedAt: new Date(),

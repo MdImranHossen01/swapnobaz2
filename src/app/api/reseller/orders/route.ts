@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
@@ -21,10 +22,10 @@ export async function GET(request: NextRequest) {
 
     const resellerId = await getResellerId(session.user.id);
     const searchParams = request.nextUrl.searchParams;
-    
+
     let page = parseInt(searchParams.get('page') || '1', 10);
     if (isNaN(page) || page < 1) page = 1;
-    
+
     let limit = parseInt(searchParams.get('limit') || '20', 10);
     if (isNaN(limit) || limit < 1) limit = 20;
     if (limit > 100) limit = 100;
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
 
     statusAggregation.forEach(item => {
       statusCounts.all += item.count;
-      switch(item._id) {
+      switch (item._id) {
         case 'Order Placed': statusCounts.placed = item.count; break;
         case 'Confirmed': statusCounts.confirmed = item.count; break;
         case 'Processing': statusCounts.processing = item.count; break;
