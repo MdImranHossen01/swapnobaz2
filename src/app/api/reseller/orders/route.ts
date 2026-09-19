@@ -32,6 +32,41 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
 
+    // Auto-sync any existing ResellerOrders whose mother order status was updated
+    try {
+      const resellerOrdersWithMother = await ResellerOrder.find({
+        resellerId,
+        motherOrderId: { $exists: true, $ne: null }
+      }).select('_id status paymentStatus motherOrderId').lean();
+
+      if (resellerOrdersWithMother.length > 0) {
+        const motherIds = resellerOrdersWithMother.map(o => o.motherOrderId).filter(Boolean) as any[];
+        const motherOrders = await Order.find({ _id: { $in: motherIds } }).select('_id status paymentStatus').lean();
+        const motherMap = new Map(motherOrders.map(m => [m._id.toString(), m]));
+
+        const updatesToRun: Promise<any>[] = [];
+        for (const ro of resellerOrdersWithMother) {
+          const mother = ro.motherOrderId ? motherMap.get(ro.motherOrderId.toString()) : null;
+          if (mother && (ro.status !== mother.status || ro.paymentStatus !== mother.paymentStatus)) {
+            const syncUpdate: any = { status: mother.status, paymentStatus: mother.paymentStatus };
+            if (mother.status === 'Cancelled') {
+              syncUpdate.commissionStatus = 'cancelled';
+            } else if (mother.status === 'Delivered' || mother.status === 'Paid') {
+              syncUpdate.commissionStatus = 'cleared';
+            }
+            updatesToRun.push(
+              ResellerOrder.updateOne({ _id: ro._id }, { $set: syncUpdate })
+            );
+          }
+        }
+        if (updatesToRun.length > 0) {
+          await Promise.all(updatesToRun);
+        }
+      }
+    } catch (syncErr) {
+      console.error('[Reseller Orders Sync Error]', syncErr);
+    }
+
     const query: Record<string, any> = { resellerId };
     if (status) query.status = status;
     if (search) {

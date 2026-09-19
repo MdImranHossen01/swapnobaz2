@@ -232,6 +232,29 @@ export async function PATCH(
         { session: dbSession, new: true }
       );
 
+      // Sync linked ResellerOrder
+      const ResellerOrder = (await import('@/models/ResellerOrder')).default;
+      const resellerOrderUpdate: any = {};
+      if (updateData.status) {
+        resellerOrderUpdate.status = updateData.status;
+        if (updateData.status === 'Cancelled') {
+          resellerOrderUpdate.commissionStatus = 'cancelled';
+        } else if (updateData.status === 'Delivered' || updateData.status === 'Paid') {
+          resellerOrderUpdate.commissionStatus = 'cleared';
+        }
+      }
+      if (updateData.paymentStatus) {
+        resellerOrderUpdate.paymentStatus = updateData.paymentStatus;
+      }
+
+      if (Object.keys(resellerOrderUpdate).length > 0) {
+        await ResellerOrder.updateMany(
+          { motherOrderId: slug },
+          { $set: resellerOrderUpdate },
+          { session: dbSession }
+        );
+      }
+
       await dbSession.commitTransaction();
 
       if (order.paymentStatus !== 'Paid' && updatedOrder?.paymentStatus === 'Paid') {

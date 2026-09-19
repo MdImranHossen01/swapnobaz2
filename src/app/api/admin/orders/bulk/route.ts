@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import connectToDatabase from '@/lib/db';
@@ -38,11 +39,11 @@ export async function PATCH(req: NextRequest) {
     }
 
     const updateData: any = {};
-    
+
     if (status) {
       if (!ALLOWED_ORDER_STATUSES.includes(status)) {
-        return NextResponse.json({ 
-          message: `Invalid status. Allowed values: ${ALLOWED_ORDER_STATUSES.join(', ')}` 
+        return NextResponse.json({
+          message: `Invalid status. Allowed values: ${ALLOWED_ORDER_STATUSES.join(', ')}`
         }, { status: 400 });
       }
       updateData.status = status;
@@ -50,8 +51,8 @@ export async function PATCH(req: NextRequest) {
 
     if (paymentStatus) {
       if (!ALLOWED_PAYMENT_STATUSES.includes(paymentStatus)) {
-        return NextResponse.json({ 
-          message: `Invalid payment status. Allowed values: ${ALLOWED_PAYMENT_STATUSES.join(', ')}` 
+        return NextResponse.json({
+          message: `Invalid payment status. Allowed values: ${ALLOWED_PAYMENT_STATUSES.join(', ')}`
         }, { status: 400 });
       }
       updateData.paymentStatus = paymentStatus;
@@ -74,7 +75,21 @@ export async function PATCH(req: NextRequest) {
       }
 
       const Product = (await import('@/models/Product')).default;
+      const ResellerOrder = (await import('@/models/ResellerOrder')).default;
       const becomesValid = ['Confirmed', 'Paid', 'Delivered'].includes(status || '');
+
+      const resellerOrderUpdate: any = {};
+      if (status) {
+        resellerOrderUpdate.status = status;
+        if (status === 'Cancelled') {
+          resellerOrderUpdate.commissionStatus = 'cancelled';
+        } else if (status === 'Delivered' || status === 'Paid') {
+          resellerOrderUpdate.commissionStatus = 'cleared';
+        }
+      }
+      if (paymentStatus) {
+        resellerOrderUpdate.paymentStatus = paymentStatus;
+      }
 
       for (const id of ids) {
         const updateObj: any = {};
@@ -118,6 +133,15 @@ export async function PATCH(req: NextRequest) {
           );
           if (regularOrder) modifiedCount++;
         }
+
+        // Sync linked ResellerOrder
+        if (Object.keys(resellerOrderUpdate).length > 0) {
+          await ResellerOrder.updateMany(
+            { motherOrderId: id },
+            { $set: resellerOrderUpdate },
+            { session: dbSession }
+          );
+        }
       }
 
       await dbSession.commitTransaction();
@@ -133,9 +157,9 @@ export async function PATCH(req: NextRequest) {
         }
       }
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: `${modifiedCount} orders updated successfully`,
-        count: modifiedCount 
+        count: modifiedCount
       });
     } catch (error) {
       await dbSession.abortTransaction();
@@ -170,9 +194,9 @@ export async function DELETE(req: NextRequest) {
       { $set: { deletedAt: new Date() } }
     );
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: `${result.modifiedCount} orders soft-deleted successfully`,
-      count: result.modifiedCount 
+      count: result.modifiedCount
     });
   } catch (error) {
     console.error('Bulk Delete Error:', error);
