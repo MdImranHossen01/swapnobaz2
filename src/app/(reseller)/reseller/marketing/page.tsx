@@ -18,7 +18,6 @@ export default function ResellerMarketingPage() {
   const [tracking, setTracking] = useState({
     metaPixelId: '', facebookAccessToken: '', facebookTestEventCode: '',
     facebookDomainVerification: '', tiktokPixelId: '', tiktokAccessToken: '',
-    googleTagManagerId: '', googleAnalyticsId: '',
   });
 
   // Payment form state
@@ -49,8 +48,6 @@ export default function ResellerMarketingPage() {
         facebookDomainVerification: r.seoConfig?.facebookDomainVerification || '',
         tiktokPixelId: r.seoConfig?.tiktokPixelId || '',
         tiktokAccessToken: r.seoConfig?.tiktokAccessToken || '',
-        googleTagManagerId: r.seoConfig?.googleTagManagerId || '',
-        googleAnalyticsId: r.seoConfig?.googleAnalyticsId || '',
       });
       setPayment({
         bkashNumber: r.paymentConfig?.bkash?.number || '',
@@ -223,7 +220,7 @@ export default function ResellerMarketingPage() {
                 <Zap className="h-5 w-5 text-primary" /> Tracking Pixels & Analytics
               </CardTitle>
               <CardDescription>
-                Configure Meta Pixel, Facebook Conversions API (CAPI), TikTok Events, and Google Tag Manager
+                Configure Meta Pixel, Facebook Conversions API (CAPI), and TikTok Events
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -297,24 +294,6 @@ export default function ResellerMarketingPage() {
                       value={tracking.tiktokAccessToken}
                       onChange={e => setTracking(t => ({ ...t, tiktokAccessToken: e.target.value }))}
                       placeholder="tok..."
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Google Tag Manager ID</Label>
-                    <Input
-                      value={tracking.googleTagManagerId}
-                      onChange={e => setTracking(t => ({ ...t, googleTagManagerId: e.target.value }))}
-                      placeholder="GTM-XXXXXXX"
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Google Analytics 4 (GA4) ID</Label>
-                    <Input
-                      value={tracking.googleAnalyticsId}
-                      onChange={e => setTracking(t => ({ ...t, googleAnalyticsId: e.target.value }))}
-                      placeholder="G-XXXXXXXXXX"
                       className="font-mono text-sm"
                     />
                   </div>

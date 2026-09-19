@@ -34,10 +34,11 @@ export async function GET(request: NextRequest) {
     if (limit > 100) limit = 100;
 
     const search = searchParams.get('search') || '';
-    const sourceFilter = searchParams.get('source') || 'all'; // 'all' | 'admin' | 'reseller' | 'sourced'
+    const sourceFilter = searchParams.get('source') || 'all'; // 'all' | 'top_selling' | 'admin' | 'reseller' | 'sourced'
 
     // Build query based on source filter
     let query: Record<string, any> = { isPublished: true };
+    let sortOption: Record<string, any> = { createdAt: -1 };
 
     if (sourceFilter === 'admin') {
       // Only Main Store / Admin products
@@ -51,6 +52,13 @@ export async function GET(request: NextRequest) {
       query.isShared = true;
       // Exclude products with no uploadedBy (admin)
       query['$and'] = [{ uploadedBy: { $ne: null } }, { uploadedBy: { $exists: true } }];
+    } else if (sourceFilter === 'top_selling') {
+      query.$or = [
+        { uploadedBy: null },
+        { uploadedBy: { $exists: false } },
+        { uploadedBy: { $ne: resellerId }, isShared: true },
+      ];
+      sortOption = { totalSales: -1, views: -1, ratings: -1, createdAt: -1 };
     } else {
       // 'all' or 'sourced' — default: show admin + other resellers' shared products
       query.$or = [
@@ -69,7 +77,7 @@ export async function GET(request: NextRequest) {
       Product.find(query)
         .populate('categories', 'name slug')
         .populate('uploadedBy', 'storeName subdomain logoUrl')
-        .sort({ createdAt: -1 })
+        .sort(sortOption)
         .skip((page - 1) * limit)
         .limit(limit)
         .lean(),
@@ -114,24 +122,26 @@ export async function GET(request: NextRequest) {
     }
 
     // Count totals for tab badges
-    const allProductIds = (await Product.find({
+    const allProducts = (await Product.find({
       isPublished: true,
       $or: [
         { uploadedBy: null },
         { uploadedBy: { $exists: false } },
         { uploadedBy: { $ne: resellerId }, isShared: true },
       ],
-    }).select('_id uploadedBy').lean()) as any[];
+    }).select('_id uploadedBy totalSales').lean()) as any[];
 
-    const adminCount = allProductIds.filter((p: any) => !p.uploadedBy).length;
-    const resellerCount = allProductIds.filter((p: any) => p.uploadedBy).length;
+    const adminCount = allProducts.filter((p: any) => !p.uploadedBy).length;
+    const resellerCount = allProducts.filter((p: any) => p.uploadedBy).length;
+    const topSellingCount = allProducts.filter((p: any) => (p.totalSales || 0) > 0).length || allProducts.length;
     const sourcedCount = sourced.length;
 
     return NextResponse.json({
       products: mappedProducts,
       pagination: { total: sourceFilter === 'sourced' ? mappedProducts.length : total, page, limit, totalPages: sourceFilter === 'sourced' ? 1 : Math.ceil(total / limit) },
       counts: {
-        all: allProductIds.length,
+        all: allProducts.length,
+        top_selling: topSellingCount,
         admin: adminCount,
         reseller: resellerCount,
         sourced: sourcedCount,
