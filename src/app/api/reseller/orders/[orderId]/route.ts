@@ -73,7 +73,7 @@ export async function PATCH(
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
-    const allowedStatuses = ['Order Placed', 'Confirmed', 'Paid', 'Ready for Delivery', 'Released for Delivery', 'Delivered', 'Cancelled'];
+    const allowedStatuses = ['Order Placed', 'Confirmed', 'Paid', 'Hold', 'Ready for Delivery', 'Released for Delivery', 'Delivered', 'Cancelled'];
     const allowedPaymentStatuses = ['Pending', 'Paid', 'Failed'];
 
     // Update customer info if provided

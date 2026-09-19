@@ -59,6 +59,8 @@ export function ResellerTrackOrder({ subdomain, storeName }: Props) {
       case 'Order Placed':
         return 0;
       case 'Confirmed':
+      case 'Paid':
+      case 'Hold':
       case 'Processing':
       case 'Ready for Delivery':
         return 1;

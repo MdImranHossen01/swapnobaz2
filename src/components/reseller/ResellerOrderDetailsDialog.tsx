@@ -413,6 +413,7 @@ export default function ResellerOrderDetailsDialog({
                       <option value="Order Placed">Order Placed</option>
                       <option value="Confirmed">Confirmed</option>
                       <option value="Paid">Paid</option>
+                      <option value="Hold">Hold</option>
                       <option value="Cancelled">Cancelled</option>
                     </select>
                   </div>

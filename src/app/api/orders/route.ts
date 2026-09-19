@@ -674,6 +674,7 @@ export async function GET(req: NextRequest) {
       placed: 0,
       confirmed: 0,
       paid: 0,
+      hold: 0,
       ready: 0,
       released: 0,
       delivered: 0,
@@ -696,6 +697,7 @@ export async function GET(req: NextRequest) {
         if (sc._id === 'Order Placed') counts.placed = sc.count;
         else if (sc._id === 'Confirmed') counts.confirmed = sc.count;
         else if (sc._id === 'Paid') counts.paid = sc.count;
+        else if (sc._id === 'Hold') counts.hold = sc.count;
         else if (sc._id === 'Ready for Delivery') counts.ready = sc.count;
         else if (sc._id === 'Released for Delivery') counts.released = sc.count;
         else if (sc._id === 'Delivered') counts.delivered = sc.count;

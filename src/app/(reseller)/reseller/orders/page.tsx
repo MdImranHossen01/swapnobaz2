@@ -143,6 +143,7 @@ function OrdersContent() {
       case 'Order Placed': return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-none">Placed</Badge>;
       case 'Confirmed': return <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-none">Confirmed</Badge>;
       case 'Paid': return <Badge variant="secondary" className="bg-green-100 text-green-800 border-none text-[10px]">Paid</Badge>;
+      case 'Hold': return <Badge variant="secondary" className="bg-amber-100 text-amber-800 border-none text-[10px]">Hold</Badge>;
       case 'Processing': return <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-none text-[10px]">Processing</Badge>;
       case 'Ready for Delivery': return <Badge variant="secondary" className="bg-purple-100 text-purple-800 border-none text-[10px]">Ready</Badge>;
       case 'Released for Delivery': return <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-none text-[10px]">Released</Badge>;
@@ -356,7 +357,8 @@ function OrdersContent() {
                   { label: 'All', value: 'All', count: statusCounts.all },
                   { label: 'Placed', value: 'Order Placed', count: statusCounts.placed },
                   { label: 'Confirmed', value: 'Confirmed', count: statusCounts.confirmed },
-                  { label: 'Processing', value: 'Processing', count: statusCounts.processing },
+                  { label: 'Paid', value: 'Paid', count: statusCounts.paid },
+                  { label: 'Hold', value: 'Hold', count: statusCounts.hold },
                   { label: 'Ready', value: 'Ready for Delivery', count: statusCounts.ready },
                   { label: 'Released', value: 'Released for Delivery', count: statusCounts.released },
                   { label: 'Delivered', value: 'Delivered', count: statusCounts.delivered },
@@ -423,12 +425,13 @@ function OrdersContent() {
       </div>
 
       {/* Status Tabs Row (Desktop only - Full Width Grid) */}
-      <div className="hidden md:grid md:grid-cols-8 gap-2 pb-2 border-b">
+      <div className="hidden md:grid md:grid-cols-9 gap-2 pb-2 border-b">
         {[
           { label: 'All', value: 'All', count: statusCounts.all },
           { label: 'Placed', value: 'Order Placed', count: statusCounts.placed },
           { label: 'Confirmed', value: 'Confirmed', count: statusCounts.confirmed },
-          { label: 'Processing', value: 'Processing', count: statusCounts.processing },
+          { label: 'Paid', value: 'Paid', count: statusCounts.paid },
+          { label: 'Hold', value: 'Hold', count: statusCounts.hold },
           { label: 'Ready', value: 'Ready for Delivery', count: statusCounts.ready },
           { label: 'Released', value: 'Released for Delivery', count: statusCounts.released },
           { label: 'Delivered', value: 'Delivered', count: statusCounts.delivered },
@@ -666,6 +669,9 @@ function OrdersContent() {
                               <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>
                                 Mark Paid
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => updateStatus(order._id, 'Hold')}>
+                                Hold Order
+                              </DropdownMenuItem>
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuGroup>
@@ -771,15 +777,7 @@ function OrdersContent() {
                           <DropdownMenuLabel>Status</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>Confirm</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>Mark Paid</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleCancelOrder(order._id)}>Cancel Order</DropdownMenuItem>
-                        </DropdownMenuGroup>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                          <DropdownMenuLabel>Status</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>Confirm</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>Mark Paid</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateStatus(order._id, 'Hold')}>Hold Order</DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleCancelOrder(order._id)}>Cancel Order</DropdownMenuItem>
                         </DropdownMenuGroup>
                       </DropdownMenuContent>

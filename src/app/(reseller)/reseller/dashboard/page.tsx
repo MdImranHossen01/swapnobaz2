@@ -71,7 +71,11 @@ export default function ResellerDashboard() {
   const orderStatusColor: Record<string, string> = {
     'Order Placed': 'bg-blue-500/10 text-blue-600',
     'Confirmed': 'bg-indigo-500/10 text-indigo-600',
+    'Paid': 'bg-emerald-500/10 text-emerald-600',
+    'Hold': 'bg-amber-500/10 text-amber-600',
     'Processing': 'bg-yellow-500/10 text-yellow-600',
+    'Ready for Delivery': 'bg-purple-500/10 text-purple-600',
+    'Released for Delivery': 'bg-orange-500/10 text-orange-600',
     'Delivered': 'bg-green-500/10 text-green-600',
     'Cancelled': 'bg-red-500/10 text-red-600',
   };

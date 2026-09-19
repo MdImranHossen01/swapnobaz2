@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const statusCounts = {
-      all: 0, placed: 0, confirmed: 0, processing: 0, ready: 0, released: 0, delivered: 0, cancelled: 0
+      all: 0, placed: 0, confirmed: 0, paid: 0, hold: 0, processing: 0, ready: 0, released: 0, delivered: 0, cancelled: 0
     };
 
     statusAggregation.forEach(item => {
@@ -105,6 +105,8 @@ export async function GET(request: NextRequest) {
       switch (item._id) {
         case 'Order Placed': statusCounts.placed = item.count; break;
         case 'Confirmed': statusCounts.confirmed = item.count; break;
+        case 'Paid': statusCounts.paid = item.count; break;
+        case 'Hold': statusCounts.hold = item.count; break;
         case 'Processing': statusCounts.processing = item.count; break;
         case 'Ready for Delivery': statusCounts.ready = item.count; break;
         case 'Released for Delivery': statusCounts.released = item.count; break;
@@ -133,7 +135,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Missing or malformed orderId' }, { status: 400 });
     }
 
-    const validStatuses = ['Order Placed', 'Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered', 'Cancelled'];
+    const validStatuses = ['Order Placed', 'Confirmed', 'Paid', 'Hold', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered', 'Cancelled'];
     if (!status || !validStatuses.includes(status)) {
       return NextResponse.json({ error: 'Invalid or unsupported status' }, { status: 400 });
     }
