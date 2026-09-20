@@ -72,7 +72,20 @@ export const proxy = auth(async (req) => {
     const url = nextUrl.clone();
     const rewrittenPath = `/store/${targetSubdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
     url.pathname = rewrittenPath;
-    const response = NextResponse.rewrite(url);
+    
+    // To pass headers to Server Components (like app/layout.tsx headers()), 
+    // we must set them on the request object for the rewrite.
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-reseller-subdomain', targetSubdomain);
+    requestHeaders.set('x-pathname', nextUrl.pathname);
+
+    const response = NextResponse.rewrite(url, {
+      request: {
+        headers: requestHeaders,
+      }
+    });
+
+    // Also set on response just in case
     response.headers.set('x-reseller-subdomain', targetSubdomain);
     response.headers.set('x-pathname', nextUrl.pathname);
     return response;
