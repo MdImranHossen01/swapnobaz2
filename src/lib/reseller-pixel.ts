@@ -50,11 +50,9 @@ const TT_EVENT_MAP: Record<string, string> = {
  */
 export const waitForResellerPixel = (pixelId: string, maxWaitMs = 5000, intervalMs = 200) =>
   new Promise<void>((resolve) => {
-    const sanitizedId = pixelId && /^\\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
-    if (!sanitizedId) { resolve(); return; }
-    
-    const flag = `_resellerPixelReady_${sanitizedId}`;
-    if (typeof window !== 'undefined' && (window as any)[flag]) {
+    // Since proxy.ts now prevents mother shop pixel from loading on reseller stores,
+    // if window.fbq exists, it belongs to the reseller.
+    if (typeof window !== 'undefined' && (window as any).fbq) {
       resolve();
       return;
     }
@@ -62,7 +60,7 @@ export const waitForResellerPixel = (pixelId: string, maxWaitMs = 5000, interval
     const timer = setInterval(() => {
       elapsed += intervalMs;
       if (
-        (typeof window !== 'undefined' && (window as any)[flag]) ||
+        (typeof window !== 'undefined' && (window as any).fbq) ||
         elapsed >= maxWaitMs
       ) {
         clearInterval(timer);
@@ -94,33 +92,29 @@ export const resellerFbEvent = (
     } : {})
   };
 
-  // 1. Browser Pixel — only fire if the reseller's own pixel is confirmed ready.
+  // 1. Browser Pixel
+  //    Since proxy.ts now correctly blocks the mother shop pixel, 
+  //    we can safely trust window.fbq if it exists.
   if (typeof window !== "undefined" && typeof (window as any).fbq === "function") {
-    const sanitizedId = pixelId && /^\\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
-    const pixelReady = sanitizedId
-      ? !!(window as any)[`_resellerPixelReady_${sanitizedId}`]
-      : true; // If no pixelId passed, fall back to trusting fbq exists
-    if (pixelReady) {
-      const standardEvents = [
-        "ViewContent", "AddToCart", "AddToWishlist", "InitiateCheckout",
-        "Purchase", "Lead", "PageView", "Contact", "Search"
-      ];
-      if (userData?.em || userData?.ph) {
-        (window as any).fbq('set', 'user_data', {
-          ...(userData.em && { em: userData.em.trim().toLowerCase() }),
-          ...(userData.ph && { ph: userData.ph.replace(/\D/g, '') }),
-          ...(userData.fn && { fn: userData.fn.trim().toLowerCase() }),
-          ...(userData.ln && { ln: userData.ln.trim().toLowerCase() }),
-          ...(userData.ct && { ct: userData.ct.trim().toLowerCase() }),
-          ...(userData.st && { st: userData.st.trim().toLowerCase() }),
-          ...(userData.country && { country: userData.country.trim().toLowerCase() }),
-        });
-      }
-      if (standardEvents.includes(eventName)) {
-        (window as any).fbq("track", eventName, formattedCustomData, { eventID: eventId });
-      } else {
-        (window as any).fbq("trackCustom", eventName, formattedCustomData, { eventID: eventId });
-      }
+    const standardEvents = [
+      "ViewContent", "AddToCart", "AddToWishlist", "InitiateCheckout",
+      "Purchase", "Lead", "PageView", "Contact", "Search"
+    ];
+    if (userData?.em || userData?.ph) {
+      (window as any).fbq('set', 'user_data', {
+        ...(userData.em && { em: userData.em.trim().toLowerCase() }),
+        ...(userData.ph && { ph: userData.ph.replace(/\D/g, '') }),
+        ...(userData.fn && { fn: userData.fn.trim().toLowerCase() }),
+        ...(userData.ln && { ln: userData.ln.trim().toLowerCase() }),
+        ...(userData.ct && { ct: userData.ct.trim().toLowerCase() }),
+        ...(userData.st && { st: userData.st.trim().toLowerCase() }),
+        ...(userData.country && { country: userData.country.trim().toLowerCase() }),
+      });
+    }
+    if (standardEvents.includes(eventName)) {
+      (window as any).fbq("track", eventName, formattedCustomData, { eventID: eventId });
+    } else {
+      (window as any).fbq("trackCustom", eventName, formattedCustomData, { eventID: eventId });
     }
   }
 
