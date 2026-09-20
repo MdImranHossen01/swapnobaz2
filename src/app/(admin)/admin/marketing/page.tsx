@@ -18,14 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Truck, CreditCard, Globe, X, BarChart3, Settings2, Zap, ShieldCheck, CheckCircle2, XCircle, AlertCircle, RefreshCcw, TrendingUp, ExternalLink } from 'lucide-react';
-
-// X (Twitter) logo — not in this version of lucide-react, using inline SVG
-const XLogoIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z" />
-  </svg>
-);
+import { Loader2, Truck, CreditCard, Globe, X, BarChart3, Settings2, Zap, ShieldCheck, CheckCircle2, XCircle, AlertCircle, RefreshCcw, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { ImageUpload } from '@/components/ui/image-upload';
 import {
@@ -327,9 +320,6 @@ export default function MarketingSettingsPage() {
               <TabsTrigger value="courier" className="flex-1 min-w-[90px]">Courier</TabsTrigger>
               <TabsTrigger value="marketing" className="flex-1 min-w-[150px]" onClick={fetchTrackingStatus}>
                 <Zap className="h-3 w-3 mr-1" />Meta Pixel & Server Track
-              </TabsTrigger>
-              <TabsTrigger value="cro" className="flex-1 min-w-[90px]">
-                <TrendingUp className="h-3 w-3 mr-1" />CRO &amp; SEO
               </TabsTrigger>
             </TabsList>
 
@@ -879,104 +869,6 @@ export default function MarketingSettingsPage() {
                 </CardContent>
               </Card>
               </div>
-            </TabsContent>
-
-            {/* ── 6. CRO & SEO Tab ─────────────────────────────────────────── */}
-            <TabsContent value="cro" className="space-y-4">
-
-              {/* Twitter Card Setup */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <XLogoIcon className="h-4 w-4 text-foreground" /> Twitter / X Card
-                  </CardTitle>
-                  <CardDescription>
-                    Twitter Cards are automatically injected from your logo and brand settings.
-                    No extra configuration is needed — just ensure these fields are set.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="rounded-xl border bg-muted/30 p-4 space-y-3">
-                    {[
-                      { label: 'Card Type', value: 'summary_large_image', desc: 'Shows a large image preview when your links are shared on X' },
-                      { label: 'Title', value: 'From Settings → Meta Title', desc: 'Set in the General Settings page' },
-                      { label: 'Description', value: 'From Settings → Meta Description', desc: 'Set in the General Settings page' },
-                      { label: 'Image', value: 'From Settings → Logo URL', desc: 'Your store logo is used as the card image' },
-                      { label: '@site Handle', value: 'From Settings → Twitter social link', desc: 'Add your Twitter/X profile URL in the social links settings' },
-                    ].map(item => (
-                      <div key={item.label} className="flex items-start justify-between gap-4 py-2 border-b last:border-0">
-                        <div>
-                          <p className="text-xs font-bold">{item.label}</p>
-                          <p className="text-[10px] text-muted-foreground">{item.desc}</p>
-                        </div>
-                        <code className="text-[10px] bg-muted rounded px-2 py-1 whitespace-nowrap shrink-0">{item.value}</code>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Validate your cards at{' '}
-                    <a href="https://socialsharepreview.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">socialsharepreview.com</a>
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* CRO Checklist */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <TrendingUp className="h-4 w-4 text-primary" /> CRO Optimisation Checklist
-                  </CardTitle>
-                  <CardDescription>
-                    Conversion Rate Optimisation — confirm these are in place to maximise checkout completions.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {[
-                      { category: 'Trust & Urgency', items: [
-                        'Product pages show stock count (e.g. "Only 3 left")',
-                        'Flash sale countdown timer is active for flash-sale products',
-                        'Customer reviews are visible on product pages',
-                        'Trust badges (secure payment, free delivery threshold) shown at checkout',
-                      ]},
-                      { category: 'Checkout Funnel', items: [
-                        'Guest checkout is available (no forced registration)',
-                        'Manual payment (bKash/Nagad) instructions are clear',
-                        'Cart persists across browser sessions (server-side cart)',
-                        'Delivery charge is shown before final checkout step',
-                        'Coupon code field is present on checkout page',
-                      ]},
-                      { category: 'Recovery & Retention', items: [
-                        'Abandoned cart tracking is active',
-                        'Wishlist is enabled for logged-in users',
-                        'Loyalty reward banner is shown after qualifying orders',
-                        'Recently viewed / related products are shown on product pages',
-                      ]},
-                      { category: 'Technical SEO', items: [
-                        'XML sitemap is accessible at /sitemap.xml',
-                        'robots.txt is accessible at /robots.txt',
-                        'Each product page has a unique meta title & description',
-                        'Open Graph and Twitter Card tags are set (check with layout.tsx)',
-                        'Google Tag Manager is connected and publishing',
-                        'Facebook Pixel fires PageView on every page (check Events Manager)',
-                      ]},
-                    ].map(section => (
-                      <div key={section.category} className="mb-4">
-                        <p className="text-xs font-black uppercase opacity-50 mb-2">{section.category}</p>
-                        <div className="space-y-1.5">
-                          {section.items.map(item => (
-                            <label key={item} className="flex items-start gap-2.5 cursor-pointer group">
-                              <input type="checkbox" className="mt-0.5 h-3.5 w-3.5 rounded border-muted-foreground accent-primary" />
-                              <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{item}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
             </TabsContent>
 
           </Tabs>
