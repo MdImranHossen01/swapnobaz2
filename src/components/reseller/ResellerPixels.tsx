@@ -34,7 +34,7 @@ function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomai
         if (interval) clearInterval(interval);
       }
     };
-    checkFbq();
+    setTimeout(checkFbq, 0); // Check immediately, but asynchronously
     if (!scriptLoaded) interval = setInterval(checkFbq, 200);
     return () => clearInterval(interval);
   }, [scriptLoaded]);
@@ -87,7 +87,6 @@ function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomai
 }
 
 function TikTokPixelScript({ pixelId, subdomain }: { pixelId: string; subdomain: string }) {
-  const [mounted, setMounted] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -95,9 +94,8 @@ function TikTokPixelScript({ pixelId, subdomain }: { pixelId: string; subdomain:
   const sanitizedPixelId = pixelId && /^[a-zA-Z0-9]+$/.test(pixelId.trim()) ? pixelId.trim() : null;
 
   useEffect(() => {
-    setMounted(true);
     if (typeof window !== "undefined" && (window as any).ttq) {
-      setScriptLoaded(true);
+      setTimeout(() => setScriptLoaded(true), 0);
     }
   }, []);
 
@@ -109,9 +107,9 @@ function TikTokPixelScript({ pixelId, subdomain }: { pixelId: string; subdomain:
   }, [sanitizedPixelId, subdomain]);
 
   useEffect(() => {
-    if (!mounted || !sanitizedPixelId || !scriptLoaded) return;
+    if (!sanitizedPixelId || !scriptLoaded) return;
     trackPageView();
-  }, [pathname, searchParams, scriptLoaded, sanitizedPixelId, trackPageView, mounted]);
+  }, [pathname, searchParams, scriptLoaded, sanitizedPixelId, trackPageView]);
 
   if (!sanitizedPixelId) return null;
 
