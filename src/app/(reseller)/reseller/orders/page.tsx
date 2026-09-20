@@ -304,9 +304,9 @@ function OrdersContent() {
   const handleHoldOrder = async (orderId: string) => {
     const result = await Swal.fire({
       title: 'Hold Order',
-      text: 'অর্ডারটি কেন Hold করছেন তার কারণ (Internal Note) লিখুন:',
+      text: 'Please provide an internal note explaining the reason for holding this order:',
       input: 'textarea',
-      inputPlaceholder: 'Hold করার কারণ লিখুন (যেমন: কাস্টমার পরে ডেলিভারি নিতে চেয়েছে / স্টক ইস্যু)...',
+      inputPlaceholder: 'Enter reason (e.g. Customer requested delayed delivery, awaiting stock)...',
       inputAttributes: {
         'aria-label': 'Hold reason',
         'rows': '3'
@@ -317,7 +317,7 @@ function OrdersContent() {
       confirmButtonText: 'Hold Order',
       inputValidator: (value) => {
         if (!value || !value.trim()) {
-          return 'Hold করার কারণ (Internal Note) লিখা বাধ্যতামূলক!';
+          return 'An internal note / reason is required to hold this order!';
         }
         return null;
       }

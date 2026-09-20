@@ -101,7 +101,7 @@ export async function PATCH(
       if (status === 'Hold') {
         const finalNote = internalNote !== undefined ? internalNote : order.internalNote;
         if (!finalNote || !finalNote.trim()) {
-          return NextResponse.json({ message: 'Order Hold করার জন্য Internal Note লিখা বাধ্যতামূলক' }, { status: 400 });
+          return NextResponse.json({ message: 'An internal note / reason is mandatory when setting order status to Hold' }, { status: 400 });
         }
       }
       order.status = status;

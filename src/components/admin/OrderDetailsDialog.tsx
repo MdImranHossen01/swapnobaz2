@@ -203,7 +203,7 @@ export default function OrderDetailsDialog({
     }
 
     if (editForm.status === 'Hold' && !editForm.internalNote?.trim()) {
-      toast.error('Hold করার কারণ (Internal Note) লিখুন');
+      toast.error('Please provide an internal note explaining why this order is on hold');
       return;
     }
 
@@ -468,13 +468,13 @@ export default function OrderDetailsDialog({
                   {editForm.status === 'Hold' && (
                     <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-lg space-y-1.5 animate-in fade-in duration-200">
                       <label className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                        <Lock className="h-3.5 w-3.5 text-amber-600" /> Hold করার কারণ লিখুন (Internal Note): <span className="text-red-600 font-bold">*</span>
+                        <Lock className="h-3.5 w-3.5 text-amber-600" /> Hold Reason (Internal Note): <span className="text-red-600 font-bold">*</span>
                       </label>
                       <textarea
                         rows={2}
                         value={editForm.internalNote || ''}
                         onChange={(e) => setEditForm({ ...editForm, internalNote: e.target.value })}
-                        placeholder="অর্ডারটি কেন Hold করছেন তার কারণ লিখুন (যেমন: কাস্টমার পরে ডেলিভারি নিতে চেয়েছে / স্টক ইস্যু)..."
+                        placeholder="Enter hold reason (e.g. Customer requested delayed delivery, awaiting stock)..."
                         className="w-full text-sm p-2 border rounded-md bg-white dark:bg-zinc-900 border-amber-300 dark:border-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none"
                         autoFocus
                       />
