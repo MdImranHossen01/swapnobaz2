@@ -24,6 +24,21 @@ function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomai
     });
   }, [pixelId, subdomain]);
 
+  // Because ResellerPixels mounts/unmounts on page navigations (unlike Mother Shop layout pixel),
+  // scriptLoaded resets to false. We must check if fbq already exists from a previous page view.
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    const checkFbq = () => {
+      if (typeof window !== "undefined" && (window as any).fbq) {
+        setScriptLoaded(true);
+        if (interval) clearInterval(interval);
+      }
+    };
+    checkFbq();
+    if (!scriptLoaded) interval = setInterval(checkFbq, 200);
+    return () => clearInterval(interval);
+  }, [scriptLoaded]);
+
   useEffect(() => {
     if (!pixelId || !scriptLoaded) return;
     trackPageView();
