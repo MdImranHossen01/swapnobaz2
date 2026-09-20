@@ -50,8 +50,10 @@ const TT_EVENT_MAP: Record<string, string> = {
  */
 export const waitForResellerPixel = (pixelId: string, maxWaitMs = 5000, intervalMs = 200) =>
   new Promise<void>((resolve) => {
-    if (!pixelId) { resolve(); return; }
-    const flag = `_resellerPixelReady_${pixelId}`;
+    const sanitizedId = pixelId && /^\\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
+    if (!sanitizedId) { resolve(); return; }
+    
+    const flag = `_resellerPixelReady_${sanitizedId}`;
     if (typeof window !== 'undefined' && (window as any)[flag]) {
       resolve();
       return;
@@ -93,11 +95,10 @@ export const resellerFbEvent = (
   };
 
   // 1. Browser Pixel — only fire if the reseller's own pixel is confirmed ready.
-  //    We check the pixel-specific flag to avoid accidentally sending to the
-  //    mother-shop pixel or to an uninitialised fbq stub.
   if (typeof window !== "undefined" && typeof (window as any).fbq === "function") {
-    const pixelReady = pixelId
-      ? !!(window as any)[`_resellerPixelReady_${pixelId}`]
+    const sanitizedId = pixelId && /^\\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
+    const pixelReady = sanitizedId
+      ? !!(window as any)[`_resellerPixelReady_${sanitizedId}`]
       : true; // If no pixelId passed, fall back to trusting fbq exists
     if (pixelReady) {
       const standardEvents = [
