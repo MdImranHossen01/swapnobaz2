@@ -181,8 +181,8 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
       country: 'bd',
     };
 
-    waitForResellerPixel().then(() => {
-      resellerFbEvent(subdomain, 'InitiateCheckout', checkoutPayload, initiateUserData);
+    waitForResellerPixel(storeInfo.metaPixelId || '').then(() => {
+      resellerFbEvent(subdomain, 'InitiateCheckout', checkoutPayload, initiateUserData, undefined, storeInfo.metaPixelId);
       resellerTtEvent(subdomain, 'InitiateCheckout', checkoutPayload, initiateUserData);
     });
   }, [cart, subdomain, watchedPhone, customerProfile?.email]);
@@ -390,7 +390,7 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
 
         // Fire Pixel & CAPI events with exact deduplication
         try {
-          resellerFbEvent(subdomain, 'Purchase', purchaseEventData, purchaseUserData, orderShortId);
+          resellerFbEvent(subdomain, 'Purchase', purchaseEventData, purchaseUserData, orderShortId, storeInfo.metaPixelId);
           resellerTtEvent(subdomain, 'Purchase', purchaseEventData, purchaseUserData, orderShortId);
         } catch (trackingErr) {
           console.error('[Reseller Tracking Error]', trackingErr);

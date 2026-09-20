@@ -41,9 +41,18 @@ const TT_EVENT_MAP: Record<string, string> = {
   'Search': 'Search',
 };
 
-export const waitForResellerPixel = (maxWaitMs = 5000, intervalMs = 200) =>
+/**
+ * Waits until the reseller's specific Facebook pixel has been initialised
+ * (i.e. window[`_resellerPixelReady_${pixelId}`] is true).
+ *
+ * We intentionally do NOT fall back to checking `window.fbq` alone — if the
+ * mother-shop pixel somehow leaks in (edge-case), that would be a false positive.
+ */
+export const waitForResellerPixel = (pixelId: string, maxWaitMs = 5000, intervalMs = 200) =>
   new Promise<void>((resolve) => {
-    if (typeof window !== 'undefined' && ((window as any).fbq || (window as any).ttq)) {
+    if (!pixelId) { resolve(); return; }
+    const flag = `_resellerPixelReady_${pixelId}`;
+    if (typeof window !== 'undefined' && (window as any)[flag]) {
       resolve();
       return;
     }
@@ -51,7 +60,7 @@ export const waitForResellerPixel = (maxWaitMs = 5000, intervalMs = 200) =>
     const timer = setInterval(() => {
       elapsed += intervalMs;
       if (
-        (typeof window !== 'undefined' && ((window as any).fbq || (window as any).ttq)) ||
+        (typeof window !== 'undefined' && (window as any)[flag]) ||
         elapsed >= maxWaitMs
       ) {
         clearInterval(timer);
@@ -65,7 +74,9 @@ export const resellerFbEvent = (
   eventName: string,
   customData: Record<string, unknown> = {},
   userData: UserData = {},
-  providedEventId?: string
+  providedEventId?: string,
+  /** Pass the pixel ID so browser-side tracking targets the correct init'd pixel. */
+  pixelId?: string
 ) => {
   const eventId = providedEventId || generateEventId();
 
@@ -81,27 +92,34 @@ export const resellerFbEvent = (
     } : {})
   };
 
-  // 1. Browser Pixel (if reseller pixel script is loaded)
+  // 1. Browser Pixel — only fire if the reseller's own pixel is confirmed ready.
+  //    We check the pixel-specific flag to avoid accidentally sending to the
+  //    mother-shop pixel or to an uninitialised fbq stub.
   if (typeof window !== "undefined" && typeof (window as any).fbq === "function") {
-    const standardEvents = [
-      "ViewContent", "AddToCart", "AddToWishlist", "InitiateCheckout",
-      "Purchase", "Lead", "PageView", "Contact", "Search"
-    ];
-    if (userData?.em || userData?.ph) {
-      (window as any).fbq('set', 'user_data', {
-        ...(userData.em && { em: userData.em.trim().toLowerCase() }),
-        ...(userData.ph && { ph: userData.ph.replace(/\D/g, '') }),
-        ...(userData.fn && { fn: userData.fn.trim().toLowerCase() }),
-        ...(userData.ln && { ln: userData.ln.trim().toLowerCase() }),
-        ...(userData.ct && { ct: userData.ct.trim().toLowerCase() }),
-        ...(userData.st && { st: userData.st.trim().toLowerCase() }),
-        ...(userData.country && { country: userData.country.trim().toLowerCase() }),
-      });
-    }
-    if (standardEvents.includes(eventName)) {
-      (window as any).fbq("track", eventName, formattedCustomData, { eventID: eventId });
-    } else {
-      (window as any).fbq("trackCustom", eventName, formattedCustomData, { eventID: eventId });
+    const pixelReady = pixelId
+      ? !!(window as any)[`_resellerPixelReady_${pixelId}`]
+      : true; // If no pixelId passed, fall back to trusting fbq exists
+    if (pixelReady) {
+      const standardEvents = [
+        "ViewContent", "AddToCart", "AddToWishlist", "InitiateCheckout",
+        "Purchase", "Lead", "PageView", "Contact", "Search"
+      ];
+      if (userData?.em || userData?.ph) {
+        (window as any).fbq('set', 'user_data', {
+          ...(userData.em && { em: userData.em.trim().toLowerCase() }),
+          ...(userData.ph && { ph: userData.ph.replace(/\D/g, '') }),
+          ...(userData.fn && { fn: userData.fn.trim().toLowerCase() }),
+          ...(userData.ln && { ln: userData.ln.trim().toLowerCase() }),
+          ...(userData.ct && { ct: userData.ct.trim().toLowerCase() }),
+          ...(userData.st && { st: userData.st.trim().toLowerCase() }),
+          ...(userData.country && { country: userData.country.trim().toLowerCase() }),
+        });
+      }
+      if (standardEvents.includes(eventName)) {
+        (window as any).fbq("track", eventName, formattedCustomData, { eventID: eventId });
+      } else {
+        (window as any).fbq("trackCustom", eventName, formattedCustomData, { eventID: eventId });
+      }
     }
   }
 

@@ -26,6 +26,7 @@ interface ResellerProductDetailsClientProps {
   subdomain: string;
   deliveryInside: number;
   deliveryOutside: number;
+  metaPixelId?: string;
 }
 
 export default function ResellerProductDetailsClient({
@@ -33,6 +34,7 @@ export default function ResellerProductDetailsClient({
   subdomain,
   deliveryInside,
   deliveryOutside,
+  metaPixelId,
 }: ResellerProductDetailsClientProps) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -108,7 +110,7 @@ export default function ResellerProductDetailsClient({
       value: product.retailPrice ?? product.price ?? 0,
       currency: 'BDT'
     };
-    resellerFbEvent(subdomain, 'ViewContent', viewContentPayload);
+    resellerFbEvent(subdomain, 'ViewContent', viewContentPayload, {}, undefined, metaPixelId);
     resellerTtEvent(subdomain, 'ViewContent', viewContentPayload);
   }, [product?._id, uniqueColors, product.variants, subdomain]);
 
@@ -207,7 +209,7 @@ export default function ResellerProductDetailsClient({
         currency: 'BDT',
         quantity: finalQty,
       };
-      resellerFbEvent(subdomain, 'AddToCart', addToCartPayload);
+      resellerFbEvent(subdomain, 'AddToCart', addToCartPayload, {}, undefined, metaPixelId);
       resellerTtEvent(subdomain, 'AddToCart', addToCartPayload);
 
       toast.success(`${product.name} added to cart!`);

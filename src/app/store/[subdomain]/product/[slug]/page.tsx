@@ -176,6 +176,7 @@ export default async function ResellerProductPage({ params }: Props) {
             subdomain={subdomain}
             deliveryInside={deliveryInside}
             deliveryOutside={deliveryOutside}
+            metaPixelId={reseller.seoConfig?.metaPixelId}
           />
 
           {/* Related Products */}

@@ -151,6 +151,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers();
+  // proxy.ts sets this header on every reseller store request (subdomain or custom domain).
+  // If present, we must NOT load the mother shop pixel — it would claim window.fbq first
+  // and silently block the reseller's own pixel from initialising.
+  const isResellerStorePage = !!headersList.get('x-reseller-subdomain');
+
   const settings = await getCachedSettings();
 
   let jsonLd = null;
@@ -204,7 +210,9 @@ export default async function RootLayout({
             <GoogleTagManager gtmId={settings.googleTagManagerId} />
           )}
 
-          {settings?.metaPixelId && (
+          {/* Mother-shop pixels — suppressed on reseller storefront pages to prevent
+              window.fbq conflicts that block the reseller's own pixel from initialising. */}
+          {!isResellerStorePage && settings?.metaPixelId && (
             <Suspense fallback={null}>
               <FacebookPixel
                 pixelId={settings.metaPixelId}
@@ -212,7 +220,7 @@ export default async function RootLayout({
             </Suspense>
           )}
 
-          {settings?.tiktokPixelId && (
+          {!isResellerStorePage && settings?.tiktokPixelId && (
             <Suspense fallback={null}>
               <TikTokPixel
                 pixelId={settings.tiktokPixelId}
