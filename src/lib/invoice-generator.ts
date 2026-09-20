@@ -34,7 +34,7 @@ export async function generateInvoicePDF(orderOrOrders: any | any[], settings: a
   }
 
   const invoicesHtml = orders.map((order, index) => {
-    const invoiceId = String(order.shortId || order.orderId || order._id || "").slice(-8).toUpperCase().replace(/^0+/, '');
+    const invoiceId = order.shortId || order.orderId || String(order._id || "").slice(-8).toUpperCase();
     const createdAt = order.createdAt ? new Date(order.createdAt) : null;
     const formattedDate = createdAt && isValid(createdAt) ? format(createdAt, "dd MMM yyyy") : "N/A";
 

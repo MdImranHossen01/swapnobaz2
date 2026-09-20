@@ -128,7 +128,7 @@ export default function OrdersPage() {
             ) : (
               orders.map((order) => (
                 <TableRow key={order._id} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="font-mono text-xs">#{order?._id?.slice(-8).toUpperCase() || 'N/A'}</TableCell>
+                  <TableCell className="font-mono text-xs">#{order?.shortId || order?._id?.slice(-8).toUpperCase() || 'N/A'}</TableCell>
                   <TableCell className="text-xs">{order?.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
                   <TableCell className="text-xs">{Array.isArray(order?.items) ? order.items.length : 0} items</TableCell>
                   <TableCell className="font-bold">৳{typeof order?.totalAmount === 'number' ? Math.round(order.totalAmount) : '0'}</TableCell>
@@ -190,7 +190,7 @@ export default function OrdersPage() {
           orders.map((order) => (
             <MobileDataCard
               key={order._id}
-              title={`#${order?._id?.slice(-8).toUpperCase() || 'N/A'}`}
+              title={`#${order?.shortId || order?._id?.slice(-8).toUpperCase() || 'N/A'}`}
               badge={<Badge variant={getStatusColor(order.status) as any} className="text-[10px] h-5 px-2">{order.status}</Badge>}
               rows={[
                 {

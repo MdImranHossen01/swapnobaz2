@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  Loader2, Eye, Search, ChevronDown, CheckCircle2, XCircle, Download, Copy, RefreshCcw, MoreHorizontal, FileText, Printer, Truck
+  Loader2, Eye, Search, ChevronDown, CheckCircle2, XCircle, Download, Copy, RefreshCcw, MoreHorizontal, FileText, Printer, Truck, Trash2
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -85,6 +85,7 @@ function OrdersContent() {
   
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [commissionFilter, setCommissionFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState({ from: '', to: '' });
   
   const [page, setPage] = useState(1);
@@ -101,6 +102,7 @@ function OrdersContent() {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) });
       if (search) params.set('search', search);
       if (statusFilter !== 'All') params.set('status', statusFilter);
+      if (commissionFilter !== 'All') params.set('commissionStatus', commissionFilter);
       if (dateFilter.from) params.set('from', dateFilter.from);
       if (dateFilter.to) params.set('to', dateFilter.to);
       
@@ -124,7 +126,7 @@ function OrdersContent() {
       if (settingsData) setSettings(settingsData);
       if (resellerData?.reseller) setReseller(resellerData.reseller);
     });
-  }, [page, statusFilter, dateFilter]);
+  }, [page, statusFilter, commissionFilter, dateFilter]);
 
   const getResellerBranding = () => {
     return {
@@ -169,7 +171,7 @@ function OrdersContent() {
         return `• ${i.quantity} x ${i.name}${variantDesc ? ` [${variantDesc}]` : ''} (@৳${i.retailPrice})`;
       }).join('\n');
 
-      const id = o.motherOrderId ? String(o.motherOrderId).slice(-8).toUpperCase() : String(o._id).slice(-8).toUpperCase();
+      const id = o.shortId || String(o._id).slice(-8).toUpperCase();
 
       return [
         `#${id}`,
@@ -315,6 +317,35 @@ function OrdersContent() {
     }
   };
 
+  const handleDeleteOrder = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: 'Delete Order?',
+      text: "Are you sure you want to remove this order from your dashboard?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, delete it!',
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`/api/reseller/orders/${orderId}`, {
+          method: 'DELETE',
+        });
+        if (res.ok) {
+          toast.success('Order deleted successfully from your dashboard');
+          fetchOrders();
+        } else {
+          const err = await res.json().catch(() => ({}));
+          toast.error(err.message || 'Failed to delete order');
+        }
+      } catch {
+        toast.error('Network error while deleting order');
+      }
+    }
+  };
+
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -385,6 +416,39 @@ function OrdersContent() {
           </DropdownMenu>
         </div>
 
+        {/* Commission Filter */}
+        <div className="w-full sm:w-auto shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-10 w-full sm:w-44 justify-between text-xs font-normal">
+                <span className="truncate font-medium">
+                  {commissionFilter === 'All' ? 'All Commission' : 
+                   commissionFilter === 'cleared' ? 'Commission: Received' :
+                   commissionFilter === 'pending' ? 'Commission: Pending' : 
+                   'Commission: Cancelled'}
+                </span>
+                <ChevronDown className="ml-1.5 h-3.5 w-3.5 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuLabel className="text-xs">Commission Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { setCommissionFilter('All'); setPage(1); }} className={commissionFilter === 'All' ? 'bg-accent font-bold' : ''}>
+                All Commission
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCommissionFilter('cleared'); setPage(1); }} className={commissionFilter === 'cleared' ? 'bg-accent font-bold text-emerald-700' : ''}>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 shrink-0"></span> Received
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCommissionFilter('pending'); setPage(1); }} className={commissionFilter === 'pending' ? 'bg-accent font-bold text-amber-700' : ''}>
+                <span className="w-2 h-2 rounded-full bg-amber-500 mr-2 shrink-0"></span> Pending
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCommissionFilter('cancelled'); setPage(1); }} className={commissionFilter === 'cancelled' ? 'bg-accent font-bold text-red-700' : ''}>
+                <span className="w-2 h-2 rounded-full bg-red-500 mr-2 shrink-0"></span> Cancelled
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <div className="flex items-center gap-2 bg-muted/50 p-1 rounded-md border w-full md:w-auto h-10">
           <Input
             type="date"
@@ -407,12 +471,13 @@ function OrdersContent() {
           />
         </div>
 
-        {(statusFilter !== 'All' || dateFilter.from || dateFilter.to || search) && (
+        {(statusFilter !== 'All' || commissionFilter !== 'All' || dateFilter.from || dateFilter.to || search) && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
               setStatusFilter('All');
+              setCommissionFilter('All');
               setDateFilter({ from: '', to: '' });
               setSearch('');
               setPage(1);
@@ -495,7 +560,7 @@ function OrdersContent() {
                 </TableRow>
               ) : (
                 orders.map((order) => {
-                  const displayId = order.motherOrderId ? String(order.motherOrderId).slice(-8).toUpperCase() : String(order._id).slice(-8).toUpperCase();
+                  const displayId = order.shortId || String(order._id).slice(-8).toUpperCase();
                   return (
                   <TableRow key={order._id}>
                     <TableCell className="max-w-[200px] whitespace-normal">
@@ -604,8 +669,21 @@ function OrdersContent() {
                     </TableCell>
 
                     <TableCell>
-                      <div className="flex flex-col">
+                      <div className="flex flex-col gap-1 items-start">
                         <span className="font-bold text-green-600 text-sm">৳{Math.round(order.resellerCommission || 0)}</span>
+                        {order.commissionStatus === 'cleared' ? (
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[9px] px-1.5 py-0 font-medium">
+                            Received
+                          </Badge>
+                        ) : order.commissionStatus === 'cancelled' ? (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 text-[9px] px-1.5 py-0 font-medium">
+                            Cancelled
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 text-[9px] px-1.5 py-0 font-medium">
+                            Pending
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     
@@ -666,9 +744,6 @@ function OrdersContent() {
                               <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>
                                 Confirm
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>
-                                Mark Paid
-                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => updateStatus(order._id, 'Hold')}>
                                 Hold Order
                               </DropdownMenuItem>
@@ -677,6 +752,9 @@ function OrdersContent() {
                             <DropdownMenuGroup>
                               <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleCancelOrder(order._id)}>
                                 Cancel Order
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleDeleteOrder(order._id)}>
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete Order
                               </DropdownMenuItem>
                             </DropdownMenuGroup>
                           </DropdownMenuContent>
@@ -701,7 +779,7 @@ function OrdersContent() {
             <div className="py-12 text-center text-muted-foreground">No orders found.</div>
           ) : (
             orders.map(order => {
-              const displayId = order.motherOrderId ? String(order.motherOrderId).slice(-8).toUpperCase() : String(order._id).slice(-8).toUpperCase();
+              const displayId = order.shortId || String(order._id).slice(-8).toUpperCase();
               return (
               <div key={order._id} className="p-4 space-y-3 bg-card">
                 <div className="flex items-center justify-between">
@@ -737,7 +815,22 @@ function OrdersContent() {
                   </div>
                   <div className="text-right">
                     <span className="text-muted-foreground block text-[10px] uppercase">Commission</span>
-                    <span className="font-bold text-green-600">৳{Math.round(order.resellerCommission || 0)}</span>
+                    <div className="flex items-center justify-end gap-1.5 mt-0.5">
+                      <span className="font-bold text-green-600">৳{Math.round(order.resellerCommission || 0)}</span>
+                      {order.commissionStatus === 'cleared' ? (
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[9px] px-1 py-0 font-medium">
+                          Received
+                        </Badge>
+                      ) : order.commissionStatus === 'cancelled' ? (
+                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 text-[9px] px-1 py-0 font-medium">
+                          Cancelled
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 text-[9px] px-1 py-0 font-medium">
+                          Pending
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -776,9 +869,9 @@ function OrdersContent() {
                         <DropdownMenuGroup>
                           <DropdownMenuLabel>Status</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>Confirm</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>Mark Paid</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => updateStatus(order._id, 'Hold')}>Hold Order</DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleCancelOrder(order._id)}>Cancel Order</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleDeleteOrder(order._id)}>Delete Order</DropdownMenuItem>
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>

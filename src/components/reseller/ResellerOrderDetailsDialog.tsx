@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { 
   Loader2, Mail, Phone, MapPin, CreditCard, Calendar, Truck, 
-  Printer, ExternalLink, Edit, X, MessageSquare, Lock, Tag
+  Printer, ExternalLink, Edit, X, MessageSquare, Lock, Tag, Trash2
 } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { toast } from 'sonner';
@@ -399,9 +399,9 @@ export default function ResellerOrderDetailsDialog({
 
               <Separator />
 
-              {/* Order & Payment Status */}
+              {/* Order Status */}
               <div className="space-y-3">
-                <h3 className="text-sm font-bold uppercase text-muted-foreground">Order & Payment Status</h3>
+                <h3 className="text-sm font-bold uppercase text-muted-foreground">Order Status</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground block mb-1">Order Status</label>
@@ -412,22 +412,16 @@ export default function ResellerOrderDetailsDialog({
                     >
                       <option value="Order Placed">Order Placed</option>
                       <option value="Confirmed">Confirmed</option>
-                      <option value="Paid">Paid</option>
                       <option value="Hold">Hold</option>
                       <option value="Cancelled">Cancelled</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Payment Status</label>
-                    <select
-                      value={editForm.paymentStatus || 'Pending'}
-                      onChange={(e) => setEditForm({ ...editForm, paymentStatus: e.target.value })}
-                      className="w-full text-sm p-2 border rounded-lg bg-background"
-                    >
-                      <option value="Pending">Pending</option>
-                      <option value="Paid">Paid</option>
-                      <option value="Failed">Failed</option>
-                    </select>
+                    <label className="text-xs font-semibold text-muted-foreground block mb-1">Payment Status (Admin Managed)</label>
+                    <div className="p-2 border rounded-lg bg-muted/40 text-sm font-medium text-muted-foreground flex items-center justify-between">
+                      <span>{order?.paymentStatus || 'Pending'}</span>
+                      <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">Admin Only</span>
+                    </div>
                   </div>
                 </div>
               </div>

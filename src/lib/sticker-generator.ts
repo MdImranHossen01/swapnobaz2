@@ -80,7 +80,7 @@ export async function printStickerInvoice(orderOrOrders: any | any[], settings: 
   }
 
   const stickersHtml = orders.map((order, index) => {
-    const orderId = String(order.shortId || order.orderId || order._id || '').slice(-8).toUpperCase();
+    const orderId = order.shortId || order.orderId || String(order._id || '').slice(-8).toUpperCase();
     const createdAt = order.createdAt ? new Date(order.createdAt) : null;
     const dateStr = createdAt && isValid(createdAt) ? format(createdAt, 'dd/MM/yyyy hh:mm a') : 'N/A';
     const consignmentId: string = order.shippingDetails?.consignmentId || order.shippingDetails?.trackingId || order.trackingNumber || '';

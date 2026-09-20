@@ -150,6 +150,7 @@ function OrdersContent() {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchParams.get('search') || '');
   const [resellers, setResellers] = useState<any[]>([]);
   const [resellerFilter, setResellerFilter] = useState(searchParams.get('resellerId') || 'all');
+  const [commissionFilter, setCommissionFilter] = useState(searchParams.get('commissionStatus') || 'All');
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
   const [dateFilter, setDateFilter] = useState({
     from: searchParams.get('from') || '',
@@ -193,13 +194,16 @@ function OrdersContent() {
     if (resellerFilter !== 'all') {
       params.set('resellerId', resellerFilter);
     }
+    if (commissionFilter !== 'All') {
+      params.set('commissionStatus', commissionFilter);
+    }
 
     const currentQuery = searchParams.toString();
     const newQuery = params.toString();
     if (currentQuery !== newQuery) {
       router.push(`/admin/orders?${newQuery}`);
     }
-  }, [currentPage, statusFilter, debouncedSearchTerm, dateFilter.from, dateFilter.to, resellerFilter]);
+  }, [currentPage, statusFilter, debouncedSearchTerm, dateFilter.from, dateFilter.to, resellerFilter, commissionFilter]);
 
   const handleDownloadInvoice = async (order: any) => {
     try {
@@ -243,6 +247,9 @@ function OrdersContent() {
         to: dateFilter.to,
         resellerId: resellerFilter
       });
+      if (commissionFilter !== 'All') {
+        queryParams.set('commissionStatus', commissionFilter);
+      }
       const res = await fetch(`/api/orders?${queryParams.toString()}`);
       if (!res.ok) {
         throw new Error(`Failed to load orders: ${res.status} ${res.statusText}`);
@@ -269,7 +276,7 @@ function OrdersContent() {
 
   useEffect(() => {
     fetchOrders(currentPage);
-  }, [currentPage, debouncedSearchTerm, statusFilter, dateFilter.from, dateFilter.to, resellerFilter]);
+  }, [currentPage, debouncedSearchTerm, statusFilter, dateFilter.from, dateFilter.to, resellerFilter, commissionFilter]);
 
   // Fetch resellers for filter
   useEffect(() => {
@@ -291,6 +298,10 @@ function OrdersContent() {
     const statusFromParams = searchParams.get('status') || 'All';
     if (statusFromParams !== statusFilter) {
       setStatusFilter(statusFromParams);
+    }
+    const commFromParams = searchParams.get('commissionStatus') || 'All';
+    if (commFromParams !== commissionFilter) {
+      setCommissionFilter(commFromParams);
     }
     const searchFromParams = searchParams.get('search') || '';
     if (searchFromParams !== searchTerm) {
@@ -443,6 +454,8 @@ function OrdersContent() {
       'Total Amount',
       'Purchase Cost',
       'Profit',
+      'Reseller Commission',
+      'Commission Status',
       'Payment Status',
       'Order Status'
     ];
@@ -460,7 +473,7 @@ function OrdersContent() {
       const profit = o.totalAmount - totalPurchaseCost - (o.deliveryCharge || 0);
 
       return [
-        o._id.toUpperCase(),
+        o.shortId || o._id.toUpperCase(),
         format(new Date(o.createdAt), 'yyyy-MM-dd HH:mm'),
         shipping.fullName || o.user?.name || 'Guest',
         o.user?.email || 'Guest',
@@ -473,6 +486,8 @@ function OrdersContent() {
         o.totalAmount,
         totalPurchaseCost,
         Math.round(profit),
+        o.resellerId ? Math.round(o.resellerCommission || 0) : 'N/A',
+        o.resellerId ? (o.commissionStatus === 'cleared' ? 'Paid' : o.commissionStatus === 'cancelled' ? 'Cancelled' : 'Pending') : 'N/A',
         o.paymentStatus,
         o.status
       ];
@@ -669,6 +684,39 @@ function OrdersContent() {
           </DropdownMenu>
         </div>
 
+        {/* Commission Status Filter */}
+        <div className="w-full md:w-44 shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="h-10 w-full justify-between px-3 font-normal text-xs">
+                <span className="truncate">
+                  {commissionFilter === 'All' ? 'All Commission' : 
+                   commissionFilter === 'cleared' ? 'Commission: Paid' :
+                   commissionFilter === 'pending' ? 'Commission: Pending' : 
+                   'Commission: Cancelled'}
+                </span>
+                <ChevronDown className="ml-1.5 h-3.5 w-3.5 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuLabel className="text-xs">Commission Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => { setCommissionFilter('All'); setCurrentPage(1); }} className={commissionFilter === 'All' ? 'bg-accent font-bold' : ''}>
+                All Commission
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCommissionFilter('cleared'); setCurrentPage(1); }} className={commissionFilter === 'cleared' ? 'bg-accent font-bold text-emerald-700' : ''}>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 mr-2 shrink-0"></span> Paid
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCommissionFilter('pending'); setCurrentPage(1); }} className={commissionFilter === 'pending' ? 'bg-accent font-bold text-amber-700' : ''}>
+                <span className="w-2 h-2 rounded-full bg-amber-500 mr-2 shrink-0"></span> Pending
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCommissionFilter('cancelled'); setCurrentPage(1); }} className={commissionFilter === 'cancelled' ? 'bg-accent font-bold text-red-700' : ''}>
+                <span className="w-2 h-2 rounded-full bg-red-500 mr-2 shrink-0"></span> Cancelled
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <div className="block md:hidden w-full sm:w-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -736,12 +784,14 @@ function OrdersContent() {
           />
         </div>
 
-        {(statusFilter !== 'All' || dateFilter.from || dateFilter.to || searchTerm) && (
+        {(statusFilter !== 'All' || resellerFilter !== 'all' || commissionFilter !== 'All' || dateFilter.from || dateFilter.to || searchTerm) && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => {
               setStatusFilter('All');
+              setResellerFilter('all');
+              setCommissionFilter('All');
               setDateFilter({ from: '', to: '' });
               setSearchTerm('');
               setCurrentPage(1);
@@ -883,6 +933,7 @@ function OrdersContent() {
                 <TableHead>Order Info</TableHead>
                 <TableHead>Items</TableHead>
                 <TableHead>Total</TableHead>
+                <TableHead>Commission</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -891,7 +942,7 @@ function OrdersContent() {
             <TableBody>
               {filteredOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                     No orders found.
                   </TableCell>
                 </TableRow>
@@ -913,7 +964,7 @@ function OrdersContent() {
                             onClick={() => openDetails(order._id)}
                           >
                             <span className={`font-bold hover:underline ${order.isDuplicate ? 'text-red-500 font-extrabold' : order.isRepeat ? 'text-yellow-600 font-extrabold' : 'text-primary'}`}>
-                              #{order._id.slice(-8).toUpperCase()}
+                              #{order.shortId || order._id.slice(-8).toUpperCase()}
                             </span>
                           </button>
                           {order.isDuplicate ? (
@@ -1009,6 +1060,30 @@ function OrdersContent() {
                       </div>
                     </TableCell>
                     <TableCell className="font-bold">৳{Math.round(order.totalAmount ?? 0)}</TableCell>
+                    <TableCell>
+                      {order.resellerId ? (
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="font-bold text-green-600 text-sm">
+                            ৳{Math.round(order.resellerCommission || 0)}
+                          </span>
+                          {order.commissionStatus === 'cleared' ? (
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[9px] px-1.5 py-0 font-semibold">
+                              Paid
+                            </Badge>
+                          ) : order.commissionStatus === 'cancelled' ? (
+                            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-300 text-[9px] px-1.5 py-0 font-semibold">
+                              Cancelled
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 text-[9px] px-1.5 py-0 font-semibold">
+                              Pending
+                            </Badge>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground font-mono">—</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         <Badge
@@ -1151,7 +1226,7 @@ function OrdersContent() {
                         className="font-bold text-xs text-primary hover:underline"
                         onClick={() => openDetails(order._id)}
                       >
-                        #{order._id.slice(-8).toUpperCase()}
+                        #{order.shortId || order._id.slice(-8).toUpperCase()}
                       </button>
                       {order.isDuplicate && (
                         <Badge className="bg-red-500 text-white text-[9px] px-1 py-0 h-4">Dup</Badge>
@@ -1230,9 +1305,29 @@ function OrdersContent() {
                       ⚙️ {order.systemNote}
                     </div>
                   )}
-                  {order.resellerId && typeof order.resellerId === 'object' && order.resellerId.storeName && (
-                    <div className="text-[9px] bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded border border-indigo-200/50 font-bold truncate">
-                      Store: {order.resellerId.storeName}
+                  {order.resellerId && (
+                    <div className="flex items-center justify-between gap-1 text-[10px] bg-indigo-50/70 dark:bg-indigo-950/20 px-2 py-1 rounded border border-indigo-200/50">
+                      <span className="font-bold text-indigo-700 dark:text-indigo-300 truncate">
+                        🏪 {typeof order.resellerId === 'object' && order.resellerId.storeName ? order.resellerId.storeName : 'Reseller Order'}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="font-bold text-green-700 dark:text-green-400">
+                          Comm: ৳{Math.round(order.resellerCommission || 0)}
+                        </span>
+                        {order.commissionStatus === 'cleared' ? (
+                          <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[8px] px-1 py-0 font-semibold h-4">
+                            Paid
+                          </Badge>
+                        ) : order.commissionStatus === 'cancelled' ? (
+                          <Badge variant="outline" className="bg-red-100 text-red-800 border-red-300 text-[8px] px-1 py-0 font-semibold h-4">
+                            Cancelled
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300 text-[8px] px-1 py-0 font-semibold h-4">
+                            Pending
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   )}
 

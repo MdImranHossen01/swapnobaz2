@@ -315,7 +315,7 @@ export default function OrderDetailsDialog({
             )}
           </div>
           <DialogDescription>
-            {order ? `Order ID: #${String(order._id ?? '').toUpperCase()}` : 'Loading order details...'}
+            {order ? `Order ID: #${order.shortId || String(order._id ?? '').slice(-8).toUpperCase()}` : 'Loading order details...'}
           </DialogDescription>
         </DialogHeader>
 

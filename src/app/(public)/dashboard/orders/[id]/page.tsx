@@ -105,7 +105,7 @@ export default function OrderDetailsPage({ params }: { params: Promise<{ id: str
                         <h1 className="text-base sm:text-xl md:text-2xl font-black tracking-tight text-foreground truncate">
                           Order Details
                         </h1>
-                        <p className="text-xs text-muted-foreground font-mono">#{order._id.slice(-8).toUpperCase()}</p>
+                        <p className="text-xs text-muted-foreground font-mono">#{order.shortId || order._id.slice(-8).toUpperCase()}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 self-end sm:self-auto">

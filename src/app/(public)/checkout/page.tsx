@@ -1249,7 +1249,7 @@ function CheckoutContent() {
               </p>
               {successOrderId && (
                 <p className="text-xs font-mono bg-muted px-3 py-1.5 rounded-full inline-block text-muted-foreground">
-                  Order ID: <span className="font-bold text-foreground">#{successOrderId.slice(-8).toUpperCase()}</span>
+                  Order ID: <span className="font-bold text-foreground">#{successOrderId.toUpperCase()}</span>
                 </p>
               )}
             </div>

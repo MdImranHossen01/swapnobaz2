@@ -61,6 +61,8 @@ export interface IOrder extends Document {
   internalNote?: string;
   customerNote?: string;
   systemNote?: string;
+  resellerCommission?: number;
+  commissionStatus?: 'pending' | 'cleared' | 'cancelled';
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date | null;
@@ -135,7 +137,9 @@ const OrderSchema: Schema<IOrder> = new Schema(
     internalNote: { type: String, default: '' },
     customerNote: { type: String, default: '' },
     systemNote: { type: String, default: '' },
-    deletedAt: { type: Date, default: null },
+    resellerCommission: { type: Number, default: 0, min: 0 },
+    commissionStatus: { type: String, enum: ['pending', 'cleared', 'cancelled'], default: undefined },
+    deletedAt: { type: Date, default: null, index: true },
   },
   { timestamps: true }
 );

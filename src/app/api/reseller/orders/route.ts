@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
 
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
+    const commissionStatus = searchParams.get('commissionStatus') || '';
 
     // Auto-sync any existing ResellerOrders whose mother order status was updated
     try {
@@ -68,8 +69,9 @@ export async function GET(request: NextRequest) {
       console.error('[Reseller Orders Sync Error]', syncErr);
     }
 
-    const query: Record<string, any> = { resellerId };
+    const query: Record<string, any> = { resellerId, deletedAt: null };
     if (status) query.status = status;
+    if (commissionStatus && commissionStatus !== 'All') query.commissionStatus = commissionStatus;
     if (search) {
       const sanitizedSearch = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
       query.$or = [
@@ -91,7 +93,7 @@ export async function GET(request: NextRequest) {
         .lean(),
       ResellerOrder.countDocuments(query),
       ResellerOrder.aggregate([
-        { $match: { resellerId } },
+        { $match: { resellerId, deletedAt: null } },
         { $group: { _id: "$status", count: { $sum: 1 } } }
       ])
     ]);
@@ -135,9 +137,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Missing or malformed orderId' }, { status: 400 });
     }
 
-    const validStatuses = ['Order Placed', 'Confirmed', 'Paid', 'Hold', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered', 'Cancelled'];
+    const validStatuses = ['Order Placed', 'Confirmed', 'Hold', 'Cancelled'];
     if (!status || !validStatuses.includes(status)) {
-      return NextResponse.json({ error: 'Invalid or unsupported status' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid or unsupported status for reseller' }, { status: 400 });
     }
 
     const order = await ResellerOrder.findOneAndUpdate(

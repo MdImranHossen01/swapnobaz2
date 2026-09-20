@@ -558,6 +558,7 @@ export async function GET(req: NextRequest) {
     const fromDate = searchParams.get('from') || '';
     const toDate = searchParams.get('to') || '';
     const resellerId = searchParams.get('resellerId') || '';
+    const commissionStatus = searchParams.get('commissionStatus') || '';
 
     await connectToDatabase();
 
@@ -622,6 +623,17 @@ export async function GET(req: NextRequest) {
       }
       if (resellerId && resellerId !== 'all') {
         query.resellerId = resellerId;
+      }
+      if (commissionStatus && commissionStatus !== 'All') {
+        const ResellerOrder = (await import('@/models/ResellerOrder')).default;
+        const matchingMotherIds = await ResellerOrder.find({ commissionStatus: commissionStatus as any, deletedAt: null }).distinct('motherOrderId');
+        query.$and = query.$and || [];
+        query.$and.push({
+          $or: [
+            { _id: { $in: matchingMotherIds } },
+            { commissionStatus: commissionStatus }
+          ]
+        });
       }
       if (fromDate || toDate) {
         query.createdAt = {};
@@ -715,9 +727,30 @@ export async function GET(req: NextRequest) {
 
     let processedOrders = orders;
     if (fetchAll && isAdmin) {
+      const ResellerOrder = (await import('@/models/ResellerOrder')).default;
+      const orderIds = orders.map((o: any) => o._id);
+      const resellerOrders = await ResellerOrder.find({
+        motherOrderId: { $in: orderIds },
+        deletedAt: null
+      }).select('motherOrderId resellerCommission commissionStatus').lean();
+      const roMap = new Map(resellerOrders.map((ro: any) => [ro.motherOrderId?.toString(), ro]));
+
       processedOrders = await Promise.all(orders.map(async (order: any) => {
+        const orderObj = order.toObject ? order.toObject() : order;
+        const ro = roMap.get(order._id.toString());
+        const finalCommission = ro?.resellerCommission ?? (orderObj.resellerCommission || 0);
+        const finalCommStatus = ro?.commissionStatus ?? (orderObj.commissionStatus || (orderObj.resellerId ? 'pending' : undefined));
+
         const phone = order.shippingAddress?.phone;
-        if (!phone) return { ...order.toObject(), isRepeat: false, isDuplicate: false };
+        if (!phone) {
+          return {
+            ...orderObj,
+            resellerCommission: finalCommission,
+            commissionStatus: finalCommStatus,
+            isRepeat: false,
+            isDuplicate: false
+          };
+        }
 
         const otherOrders = await Order.find({
           "shippingAddress.phone": phone,
@@ -726,7 +759,13 @@ export async function GET(req: NextRequest) {
         }).select('items');
 
         if (otherOrders.length === 0) {
-          return { ...order.toObject(), isRepeat: false, isDuplicate: false };
+          return {
+            ...orderObj,
+            resellerCommission: finalCommission,
+            commissionStatus: finalCommStatus,
+            isRepeat: false,
+            isDuplicate: false
+          };
         }
 
         const isDuplicate = otherOrders.some(other => {
@@ -742,7 +781,9 @@ export async function GET(req: NextRequest) {
         });
 
         return {
-          ...order.toObject(),
+          ...orderObj,
+          resellerCommission: finalCommission,
+          commissionStatus: finalCommStatus,
           isRepeat: true,
           isDuplicate
         };

@@ -73,8 +73,7 @@ export async function PATCH(
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
-    const allowedStatuses = ['Order Placed', 'Confirmed', 'Paid', 'Hold', 'Ready for Delivery', 'Released for Delivery', 'Delivered', 'Cancelled'];
-    const allowedPaymentStatuses = ['Pending', 'Paid', 'Failed'];
+    const allowedStatuses = ['Order Placed', 'Confirmed', 'Hold', 'Ready for Delivery', 'Released for Delivery', 'Cancelled'];
 
     // Update customer info if provided
     if (customer) {
@@ -93,6 +92,9 @@ export async function PATCH(
 
     // Update status if provided
     if (status) {
+      if (status === 'Paid') {
+        return NextResponse.json({ message: 'Resellers cannot mark orders as Paid. Payment is verified and received by Admin.' }, { status: 400 });
+      }
       if (!allowedStatuses.includes(status)) {
         return NextResponse.json({ message: `Invalid status: ${status}` }, { status: 400 });
       }
@@ -102,14 +104,6 @@ export async function PATCH(
       } else if (order.commissionStatus === 'cancelled') {
         order.commissionStatus = 'pending';
       }
-    }
-
-    // Update paymentStatus if provided
-    if (paymentStatus) {
-      if (!allowedPaymentStatuses.includes(paymentStatus)) {
-        return NextResponse.json({ message: `Invalid payment status: ${paymentStatus}` }, { status: 400 });
-      }
-      order.paymentStatus = paymentStatus;
     }
 
     // Update notes if provided
@@ -164,3 +158,45 @@ export async function PATCH(
     return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ orderId: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id || (session.user as any).role !== 'reseller') {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { orderId } = await params;
+    if (!orderId) {
+      return NextResponse.json({ message: 'Order ID is required' }, { status: 400 });
+    }
+
+    await dbConnect();
+
+    const reseller = await Reseller.findOne({ userId: session.user.id });
+    if (!reseller) {
+      return NextResponse.json({ message: 'Reseller not found' }, { status: 404 });
+    }
+
+    // Soft delete ResellerOrder only for this reseller.
+    // NOTE: The Mother Order in Admin Dashboard remains untouched and active.
+    const order = await ResellerOrder.findOneAndUpdate(
+      { _id: orderId, resellerId: reseller._id },
+      { $set: { deletedAt: new Date() } },
+      { new: true }
+    );
+
+    if (!order) {
+      return NextResponse.json({ message: 'Order not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: 'Order deleted successfully from your dashboard' });
+  } catch (error: any) {
+    console.error('Error deleting reseller order:', error);
+    return NextResponse.json({ message: error.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
+
