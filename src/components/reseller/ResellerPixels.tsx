@@ -13,99 +13,94 @@ import Script from "next/script";
 import { Suspense } from "react";
 
 function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomain: string }) {
+  const [mounted, setMounted] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const sanitizedPixelId = /^\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
+  const sanitizedPixelId = pixelId && /^\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== "undefined" && typeof (window as any).fbq === "function") {
+      setScriptLoaded(true);
+    }
+  }, []);
 
   const trackPageView = useCallback(() => {
     if (!sanitizedPixelId) return;
-    const eventId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-    if (typeof window !== "undefined" && typeof (window as any).fbq === "function") {
-      (window as any).fbq("track", "PageView", {}, { eventID: eventId });
-    }
-    // CAPI PageView
-    if (typeof window !== "undefined") {
-      fetch(`/api/store/${subdomain}/facebook/event`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          eventName: "PageView",
-          eventUrl: window.location.href,
-          userAgent: navigator.userAgent,
-          eventId,
-          userData: {},
-          customData: {},
-        }),
-      }).catch(() => {});
-    }
+    import("@/lib/reseller-pixel").then(({ resellerFbEvent }) => {
+      resellerFbEvent(subdomain, "PageView");
+    });
   }, [sanitizedPixelId, subdomain]);
 
   useEffect(() => {
-    if (!scriptLoaded || !sanitizedPixelId) return;
+    if (!mounted || !sanitizedPixelId || !scriptLoaded) return;
     trackPageView();
-  }, [pathname, searchParams, scriptLoaded, sanitizedPixelId, trackPageView]);
+  }, [pathname, searchParams, scriptLoaded, sanitizedPixelId, trackPageView, mounted]);
 
   if (!sanitizedPixelId) return null;
 
   return (
-    <Script
-      id={`fb-pixel-reseller-${subdomain}`}
-      strategy="afterInteractive"
-      onLoad={() => setScriptLoaded(true)}
-      dangerouslySetInnerHTML={{
-        __html: `
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '${sanitizedPixelId}');
-          fbq('track', 'PageView');
-        `,
-      }}
-    />
+    <>
+      <Script
+        id={`fb-pixel-reseller-${subdomain}`}
+        strategy="afterInteractive"
+        onLoad={() => setScriptLoaded(true)}
+        dangerouslySetInnerHTML={{
+          __html: `
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('dataProcessingOptions', []);
+            fbq('init', '${sanitizedPixelId}');
+          `,
+        }}
+      />
+      <noscript>
+        <img
+          height="1"
+          width="1"
+          style={{ display: "none" }}
+          src={`https://www.facebook.com/tr?id=${sanitizedPixelId}&ev=PageView&noscript=1`}
+          alt=""
+        />
+      </noscript>
+    </>
   );
 }
 
 function TikTokPixelScript({ pixelId, subdomain }: { pixelId: string; subdomain: string }) {
+  const [mounted, setMounted] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const sanitizedPixelId = /^[a-zA-Z0-9]+$/.test(pixelId.trim()) ? pixelId.trim() : null;
+  const sanitizedPixelId = pixelId && /^[a-zA-Z0-9]+$/.test(pixelId.trim()) ? pixelId.trim() : null;
+
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== "undefined" && (window as any).ttq) {
+      setScriptLoaded(true);
+    }
+  }, []);
 
   const trackPageView = useCallback(() => {
     if (!sanitizedPixelId) return;
-    if (typeof window !== "undefined" && (window as any).ttq && typeof (window as any).ttq.page === "function") {
-      (window as any).ttq.page();
-    }
-    // CAPI PageView
-    if (typeof window !== "undefined") {
-      fetch(`/api/store/${subdomain}/tiktok/event`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          eventName: "PageView",
-          eventUrl: window.location.href,
-          userAgent: navigator.userAgent,
-          eventId: crypto.randomUUID?.() || Math.random().toString(36).slice(2),
-          userData: {},
-          customData: {},
-        }),
-      }).catch(() => {});
-    }
+    import("@/lib/reseller-pixel").then(({ resellerTtEvent }) => {
+      resellerTtEvent(subdomain, "PageView");
+    });
   }, [sanitizedPixelId, subdomain]);
 
   useEffect(() => {
-    if (!scriptLoaded || !sanitizedPixelId) return;
+    if (!mounted || !sanitizedPixelId || !scriptLoaded) return;
     trackPageView();
-  }, [pathname, searchParams, scriptLoaded, sanitizedPixelId, trackPageView]);
+  }, [pathname, searchParams, scriptLoaded, sanitizedPixelId, trackPageView, mounted]);
 
   if (!sanitizedPixelId) return null;
 

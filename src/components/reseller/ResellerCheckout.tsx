@@ -160,32 +160,30 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
     hasTrackedInitiate.current = true;
 
     const total = validItems.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0);
-    const payload = {
-      content_name: 'InitiateCheckout',
-      content_type: 'product',
+    const checkoutPayload = {
       content_ids: validItems.map(i => i.resellerProductId || i.productId),
+      content_type: 'product',
+      value: total,
+      currency: 'BDT',
+      num_items: validItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0),
       contents: validItems.map(i => ({
         id: i.resellerProductId || i.productId,
         quantity: Number(i.quantity) || 1,
         item_price: Number(i.price) || 0,
         price: Number(i.price) || 0,
-        name: i.name || undefined,
       })),
-      value: total,
-      currency: 'BDT',
-      num_items: validItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0),
     };
 
     const normalizedPhone = watchedPhone ? normalizePhoneNumber(watchedPhone) || watchedPhone : undefined;
-    const userData = {
+    const initiateUserData = {
       ph: normalizedPhone,
       em: customerProfile?.email || undefined,
       country: 'bd',
     };
 
     waitForResellerPixel().then(() => {
-      resellerFbEvent(subdomain, 'InitiateCheckout', payload, userData);
-      resellerTtEvent(subdomain, 'InitiateCheckout', payload, userData);
+      resellerFbEvent(subdomain, 'InitiateCheckout', checkoutPayload, initiateUserData);
+      resellerTtEvent(subdomain, 'InitiateCheckout', checkoutPayload, initiateUserData);
     });
   }, [cart, subdomain, watchedPhone, customerProfile?.email]);
 
@@ -363,37 +361,37 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
         const nameParts = (values.fullName || '').trim().split(/\s+/);
         const validItems = cart.filter(i => i.resellerProductId || i.productId);
 
-        const purchasePayload = {
-          content_name: 'Purchase',
-          content_type: 'product',
-          order_id: orderShortId,
+        const purchaseEventData = {
+          value: data.totalAmount ?? finalTotal,
+          currency: 'BDT',
           content_ids: validItems.map(i => i.resellerProductId || i.productId),
+          content_type: 'product',
+          num_items: validItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0),
           contents: validItems.map(i => ({
             id: i.resellerProductId || i.productId,
             quantity: Number(i.quantity) || 1,
             item_price: Number(i.price) || 0,
             price: Number(i.price) || 0,
-            name: i.name || undefined,
           })),
-          value: data.totalAmount ?? finalTotal,
-          currency: 'BDT',
-          num_items: validItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0),
         };
 
-        const purchaseUserData = {
-          em: customerProfile?.email || undefined,
-          ph: normalizedPhone,
+        const purchaseUserData: any = {
+          em: customerProfile?.email || '',
+          ph: values.phone,
           fn: nameParts[0] || '',
           ln: nameParts.slice(1).join(' ') || '',
-          ct: values.deliveryArea === 'inside' ? 'Dhaka' : 'Outside Dhaka',
-          st: values.deliveryArea === 'inside' ? 'Dhaka' : undefined,
           country: 'bd',
         };
 
+        if (values.deliveryArea === 'inside') {
+          purchaseUserData.ct = 'Dhaka';
+          purchaseUserData.st = 'Dhaka';
+        }
+
         // Fire Pixel & CAPI events with exact deduplication
         try {
-          resellerFbEvent(subdomain, 'Purchase', purchasePayload, purchaseUserData, orderShortId);
-          resellerTtEvent(subdomain, 'Purchase', purchasePayload, purchaseUserData, orderShortId);
+          resellerFbEvent(subdomain, 'Purchase', purchaseEventData, purchaseUserData, orderShortId);
+          resellerTtEvent(subdomain, 'Purchase', purchaseEventData, purchaseUserData, orderShortId);
         } catch (trackingErr) {
           console.error('[Reseller Tracking Error]', trackingErr);
         }
