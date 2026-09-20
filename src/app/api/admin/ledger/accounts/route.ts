@@ -14,6 +14,10 @@ export async function GET() {
     await connectToDatabase();
     await seedLedgerAccounts();
 
+    // Auto-sync any approved reseller payouts to the ledger
+    const { backfillPayoutsToLedger } = await import('@/lib/ledgerHelper');
+    await backfillPayoutsToLedger();
+
     const accounts = await LedgerAccount.find().sort({ code: 1 });
     return NextResponse.json(accounts);
   } catch (error: any) {

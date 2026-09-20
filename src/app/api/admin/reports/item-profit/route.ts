@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
 
     const matchQuery: any = {
-      status: { $in: ['Paid', 'Confirmed', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
+      status: { $in: ['Paid', 'Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
       deletedAt: null
     };
 

@@ -14,6 +14,10 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
     await seedLedgerAccounts();
 
+    // Auto-sync any approved reseller payouts to the ledger
+    const { backfillPayoutsToLedger } = await import('@/lib/ledgerHelper');
+    await backfillPayoutsToLedger();
+
     const transactions = await LedgerTransaction.find()
       .populate('account')
       .sort({ date: -1, createdAt: -1 });

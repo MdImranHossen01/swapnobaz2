@@ -143,3 +143,63 @@ export async function logOrderPaymentToLedger(order: any) {
     console.error('[Ledger] Error logging order payment to ledger:', error);
   }
 }
+
+/**
+ * Log reseller commission payout to the ledger
+ */
+export async function logPayoutToLedger(payoutTx: any, reseller?: any) {
+  try {
+    await connectToDatabase();
+    
+    // bKash, Nagad, Bank -> BANK, Cash -> CASH
+    const methodStr = (payoutTx.payoutMethod || '').toLowerCase();
+    const accountCode = methodStr === 'cash' ? 'CASH' : 'BANK';
+    const amount = Math.abs(payoutTx.amount || 0);
+    const txIdStr = payoutTx._id.toString();
+    const shortId = txIdStr.slice(-8).toUpperCase();
+    const reference = `PAYOUT-${shortId}`;
+
+    const exists = await LedgerTransaction.findOne({ reference });
+    if (exists) {
+      console.log(`[Ledger] Entry already exists for payout reference: ${reference}`);
+      return;
+    }
+
+    const storeName = reseller?.storeName || payoutTx.resellerId?.storeName || 'Reseller';
+    const method = payoutTx.payoutMethod || 'Mobile Banking';
+    const refNote = payoutTx.payoutReference ? ` (Ref: ${payoutTx.payoutReference})` : '';
+    const description = `Reseller Commission Payout to ${storeName} via ${method}${refNote}`;
+
+    await logLedgerTransaction(
+      accountCode,
+      'credit', // Credit decreases Cash or Bank asset account
+      amount,
+      description,
+      reference,
+      payoutTx.updatedAt ? new Date(payoutTx.updatedAt) : new Date()
+    );
+    console.log(`[Ledger] Logged payout for ${storeName} (৳${amount}) to ${accountCode} successfully.`);
+  } catch (error) {
+    console.error('[Ledger] Error logging payout to ledger:', error);
+  }
+}
+
+/**
+ * Backfill any cleared payouts that haven't been logged to the ledger yet
+ */
+export async function backfillPayoutsToLedger() {
+  try {
+    await connectToDatabase();
+    const ResellerWalletTransaction = (await import('@/models/ResellerWalletTransaction')).default;
+    const clearedPayouts = await ResellerWalletTransaction.find({
+      type: 'payout_released',
+      status: 'cleared',
+    }).populate('resellerId', 'storeName');
+
+    for (const payout of clearedPayouts) {
+      await logPayoutToLedger(payout, payout.resellerId);
+    }
+  } catch (error) {
+    console.error('[Ledger] Error backfilling payouts to ledger:', error);
+  }
+}

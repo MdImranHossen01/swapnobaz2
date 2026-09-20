@@ -24,26 +24,28 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: 'Invalid month or year parameter' }, { status: 400 });
     }
 
-    // Calculate start and end dates for selected month & year (UTC)
-    const startDate = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
+    // Calculate start and end dates for selected month & year (BST +06:00)
+    const startDate = new Date(`${year}-${month.toString().padStart(2, '0')}-01T00:00:00+06:00`);
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const nextYear = month === 12 ? year + 1 : year;
+    const endDate = new Date(new Date(`${nextYear}-${nextMonth.toString().padStart(2, '0')}-01T00:00:00+06:00`).getTime() - 1);
     const daysInMonth = new Date(year, month, 0).getDate();
-    const endDate = new Date(Date.UTC(year, month - 1, daysInMonth, 23, 59, 59, 999));
 
     await connectToDatabase();
 
     const [ordersAggregation, expensesAggregation] = await Promise.all([
-      // Orders Aggregated by day
+      // Orders Aggregated by day (BST +06:00)
       Order.aggregate([
         {
           $match: {
-            status: { $in: ['Paid', 'Confirmed', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
+            status: { $in: ['Paid', 'Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
             createdAt: { $gte: startDate, $lte: endDate },
             deletedAt: null
           }
         },
         {
           $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: '+06:00' } },
             totalSales: { $sum: '$totalAmount' },
             deliveryCost: { $sum: '$deliveryCharge' },
             cogs: {
@@ -62,7 +64,7 @@ export async function GET(req: NextRequest) {
         }
       ]),
 
-      // Expenses Aggregated by day
+      // Expenses Aggregated by day (BST +06:00)
       Expense.aggregate([
         {
           $match: {
@@ -72,7 +74,7 @@ export async function GET(req: NextRequest) {
         },
         {
           $group: {
-            _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: '+06:00' } },
             expense: { $sum: '$amount' }
           }
         }

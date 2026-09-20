@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
       const topProducts = await Order.aggregate([
         {
           $match: {
-            status: { $in: ['Paid', 'Confirmed', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
+            status: { $in: ['Paid', 'Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
             deletedAt: null
           }
         },
@@ -64,7 +64,7 @@ export async function GET(req: NextRequest) {
       const soldProductIdsResult = await Order.aggregate([
         {
           $match: {
-            status: { $in: ['Paid', 'Confirmed', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
+            status: { $in: ['Paid', 'Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
             deletedAt: null
           }
         },

@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     const brandSalesAgg = await Order.aggregate([
       {
         $match: {
-          status: { $in: ['Paid', 'Confirmed', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
+          status: { $in: ['Paid', 'Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
           createdAt: { $gte: startDate, $lte: endDate },
           deletedAt: null
         }

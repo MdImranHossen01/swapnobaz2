@@ -4,6 +4,7 @@ import connectToDatabase from '@/lib/db';
 import Supplier from '@/models/Supplier';
 import SupplierBill from '@/models/SupplierBill';
 import Reseller from '@/models/Reseller';
+import ResellerOrder from '@/models/ResellerOrder';
 import ResellerWalletTransaction from '@/models/ResellerWalletTransaction';
 
 export async function GET(req: NextRequest) {
@@ -45,6 +46,22 @@ export async function GET(req: NextRequest) {
         .lean()
     ]);
 
+    // Calculate aggregated order count & lifetime earnings for resellers
+    const resellerIds = resellers.map((r: any) => r._id);
+    const [orderCounts, earningsData] = await Promise.all([
+      ResellerOrder.aggregate([
+        { $match: { resellerId: { $in: resellerIds }, deletedAt: null } },
+        { $group: { _id: '$resellerId', count: { $sum: 1 } } }
+      ]),
+      ResellerWalletTransaction.aggregate([
+        { $match: { resellerId: { $in: resellerIds }, type: 'commission_earned', status: { $in: ['cleared', 'completed'] } } },
+        { $group: { _id: '$resellerId', totalEarned: { $sum: '$amount' } } }
+      ])
+    ]);
+
+    const orderCountMap = new Map(orderCounts.map((o: any) => [o._id.toString(), o.count]));
+    const earningsMap = new Map(earningsData.map((e: any) => [e._id.toString(), e.totalEarned]));
+
     // Calculate totals
     const totalSupplierDue = dueSupplierBills.reduce((acc: number, curr: any) => acc + (curr.dueAmount || 0), 0);
     const totalResellerWalletPayable = resellers.reduce((acc: number, curr: any) => acc + (curr.walletBalance || 0), 0);
@@ -67,6 +84,8 @@ export async function GET(req: NextRequest) {
           ownerPhone: r.userId?.phone || '',
           walletBalance: r.walletBalance || 0,
           pendingBalance: r.pendingBalance || 0,
+          totalOrders: orderCountMap.get(r._id.toString()) ?? (r.totalOrders || 0),
+          totalEarnings: earningsMap.get(r._id.toString()) || (r.totalEarnings || 0),
           commissionRate: r.commissionRate ?? 10,
           status: r.status
         })),

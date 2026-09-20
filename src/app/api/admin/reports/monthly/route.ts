@@ -16,25 +16,25 @@ export async function GET(req: NextRequest) {
     const now = new Date();
     const year = parseInt(searchParams.get('year') || now.getFullYear().toString());
 
-    // Calculate start and end dates for selected year (UTC)
-    const startDate = new Date(Date.UTC(year, 0, 1, 0, 0, 0));
-    const endDate = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999));
+    // Calculate start and end dates for selected year (BST +06:00)
+    const startDate = new Date(`${year}-01-01T00:00:00+06:00`);
+    const endDate = new Date(`${year}-12-31T23:59:59.999+06:00`);
 
     await connectToDatabase();
 
     const [ordersAggregation, expensesAggregation] = await Promise.all([
-      // Orders Aggregated by month (%Y-%m)
+      // Orders Aggregated by month (%Y-%m) (BST +06:00)
       Order.aggregate([
         {
           $match: {
-            status: { $in: ['Paid', 'Confirmed', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
+            status: { $in: ['Paid', 'Confirmed', 'Processing', 'Ready for Delivery', 'Released for Delivery', 'Delivered'] },
             createdAt: { $gte: startDate, $lte: endDate },
             deletedAt: null
           }
         },
         {
           $group: {
-            _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+            _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: '+06:00' } },
             totalSales: { $sum: '$totalAmount' },
             deliveryCost: { $sum: '$deliveryCharge' },
             orderCount: { $sum: 1 },
@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
         }
       ]),
 
-      // Expenses Aggregated by month (%Y-%m)
+      // Expenses Aggregated by month (%Y-%m) (BST +06:00)
       Expense.aggregate([
         {
           $match: {
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
         },
         {
           $group: {
-            _id: { $dateToString: { format: '%Y-%m', date: '$date' } },
+            _id: { $dateToString: { format: '%Y-%m', date: '$date', timezone: '+06:00' } },
             expense: { $sum: '$amount' }
           }
         }

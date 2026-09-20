@@ -98,6 +98,19 @@ export async function PATCH(request: NextRequest) {
       await sessionConn.commitTransaction();
       sessionConn.endSession();
 
+      if (action === 'approve') {
+        try {
+          const { logPayoutToLedger } = await import('@/lib/ledgerHelper');
+          const reseller = await Reseller.findById(transaction.resellerId);
+          await logPayoutToLedger(
+            { ...transaction.toObject(), payoutReference: payoutReference || transaction.payoutReference },
+            reseller
+          );
+        } catch (ledgerErr) {
+          console.error('[Ledger] Error logging payout to ledger:', ledgerErr);
+        }
+      }
+
       return NextResponse.json({ success: true, message: 'Payout updated successfully' });
     } catch (innerError) {
       await sessionConn.abortTransaction();

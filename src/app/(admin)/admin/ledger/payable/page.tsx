@@ -246,7 +246,8 @@ export default function PayableLedgerPage() {
                   <tr className="bg-muted/20 border-b text-muted-foreground font-semibold">
                     <th className="p-3 text-left font-bold text-foreground">Reseller Store</th>
                     <th className="p-3 text-left font-bold text-foreground">Owner</th>
-                    <th className="p-3 font-bold text-foreground">Comm. Rate</th>
+                    <th className="p-3 font-bold text-foreground">Total Orders</th>
+                    <th className="p-3 font-bold text-emerald-600 dark:text-emerald-400">Lifetime Earnings</th>
                     <th className="p-3 font-bold text-muted-foreground">Pending In-Transit</th>
                     <th className="p-3 font-bold text-primary text-right">Cleared Wallet Due</th>
                   </tr>
@@ -254,7 +255,7 @@ export default function PayableLedgerPage() {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
                         <div className="flex items-center justify-center gap-2">
                           <Loader2 className="h-5 w-5 animate-spin" />
                           <span>Loading reseller liabilities...</span>
@@ -275,7 +276,14 @@ export default function PayableLedgerPage() {
                           <div className="font-medium text-foreground">{r.ownerName}</div>
                           {r.ownerPhone && <div className="text-[11px] text-muted-foreground">{r.ownerPhone}</div>}
                         </td>
-                        <td className="p-3 font-medium text-muted-foreground">{r.commissionRate}%</td>
+                        <td className="p-3 font-medium text-foreground">
+                          <Badge variant="outline" className="font-mono bg-muted/40 font-semibold text-xs">
+                            {r.totalOrders || 0} Orders
+                          </Badge>
+                        </td>
+                        <td className="p-3 font-semibold text-emerald-600 dark:text-emerald-400">
+                          ৳{Math.round(r.totalEarnings || 0).toLocaleString()}
+                        </td>
                         <td className="p-3 font-medium text-muted-foreground">
                           ৳{Math.round(r.pendingBalance || 0).toLocaleString()}
                         </td>
@@ -286,7 +294,7 @@ export default function PayableLedgerPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="p-6 text-center text-muted-foreground">No reseller liabilities recorded.</td>
+                      <td colSpan={6} className="p-6 text-center text-muted-foreground">No reseller liabilities recorded.</td>
                     </tr>
                   )}
                 </tbody>
