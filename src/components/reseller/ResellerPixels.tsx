@@ -21,6 +21,9 @@ function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomai
     if (!pixelId) return;
     import("@/lib/reseller-pixel").then(({ resellerFbEvent }) => {
       resellerFbEvent(subdomain, "PageView", {}, {}, undefined, pixelId);
+      if (typeof window !== "undefined") {
+        (window as any)._resellerPageViewFired = true;
+      }
     });
   }, [pixelId, subdomain]);
 

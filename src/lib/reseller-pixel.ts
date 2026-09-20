@@ -50,9 +50,7 @@ const TT_EVENT_MAP: Record<string, string> = {
  */
 export const waitForResellerPixel = (pixelId: string, maxWaitMs = 5000, intervalMs = 200) =>
   new Promise<void>((resolve) => {
-    // Since proxy.ts now prevents mother shop pixel from loading on reseller stores,
-    // if window.fbq exists, it belongs to the reseller.
-    if (typeof window !== 'undefined' && (window as any).fbq) {
+    if (typeof window !== 'undefined' && (window as any).fbq && (window as any)._resellerPageViewFired) {
       resolve();
       return;
     }
@@ -60,7 +58,7 @@ export const waitForResellerPixel = (pixelId: string, maxWaitMs = 5000, interval
     const timer = setInterval(() => {
       elapsed += intervalMs;
       if (
-        (typeof window !== 'undefined' && (window as any).fbq) ||
+        (typeof window !== 'undefined' && (window as any).fbq && (window as any)._resellerPageViewFired) ||
         elapsed >= maxWaitMs
       ) {
         clearInterval(timer);
