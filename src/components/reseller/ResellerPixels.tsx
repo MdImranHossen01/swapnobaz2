@@ -13,12 +13,21 @@ import Script from "next/script";
 import { Suspense } from "react";
 
 function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomain: string }) {
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(() => {
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      return true;
+    }
+    return false;
+  });
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const trackPageView = useCallback(() => {
     if (!pixelId) return;
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      // Force init on every route change to keep Pixel Helper extension happy during SPA routing.
+      (window as any).fbq('init', pixelId);
+    }
     import("@/lib/reseller-pixel").then(({ resellerFbEvent }) => {
       resellerFbEvent(subdomain, "PageView", {}, {}, undefined, pixelId);
       if (typeof window !== "undefined") {
@@ -98,7 +107,12 @@ function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomai
 }
 
 function TikTokPixelScript({ pixelId, subdomain }: { pixelId: string; subdomain: string }) {
-  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(() => {
+    if (typeof window !== "undefined" && (window as any).ttq) {
+      return true;
+    }
+    return false;
+  });
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
