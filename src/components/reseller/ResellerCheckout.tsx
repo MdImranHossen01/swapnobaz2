@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { normalizePhoneNumber } from '@/lib/utils';
-import { resellerTtEvent, waitForResellerPixel } from '@/lib/reseller-pixel';
+import { resellerFbEvent, resellerTtEvent, waitForResellerPixel } from '@/lib/reseller-pixel';
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'নাম আবশ্যক'),
@@ -150,17 +150,19 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
   }, [watchedPhone, subdomain]);
 
   // Fire InitiateCheckout when cart loads.
-  // Strategy mirrors mother shop's checkout page:
-  //   - Server-side CAPI fires immediately (no pixel needed on browser)
-  //   - Browser fbq fires after we confirm the pixel is ready
-  //   - hasTrackedInitiate is only set AFTER the events are queued,
-  //     so a slow pixel load won't permanently skip the event.
+  // Mirrors mother shop's pattern exactly:
+  //   waitForResellerPixel().then(() => resellerFbEvent(...))
+  //   ↕ same as mother's:
+  //   waitForFbq().then(() => fbEvent(...))
+  // resellerFbEvent handles both CAPI and browser pixel internally.
   const hasTrackedInitiate = useRef(false);
   useEffect(() => {
     if (cart.length === 0 || hasTrackedInitiate.current) return;
 
     const validItems = cart.filter(i => i.resellerProductId || i.productId);
     if (validItems.length === 0) return;
+
+    hasTrackedInitiate.current = true;
 
     const total = validItems.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0);
     const checkoutPayload = {
@@ -184,49 +186,10 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
       country: 'bd',
     };
 
-    // Mark as tracked immediately so this block never fires twice,
-    // even if cart/phone deps change while the pixel is still loading.
-    hasTrackedInitiate.current = true;
-
-    const eventId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-    const pixelId = storeInfo.metaPixelId || '';
-
-    // 1. Fire CAPI immediately — server-side never needs window.fbq
-    if (typeof window !== 'undefined') {
-      fetch(`/api/store/${subdomain}/facebook/event`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          eventName: 'InitiateCheckout',
-          eventUrl: window.location.href,
-          userAgent: navigator.userAgent,
-          eventId,
-          userData: initiateUserData,
-          customData: checkoutPayload,
-        }),
-      }).catch(() => {});
-    }
-
-    // 2. Fire browser pixel after pixel is confirmed ready
-    //    waitForResellerPixel polls for _resellerPixelReady_<pixelId> flag
-    //    set by ResellerPixels.tsx once fbevents.js loads and fbq('init') runs.
-    waitForResellerPixel(pixelId).then(() => {
-      if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
-        const flag = pixelId ? !!(window as any)[`_resellerPixelReady_${pixelId}`] : true;
-        if (flag) {
-          if (initiateUserData.em || initiateUserData.ph) {
-            (window as any).fbq('set', 'user_data', {
-              ...(initiateUserData.em && { em: initiateUserData.em.trim().toLowerCase() }),
-              ...(initiateUserData.ph && { ph: initiateUserData.ph.replace(/\D/g, '') }),
-              country: 'bd',
-            });
-          }
-          (window as any).fbq('track', 'InitiateCheckout', checkoutPayload, { eventID: eventId });
-        }
-      }
-      // TikTok (CAPI + browser)
-      resellerTtEvent(subdomain, 'InitiateCheckout', checkoutPayload, initiateUserData, eventId);
+    // Wait for reseller pixel then fire — resellerFbEvent handles CAPI + browser internally
+    waitForResellerPixel(storeInfo.metaPixelId || '').then(() => {
+      resellerFbEvent(subdomain, 'InitiateCheckout', checkoutPayload, initiateUserData, undefined, storeInfo.metaPixelId);
+      resellerTtEvent(subdomain, 'InitiateCheckout', checkoutPayload, initiateUserData);
     });
   }, [cart, subdomain, watchedPhone, customerProfile?.email]);
 
@@ -431,47 +394,10 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
           purchaseUserData.st = 'Dhaka';
         }
 
-        // Fire Purchase events — CAPI immediately, browser pixel explicitly
+        // Fire Purchase — same pattern as mother shop's onSubmit tracking:
+        //   resellerFbEvent handles CAPI + browser pixel internally
         try {
-          const pixelId = storeInfo.metaPixelId || '';
-
-          // 1. CAPI — fires immediately, no browser pixel needed
-          if (typeof window !== 'undefined') {
-            fetch(`/api/store/${subdomain}/facebook/event`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({
-                eventName: 'Purchase',
-                eventUrl: window.location.href,
-                userAgent: navigator.userAgent,
-                eventId: orderShortId,
-                userData: purchaseUserData,
-                customData: purchaseEventData,
-              }),
-            }).catch(() => {});
-          }
-
-          // 2. Browser pixel — direct fbq call, pixel is already loaded (user just submitted the form)
-          if (typeof window !== 'undefined' && typeof (window as any).fbq === 'function') {
-            const pixelReady = pixelId ? !!(window as any)[`_resellerPixelReady_${pixelId}`] : true;
-            if (pixelReady) {
-              if (purchaseUserData.em || purchaseUserData.ph) {
-                (window as any).fbq('set', 'user_data', {
-                  ...(purchaseUserData.em && { em: purchaseUserData.em.trim().toLowerCase() }),
-                  ...(purchaseUserData.ph && { ph: purchaseUserData.ph.replace(/\D/g, '') }),
-                  ...(purchaseUserData.fn && { fn: purchaseUserData.fn.trim().toLowerCase() }),
-                  ...(purchaseUserData.ln && { ln: purchaseUserData.ln.trim().toLowerCase() }),
-                  ...(purchaseUserData.ct && { ct: purchaseUserData.ct.trim().toLowerCase() }),
-                  ...(purchaseUserData.st && { st: purchaseUserData.st.trim().toLowerCase() }),
-                  country: 'bd',
-                });
-              }
-              (window as any).fbq('track', 'Purchase', purchaseEventData, { eventID: orderShortId });
-            }
-          }
-
-          // 3. TikTok
+          resellerFbEvent(subdomain, 'Purchase', purchaseEventData, purchaseUserData, orderShortId, storeInfo.metaPixelId);
           resellerTtEvent(subdomain, 'Purchase', purchaseEventData, purchaseUserData, orderShortId);
         } catch (trackingErr) {
           console.error('[Reseller Tracking Error]', trackingErr);
