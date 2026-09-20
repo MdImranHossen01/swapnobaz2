@@ -18,9 +18,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Truck, CreditCard, Globe, X, BarChart3, Settings2, Zap, ShieldCheck, CheckCircle2, XCircle, AlertCircle, RefreshCcw, ExternalLink } from 'lucide-react';
+import { Loader2, Truck, CreditCard, BarChart3, Settings2, Zap, ShieldCheck, CheckCircle2, XCircle, AlertCircle, RefreshCcw, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
-import { ImageUpload } from '@/components/ui/image-upload';
 import {
   Select,
   SelectContent,
@@ -780,94 +779,92 @@ export default function MarketingSettingsPage() {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* Status Overview & Event Testing */}
               <div className="space-y-6 mt-6">
-              {/* Status Overview Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {([
-                  { key: 'facebook', label: 'Meta CAPI', icon: <BarChart3 className="h-4 w-4" /> },
-                  { key: 'tiktok', label: 'TikTok API', icon: <BarChart3 className="h-4 w-4" /> },
-                  { key: 'gtm', label: 'GTM', icon: <Settings2 className="h-4 w-4" /> },
-                  { key: 'ga', label: 'GA4', icon: <BarChart3 className="h-4 w-4" /> },
-                ] as const).map(({ key, label, icon }) => {
-                  const platform = trackingStatus?.[key];
-                  const isConfigured = platform?.configured ?? false;
-                  return (
-                    <Card key={key} className={`border-2 ${
-                      trackingStatus === null ? 'border-muted' :
-                      isConfigured ? 'border-primary/30 bg-primary/5' : 'border-destructive/30 bg-destructive/5'
-                    }`}>
-                      <CardContent className="pt-4 pb-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-bold uppercase tracking-wide opacity-60">{label}</span>
-                          {trackingStatusLoading ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : trackingStatus === null ? (
-                            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                          ) : isConfigured ? (
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
-                          ) : (
-                            <XCircle className="h-4 w-4 text-destructive" />
-                          )}
-                        </div>
-                        <p className={`text-sm font-bold ${
-                          trackingStatus === null ? 'text-muted-foreground' :
-                          isConfigured ? 'text-primary' : 'text-destructive'
+                {/* Status Overview Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {([
+                    { key: 'facebook', label: 'Meta CAPI', icon: <BarChart3 className="h-4 w-4" /> },
+                    { key: 'tiktok', label: 'TikTok API', icon: <BarChart3 className="h-4 w-4" /> },
+                    { key: 'gtm', label: 'GTM', icon: <Settings2 className="h-4 w-4" /> },
+                    { key: 'ga', label: 'GA4', icon: <BarChart3 className="h-4 w-4" /> },
+                  ] as const).map(({ key, label, icon }) => {
+                    const platform = trackingStatus?.[key];
+                    const isConfigured = platform?.configured ?? false;
+                    return (
+                      <Card key={key} className={`border-2 ${trackingStatus === null ? 'border-muted' :
+                          isConfigured ? 'border-primary/30 bg-primary/5' : 'border-destructive/30 bg-destructive/5'
                         }`}>
-                          {trackingStatus === null ? '—' : isConfigured ? 'Connected' : 'Not Set'}
-                        </p>
-                        {platform && 'pixelId' in platform && platform.pixelId && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{platform.pixelId}</p>
-                        )}
-                        {platform && 'gtmId' in platform && platform.gtmId && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{platform.gtmId}</p>
-                        )}
-                        {platform && 'gaId' in platform && platform.gaId && (
-                          <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{platform.gaId}</p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                        <CardContent className="pt-4 pb-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold uppercase tracking-wide opacity-60">{label}</span>
+                            {trackingStatusLoading ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : trackingStatus === null ? (
+                              <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                            ) : isConfigured ? (
+                              <CheckCircle2 className="h-4 w-4 text-primary" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-destructive" />
+                            )}
+                          </div>
+                          <p className={`text-sm font-bold ${trackingStatus === null ? 'text-muted-foreground' :
+                              isConfigured ? 'text-primary' : 'text-destructive'
+                            }`}>
+                            {trackingStatus === null ? '—' : isConfigured ? 'Connected' : 'Not Set'}
+                          </p>
+                          {platform && 'pixelId' in platform && platform.pixelId && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{platform.pixelId}</p>
+                          )}
+                          {platform && 'gtmId' in platform && platform.gtmId && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{platform.gtmId}</p>
+                          )}
+                          {platform && 'gaId' in platform && platform.gaId && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{platform.gaId}</p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
 
-              {/* Refresh status button */}
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={fetchTrackingStatus}
-                  disabled={trackingStatusLoading}
-                >
-                  {trackingStatusLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <RefreshCcw className="h-4 w-4 mr-2" />
+                {/* Refresh status button */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchTrackingStatus}
+                    disabled={trackingStatusLoading}
+                  >
+                    {trackingStatusLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCcw className="h-4 w-4 mr-2" />
+                    )}
+                    Refresh Status
+                  </Button>
+                  {!trackingStatus && !trackingStatusLoading && (
+                    <p className="text-xs text-muted-foreground">Click the tab or Refresh Status to load configuration.</p>
                   )}
-                  Refresh Status
-                </Button>
-                {!trackingStatus && !trackingStatusLoading && (
-                  <p className="text-xs text-muted-foreground">Click the tab or Refresh Status to load configuration.</p>
-                )}
-              </div>
+                </div>
 
-              {/* Security notice */}
-              <Card className="border-amber-500/20 bg-amber-500/5">
-                <CardContent className="pt-4 pb-3">
-                  <div className="flex items-start gap-3">
-                    <ShieldCheck className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-                    <div className="text-xs">
-                      <p className="font-bold mb-1">Security: Credentials are stored encrypted</p>
-                      <p className="text-muted-foreground">
-                        Facebook and TikTok Access Tokens are stored with field-level encryption in MongoDB.
-                        They are never exposed in frontend responses — only masked IDs are returned to the client.
-                      </p>
+                {/* Security notice */}
+                <Card className="border-amber-500/20 bg-amber-500/5">
+                  <CardContent className="pt-4 pb-3">
+                    <div className="flex items-start gap-3">
+                      <ShieldCheck className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                      <div className="text-xs">
+                        <p className="font-bold mb-1">Security: Credentials are stored encrypted</p>
+                        <p className="text-muted-foreground">
+                          Facebook and TikTok Access Tokens are stored with field-level encryption in MongoDB.
+                          They are never exposed in frontend responses — only masked IDs are returned to the client.
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
 
