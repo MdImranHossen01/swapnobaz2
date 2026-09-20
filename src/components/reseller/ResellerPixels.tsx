@@ -44,7 +44,7 @@ function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomai
     trackPageView();
   }, [pathname, searchParams, trackPageView, pixelId, scriptLoaded]);
 
-  const sanitizedPixelId = pixelId && /^\\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
+  const sanitizedPixelId = pixelId && /^\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
 
   if (!sanitizedPixelId) {
     return null;
