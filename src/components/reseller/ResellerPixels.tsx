@@ -42,6 +42,14 @@ function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomai
     return () => clearInterval(interval);
   }, [scriptLoaded]);
 
+  // Reset the PageView fired flag on route change to ensure InitiateCheckout
+  // waits for the new PageView to fire on the new route.
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any)._resellerPageViewFired = false;
+    }
+  }, [pathname]);
+
   useEffect(() => {
     if (!pixelId || !scriptLoaded) return;
     trackPageView();
