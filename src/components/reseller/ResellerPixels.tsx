@@ -17,80 +17,48 @@ function FacebookPixelScript({ pixelId, subdomain }: { pixelId: string; subdomai
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const sanitizedPixelId = pixelId && /^\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
-
-  // Mark the pixel as ready — works whether we loaded fbevents.js freshly or fbq already existed.
-  const markReady = useCallback(() => {
-    if (sanitizedPixelId && typeof window !== "undefined") {
-      (window as any)[`_resellerPixelReady_${sanitizedPixelId}`] = true;
-    }
-    setScriptLoaded(true);
-  }, [sanitizedPixelId]);
-
-  // If fbevents.js was already loaded by an earlier pixel (e.g. during development hot-reload
-  // or if another script loaded it), the <Script> tag's onLoad may never fire because the
-  // browser won't re-download a cached script. In that case we detect fbq and init manually.
-  useEffect(() => {
-    if (!sanitizedPixelId) return;
-    if (typeof window === "undefined") return;
-    if ((window as any).fbq) {
-      // fbevents.js already present — just init our pixel ID and mark ready.
-      (window as any).fbq('dataProcessingOptions', []);
-      (window as any).fbq('set', 'autoConfig', false, sanitizedPixelId);
-      (window as any).fbq('init', sanitizedPixelId);
-      markReady();
-    }
-  }, [sanitizedPixelId, markReady]);
-
   const trackPageView = useCallback(() => {
-    if (!sanitizedPixelId) return;
+    if (!pixelId) return;
     import("@/lib/reseller-pixel").then(({ resellerFbEvent }) => {
-      resellerFbEvent(subdomain, "PageView", {}, {}, undefined, sanitizedPixelId);
+      resellerFbEvent(subdomain, "PageView", {}, {}, undefined, pixelId);
     });
-  }, [sanitizedPixelId, subdomain]);
+  }, [pixelId, subdomain]);
 
   useEffect(() => {
-    if (!scriptLoaded || !sanitizedPixelId) return;
+    if (!pixelId || !scriptLoaded) return;
     trackPageView();
-  }, [pathname, searchParams, scriptLoaded, sanitizedPixelId, trackPageView]);
+  }, [pathname, searchParams, trackPageView, pixelId, scriptLoaded]);
 
-  if (!sanitizedPixelId) return null;
+  const sanitizedPixelId = pixelId && /^\\d+$/.test(pixelId.trim()) ? pixelId.trim() : null;
+
+  if (!sanitizedPixelId) {
+    return null;
+  }
 
   return (
     <>
-      {/*
-        Multi-pixel safe init:
-        - We do NOT use the standard `if(f.fbq)return` guard because it exits before
-          calling fbq('init', resellerPixelId) when another pixel already loaded fbevents.js.
-        - Instead: only load fbevents.js if window.fbq is absent; always call fbq('init', id).
-        - The window flag `_resellerPixelReady_<pixelId>` is set so waitForResellerPixel()
-          can distinguish "reseller pixel ready" from "some other fbq exists".
-      */}
       <Script
         id={`fb-pixel-reseller-${subdomain}`}
         strategy="afterInteractive"
-        onLoad={markReady}
+        onLoad={() => setScriptLoaded(true)}
         dangerouslySetInnerHTML={{
           __html: `
-            (function(f,b,e,v,n,t,s) {
-              if (!f.fbq) {
-                n=f.fbq=function(){n.callMethod?
-                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-                n.queue=[];t=b.createElement(e);t.async=!0;
-                t.src=v;s=b.getElementsByTagName(e)[0];
-                s.parentNode.insertBefore(t,s);
-              }
-              // Always init the reseller pixel ID — safe to call even if fbq already exists.
-              f.fbq('dataProcessingOptions', []);
-              f.fbq('set', 'autoConfig', false, '${sanitizedPixelId}');
-              f.fbq('init', '${sanitizedPixelId}');
-              f['_resellerPixelReady_${sanitizedPixelId}'] = true;
-            })(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod ?
+              n.callMethod.apply(n, arguments) : n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('dataProcessingOptions', []);
+            fbq('set', 'autoConfig', false, '${sanitizedPixelId}');
+            fbq('init', '${sanitizedPixelId}');
           `,
         }}
       />
       <noscript>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           height="1"
           width="1"
