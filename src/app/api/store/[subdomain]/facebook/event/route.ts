@@ -84,7 +84,19 @@ export async function POST(request: NextRequest, { params }: Params) {
                 event_source_url: eventUrl,
                 action_source: 'website',
                 user_data: fbUserData,
-                custom_data: { ...customData },
+                custom_data: {
+                    ...customData,
+                    currency: customData.currency || 'BDT',
+                    value: customData.value !== undefined ? Number(customData.value) : undefined,
+                    content_type: customData.content_type || 'product',
+                    ...(customData.contents && Array.isArray(customData.contents) ? {
+                        contents: (customData.contents as any[]).map((item: any) => ({
+                            id: String(item.id || item.productId || item.resellerProductId || ''),
+                            quantity: Number(item.quantity || 1),
+                            item_price: Number(item.item_price || item.price || 0),
+                        }))
+                    } : {})
+                },
             }],
         };
 

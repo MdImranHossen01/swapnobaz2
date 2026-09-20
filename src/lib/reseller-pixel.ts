@@ -41,6 +41,25 @@ const TT_EVENT_MAP: Record<string, string> = {
   'Search': 'Search',
 };
 
+export const waitForResellerPixel = (maxWaitMs = 5000, intervalMs = 200) =>
+  new Promise<void>((resolve) => {
+    if (typeof window !== 'undefined' && ((window as any).fbq || (window as any).ttq)) {
+      resolve();
+      return;
+    }
+    let elapsed = 0;
+    const timer = setInterval(() => {
+      elapsed += intervalMs;
+      if (
+        (typeof window !== 'undefined' && ((window as any).fbq || (window as any).ttq)) ||
+        elapsed >= maxWaitMs
+      ) {
+        clearInterval(timer);
+        resolve();
+      }
+    }, intervalMs);
+  });
+
 export const resellerFbEvent = (
   subdomain: string,
   eventName: string,
@@ -49,6 +68,18 @@ export const resellerFbEvent = (
   providedEventId?: string
 ) => {
   const eventId = providedEventId || generateEventId();
+
+  const formattedCustomData = {
+    ...customData,
+    content_type: customData.content_type || 'product',
+    ...(customData.contents && Array.isArray(customData.contents) ? {
+      contents: (customData.contents as any[]).map((item: any) => ({
+        ...item,
+        price: item.price || item.item_price,
+        item_price: item.item_price || item.price
+      }))
+    } : {})
+  };
 
   // 1. Browser Pixel (if reseller pixel script is loaded)
   if (typeof window !== "undefined" && typeof (window as any).fbq === "function") {
@@ -68,9 +99,9 @@ export const resellerFbEvent = (
       });
     }
     if (standardEvents.includes(eventName)) {
-      (window as any).fbq("track", eventName, customData, { eventID: eventId });
+      (window as any).fbq("track", eventName, formattedCustomData, { eventID: eventId });
     } else {
-      (window as any).fbq("trackCustom", eventName, customData, { eventID: eventId });
+      (window as any).fbq("trackCustom", eventName, formattedCustomData, { eventID: eventId });
     }
   }
 
@@ -86,7 +117,7 @@ export const resellerFbEvent = (
         userAgent: navigator.userAgent,
         eventId,
         userData,
-        customData,
+        customData: formattedCustomData,
       }),
     }).catch(() => { /* Fail silently */ });
   }
@@ -104,9 +135,21 @@ export const resellerTtEvent = (
   const eventId = providedEventId || generateEventId();
   const mappedEvent = TT_EVENT_MAP[eventName] || eventName;
 
+  const formattedCustomData = {
+    ...customData,
+    content_type: customData.content_type || 'product',
+    ...(customData.contents && Array.isArray(customData.contents) ? {
+      contents: (customData.contents as any[]).map((item: any) => ({
+        ...item,
+        price: item.price || item.item_price,
+        item_price: item.item_price || item.price
+      }))
+    } : {})
+  };
+
   // 1. Browser TikTok Pixel (if loaded)
   if (typeof window !== "undefined" && (window as any).ttq && typeof (window as any).ttq.track === "function") {
-    (window as any).ttq.track(mappedEvent, customData, { event_id: eventId });
+    (window as any).ttq.track(mappedEvent, formattedCustomData, { event_id: eventId });
   }
 
   // 2. Server-side Events API using reseller's own pixel config
@@ -120,7 +163,7 @@ export const resellerTtEvent = (
         userAgent: navigator.userAgent,
         eventId,
         userData,
-        customData,
+        customData: formattedCustomData,
       }),
     }).catch(() => { /* Fail silently */ });
   }

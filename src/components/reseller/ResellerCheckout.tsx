@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { normalizePhoneNumber } from '@/lib/utils';
-import { resellerFbEvent, resellerTtEvent } from '@/lib/reseller-pixel';
+import { resellerFbEvent, resellerTtEvent, waitForResellerPixel } from '@/lib/reseller-pixel';
 
 const checkoutSchema = z.object({
   fullName: z.string().min(2, 'নাম আবশ্যক'),
@@ -153,23 +153,40 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
   const hasTrackedInitiate = useRef(false);
   useEffect(() => {
     if (cart.length === 0 || hasTrackedInitiate.current) return;
+
+    const validItems = cart.filter(i => i.resellerProductId || i.productId);
+    if (validItems.length === 0) return;
+
     hasTrackedInitiate.current = true;
 
-    const total = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    const total = validItems.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0);
     const payload = {
-      content_ids: cart.map(i => i.resellerProductId),
-      contents: cart.map(i => ({ id: i.resellerProductId, quantity: i.quantity, item_price: i.price })),
+      content_name: 'InitiateCheckout',
+      content_type: 'product',
+      content_ids: validItems.map(i => i.resellerProductId || i.productId),
+      contents: validItems.map(i => ({
+        id: i.resellerProductId || i.productId,
+        quantity: Number(i.quantity) || 1,
+        item_price: Number(i.price) || 0,
+        price: Number(i.price) || 0,
+        name: i.name || undefined,
+      })),
       value: total,
       currency: 'BDT',
-      num_items: cart.reduce((s, i) => s + i.quantity, 0),
+      num_items: validItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0),
     };
+
+    const normalizedPhone = watchedPhone ? normalizePhoneNumber(watchedPhone) || watchedPhone : undefined;
     const userData = {
-      ph: watchedPhone,
-      em: customerProfile?.email,
-      country: 'bd'
+      ph: normalizedPhone,
+      em: customerProfile?.email || undefined,
+      country: 'bd',
     };
-    resellerFbEvent(subdomain, 'InitiateCheckout', payload, userData);
-    resellerTtEvent(subdomain, 'InitiateCheckout', payload, userData);
+
+    waitForResellerPixel().then(() => {
+      resellerFbEvent(subdomain, 'InitiateCheckout', payload, userData);
+      resellerTtEvent(subdomain, 'InitiateCheckout', payload, userData);
+    });
   }, [cart, subdomain, watchedPhone, customerProfile?.email]);
 
   // Pricing calculations
@@ -344,28 +361,42 @@ export function ResellerCheckout({ subdomain, storeInfo, resellerId }: Props) {
       if (res.ok) {
         const orderShortId = data.shortId || data.orderId;
         const nameParts = (values.fullName || '').trim().split(/\s+/);
+        const validItems = cart.filter(i => i.resellerProductId || i.productId);
 
         const purchasePayload = {
+          content_name: 'Purchase',
+          content_type: 'product',
           order_id: orderShortId,
-          content_ids: cart.map(i => i.resellerProductId),
-          contents: cart.map(i => ({ id: i.resellerProductId, quantity: i.quantity, item_price: i.price })),
-          value: finalTotal,
+          content_ids: validItems.map(i => i.resellerProductId || i.productId),
+          contents: validItems.map(i => ({
+            id: i.resellerProductId || i.productId,
+            quantity: Number(i.quantity) || 1,
+            item_price: Number(i.price) || 0,
+            price: Number(i.price) || 0,
+            name: i.name || undefined,
+          })),
+          value: data.totalAmount ?? finalTotal,
           currency: 'BDT',
-          num_items: cart.reduce((s, i) => s + i.quantity, 0),
+          num_items: validItems.reduce((s, i) => s + (Number(i.quantity) || 1), 0),
         };
 
         const purchaseUserData = {
-          em: customerProfile?.email || `${normalizedPhone}@store.com`,
+          em: customerProfile?.email || undefined,
           ph: normalizedPhone,
           fn: nameParts[0] || '',
           ln: nameParts.slice(1).join(' ') || '',
           ct: values.deliveryArea === 'inside' ? 'Dhaka' : 'Outside Dhaka',
-          country: 'bd'
+          st: values.deliveryArea === 'inside' ? 'Dhaka' : undefined,
+          country: 'bd',
         };
 
         // Fire Pixel & CAPI events with exact deduplication
-        resellerFbEvent(subdomain, 'Purchase', purchasePayload, purchaseUserData, orderShortId);
-        resellerTtEvent(subdomain, 'Purchase', purchasePayload, purchaseUserData, orderShortId);
+        try {
+          resellerFbEvent(subdomain, 'Purchase', purchasePayload, purchaseUserData, orderShortId);
+          resellerTtEvent(subdomain, 'Purchase', purchasePayload, purchaseUserData, orderShortId);
+        } catch (trackingErr) {
+          console.error('[Reseller Tracking Error]', trackingErr);
+        }
 
         if (values.paymentMethod === 'stripe') {
           const stripeRes = await fetch('/api/payment/stripe/checkout', {
