@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
-  Loader2, Eye, Search, ChevronDown, CheckCircle2, XCircle, Download, Copy, RefreshCcw, MoreHorizontal, FileText, Printer, Truck, Trash2
+  Loader2, Eye, Search, ChevronDown, CheckCircle2, XCircle, Download, Copy, RefreshCcw, MoreHorizontal, FileText, Printer, Truck
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -754,7 +754,7 @@ function OrdersContent() {
                                 Cancel Order
                               </DropdownMenuItem>
                               <DropdownMenuItem className="text-destructive font-medium" onClick={() => handleDeleteOrder(order._id)}>
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete Order
+                                Delete Order
                               </DropdownMenuItem>
                             </DropdownMenuGroup>
                           </DropdownMenuContent>

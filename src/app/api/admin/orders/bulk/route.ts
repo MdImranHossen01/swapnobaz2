@@ -134,14 +134,14 @@ export async function PATCH(req: NextRequest) {
           if (regularOrder) modifiedCount++;
         }
 
-        // Sync linked ResellerOrder
-        if (Object.keys(resellerOrderUpdate).length > 0) {
-          await ResellerOrder.updateMany(
-            { motherOrderId: id },
-            { $set: resellerOrderUpdate },
-            { session: dbSession }
-          );
-        }
+        // Sync linked ResellerOrder and clear/cancel commissions & wallet balance
+        const { syncResellerCommissionForMotherOrder } = await import('@/lib/resellerCommissionSync');
+        await syncResellerCommissionForMotherOrder({
+          motherOrderId: id,
+          newStatus: status,
+          newPaymentStatus: paymentStatus,
+          session: dbSession,
+        });
       }
 
       await dbSession.commitTransaction();

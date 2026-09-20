@@ -10,7 +10,7 @@ export interface IResellerWalletTransaction extends Document {
   amount: number;                            // positive = credit, negative = debit
   orderId?: mongoose.Types.ObjectId;         // Related reseller order
   description: string;
-  status: 'pending' | 'cleared' | 'failed';
+  status: 'pending' | 'cleared' | 'failed' | 'cancelled';
   payoutMethod?: string;                     // bKash, Nagad, Bank Transfer etc.
   payoutReference?: string;                  // Transaction ID from payment
   processedBy?: mongoose.Types.ObjectId;     // Admin user who processed payout
@@ -31,7 +31,7 @@ const ResellerWalletTransactionSchema: Schema<IResellerWalletTransaction> = new 
     description: { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'cleared', 'failed'],
+      enum: ['pending', 'cleared', 'failed', 'cancelled'],
       default: 'pending',
     },
     payoutMethod: { type: String },

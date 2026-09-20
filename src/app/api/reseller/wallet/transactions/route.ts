@@ -12,10 +12,14 @@ export async function GET(request: NextRequest) {
     }
     await dbConnect();
 
-    const reseller = await Reseller.findOne({ userId: session.user.id }).lean();
+    const reseller = await Reseller.findOne({ userId: session.user.id });
     if (!reseller) return NextResponse.json({ transactions: [] });
 
-    const transactions = await ResellerWalletTransaction.find({ resellerId: (reseller as any)._id })
+    // Auto-reconcile any Delivered/Paid orders that haven't been cleared yet
+    const { reconcileResellerCommissions } = await import('@/lib/resellerCommissionSync');
+    await reconcileResellerCommissions(reseller._id);
+
+    const transactions = await ResellerWalletTransaction.find({ resellerId: reseller._id })
       .sort({ createdAt: -1 }).limit(50).lean();
 
     return NextResponse.json({ transactions });

@@ -14,13 +14,18 @@ export async function GET() {
   try {
     await dbConnect();
     const currentUserId = (session.user as any).id;
-    const reseller = await Reseller.findOne({ userId: currentUserId });
+    let reseller = await Reseller.findOne({ userId: currentUserId });
     if (!reseller) {
       return NextResponse.json({ error: 'Reseller not found' }, { status: 404 });
     }
 
+    // Auto-reconcile any Delivered/Paid commissions
+    const { reconcileResellerCommissions } = await import('@/lib/resellerCommissionSync');
+    await reconcileResellerCommissions(reseller._id);
+    reseller = await Reseller.findById(reseller._id);
+
     // Ensure User profile image is synchronized with store logo
-    if (reseller.logoUrl && currentUserId) {
+    if (reseller?.logoUrl && currentUserId) {
       await User.findByIdAndUpdate(currentUserId, { image: reseller.logoUrl });
     }
 

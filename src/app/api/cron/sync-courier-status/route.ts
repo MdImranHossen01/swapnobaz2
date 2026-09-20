@@ -89,6 +89,15 @@ export async function GET(req: NextRequest) {
 
         await Order.updateOne({ _id: order._id }, { $set: updateFields });
 
+        if (updateFields.status || updateFields.paymentStatus) {
+          const { syncResellerCommissionForMotherOrder } = await import('@/lib/resellerCommissionSync');
+          await syncResellerCommissionForMotherOrder({
+            motherOrderId: order._id,
+            newStatus: updateFields.status,
+            newPaymentStatus: updateFields.paymentStatus,
+          });
+        }
+
       } catch (err: any) {
         errorCount++;
         results.push({ orderId: order._id, shortId: order.shortId, action: 'error', error: err.message });

@@ -150,9 +150,14 @@ export async function PATCH(request: NextRequest) {
 
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
-    // If motherOrderId exists, also sync status
+    // If motherOrderId exists, also sync status & commission
     if (order.motherOrderId) {
       await Order.findByIdAndUpdate(order.motherOrderId, { $set: { status } });
+      const { syncResellerCommissionForMotherOrder } = await import('@/lib/resellerCommissionSync');
+      await syncResellerCommissionForMotherOrder({
+        motherOrderId: order.motherOrderId,
+        newStatus: status,
+      });
     }
 
     return NextResponse.json({ order });
