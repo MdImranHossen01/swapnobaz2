@@ -577,6 +577,33 @@ function OrdersContent() {
     }
   };
 
+  const handleHoldOrder = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: 'Hold Order',
+      text: 'অর্ডারটি কেন Hold করছেন তার কারণ (Internal Note) লিখুন:',
+      input: 'textarea',
+      inputPlaceholder: 'Hold করার কারণ লিখুন (যেমন: কাস্টমার পরে ডেলিভারি নিতে চেয়েছে / স্টক ইস্যু)...',
+      inputAttributes: {
+        'aria-label': 'Hold reason',
+        'rows': '3'
+      },
+      showCancelButton: true,
+      confirmButtonColor: '#d97706',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Hold Order',
+      inputValidator: (value) => {
+        if (!value || !value.trim()) {
+          return 'Hold করার কারণ (Internal Note) লিখা বাধ্যতামূলক!';
+        }
+        return null;
+      }
+    });
+
+    if (result.isConfirmed && result.value) {
+      await updateStatus(orderId, 'Hold', { internalNote: result.value.trim() });
+    }
+  };
+
   const handleCancelOrder = async (orderId: string) => {
     const result = await Swal.fire({
       title: 'Cancel Order?',
@@ -1177,7 +1204,7 @@ function OrdersContent() {
                               <DropdownMenuLabel>Change Status</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>Confirm</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>Mark Paid</DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => updateStatus(order._id, 'Hold')}>Hold Order</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleHoldOrder(order._id)}>Hold Order</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => updateStatus(order._id, 'Ready for Delivery')}>Ready for Delivery</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => updateStatus(order._id, 'Released for Delivery')}>Release for Delivery</DropdownMenuItem>
                               <DropdownMenuItem onClick={() => updateStatus(order._id, 'Delivered')}>Mark Delivered</DropdownMenuItem>
@@ -1386,7 +1413,7 @@ function OrdersContent() {
                           <DropdownMenuGroup>
                             <DropdownMenuItem onClick={() => updateStatus(order._id, 'Confirmed')}>Confirm</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateStatus(order._id, 'Paid', { paymentStatus: 'Paid' })}>Mark Paid</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => updateStatus(order._id, 'Hold')}>Hold Order</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleHoldOrder(order._id)}>Hold Order</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => updateStatus(order._id, 'Delivered')}>Mark Delivered</DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive" onClick={() => handleCancelOrder(order._id)}>Cancel</DropdownMenuItem>
                           </DropdownMenuGroup>

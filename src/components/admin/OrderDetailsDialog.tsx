@@ -202,16 +202,10 @@ export default function OrderDetailsDialog({
       }
     }
 
-    const confirmRes = await Swal.fire({
-      title: 'Save Order Changes?',
-      text: 'Are you sure you want to save the modified order details?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#2563eb',
-      confirmButtonText: 'Yes, save changes'
-    });
-
-    if (!confirmRes.isConfirmed) return;
+    if (editForm.status === 'Hold' && !editForm.internalNote?.trim()) {
+      toast.error('Hold করার কারণ (Internal Note) লিখুন');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -469,6 +463,23 @@ export default function OrderDetailsDialog({
                       />
                     </div>
                   </div>
+
+                  {/* Inline Hold Reason Field - Opens immediately when Hold is selected */}
+                  {editForm.status === 'Hold' && (
+                    <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-lg space-y-1.5 animate-in fade-in duration-200">
+                      <label className="text-xs font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                        <Lock className="h-3.5 w-3.5 text-amber-600" /> Hold করার কারণ লিখুন (Internal Note): <span className="text-red-600 font-bold">*</span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={editForm.internalNote || ''}
+                        onChange={(e) => setEditForm({ ...editForm, internalNote: e.target.value })}
+                        placeholder="অর্ডারটি কেন Hold করছেন তার কারণ লিখুন (যেমন: কাস্টমার পরে ডেলিভারি নিতে চেয়েছে / স্টক ইস্যু)..."
+                        className="w-full text-sm p-2 border rounded-md bg-white dark:bg-zinc-900 border-amber-300 dark:border-amber-700 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                        autoFocus
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
@@ -659,14 +670,29 @@ export default function OrderDetailsDialog({
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="text-sm font-bold uppercase text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-                      <Lock className="h-4 w-4" /> Internal Note (Admin/Staff)
+                    <h3 className="text-sm font-bold uppercase text-amber-700 dark:text-amber-400 flex items-center justify-between gap-1.5">
+                      <span className="flex items-center gap-1.5">
+                        <Lock className="h-4 w-4" /> Internal Note (Admin/Staff)
+                      </span>
+                      {editForm.status === 'Hold' && (
+                        <span className="text-[11px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded border border-red-200">
+                          Required for Hold *
+                        </span>
+                      )}
                     </h3>
                     <textarea 
                       value={editForm.internalNote || ''} 
                       onChange={(e) => setEditForm({ ...editForm, internalNote: e.target.value })}
-                      className="w-full text-sm p-2 border rounded-lg h-20 resize-y bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900" 
-                      placeholder="Private internal notes for staff..."
+                      className={`w-full text-sm p-2 border rounded-lg h-20 resize-y bg-amber-50/50 dark:bg-amber-950/20 ${
+                        editForm.status === 'Hold' && !editForm.internalNote?.trim()
+                          ? 'border-red-400 ring-2 ring-red-400/20'
+                          : 'border-amber-200 dark:border-amber-900'
+                      }`} 
+                      placeholder={
+                        editForm.status === 'Hold'
+                          ? 'Hold করার কারণ লিখুন (বাধ্যতামূলক, যেমন: কাস্টমার ৩ দিন পর ডেলিভারি চেয়েছে)...'
+                          : 'Private internal notes for staff...'
+                      }
                     />
                   </div>
                 </div>

@@ -98,6 +98,12 @@ export async function PATCH(
       if (!allowedStatuses.includes(status)) {
         return NextResponse.json({ message: `Invalid status: ${status}` }, { status: 400 });
       }
+      if (status === 'Hold') {
+        const finalNote = internalNote !== undefined ? internalNote : order.internalNote;
+        if (!finalNote || !finalNote.trim()) {
+          return NextResponse.json({ message: 'Order Hold করার জন্য Internal Note লিখা বাধ্যতামূলক' }, { status: 400 });
+        }
+      }
       order.status = status;
       if (status === 'Cancelled') {
         order.commissionStatus = 'cancelled';

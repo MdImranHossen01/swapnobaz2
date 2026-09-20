@@ -112,6 +112,15 @@ export async function PATCH(
             message: `Invalid status. Allowed values: ${allowedStatuses.join(', ')}`
           }, { status: 400 });
         }
+        if (status === 'Hold') {
+          const finalInternalNote = internalNote !== undefined ? internalNote : order.internalNote;
+          if (!finalInternalNote || !finalInternalNote.trim()) {
+            await dbSession.abortTransaction();
+            return NextResponse.json({
+              message: 'Internal note is mandatory when setting order status to Hold'
+            }, { status: 400 });
+          }
+        }
         updateData.status = status;
       }
 

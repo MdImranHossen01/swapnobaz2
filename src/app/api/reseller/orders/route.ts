@@ -131,7 +131,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const resellerId = await getResellerId(session.user.id);
-    const { orderId, status } = await request.json();
+    const { orderId, status, internalNote } = await request.json();
 
     if (!orderId || !/^[0-9a-fA-F]{24}$/.test(orderId)) {
       return NextResponse.json({ error: 'Missing or malformed orderId' }, { status: 400 });
@@ -142,9 +142,22 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or unsupported status for reseller' }, { status: 400 });
     }
 
+    const existingOrder = await ResellerOrder.findOne({ _id: orderId, resellerId });
+    if (!existingOrder) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+
+    if (status === 'Hold') {
+      const finalNote = internalNote !== undefined ? internalNote : existingOrder.internalNote;
+      if (!finalNote || !finalNote.trim()) {
+        return NextResponse.json({ error: 'Order Hold করার জন্য Internal Note লিখা বাধ্যতামূলক' }, { status: 400 });
+      }
+    }
+
+    const updateFields: any = { status };
+    if (internalNote !== undefined) updateFields.internalNote = internalNote;
+
     const order = await ResellerOrder.findOneAndUpdate(
       { _id: orderId, resellerId },
-      { $set: { status } },
+      { $set: updateFields },
       { new: true }
     );
 
