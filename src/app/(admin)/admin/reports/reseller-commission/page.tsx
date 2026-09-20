@@ -101,7 +101,7 @@ export default function ResellerCommissionReportPage() {
             />
           </div>
 
-          <Select value={selectedReseller} onValueChange={setSelectedReseller}>
+          <Select value={selectedReseller} onValueChange={(val) => setSelectedReseller(val || 'all')}>
             <SelectTrigger className="w-full sm:w-48 h-9 text-xs">
               <SelectValue placeholder="All Reseller Stores" />
             </SelectTrigger>
