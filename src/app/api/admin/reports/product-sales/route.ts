@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import connectToDatabase from '@/lib/db';
@@ -89,8 +90,8 @@ export async function GET(req: NextRequest) {
           soldQty
         };
       })
-      .sort((a: any, b: any) => a.soldQty - b.soldQty)
-      .slice(0, limit);
+        .sort((a: any, b: any) => a.soldQty - b.soldQty)
+        .slice(0, limit);
 
       return NextResponse.json({ view: 'low', items: lowSalesItems });
     }

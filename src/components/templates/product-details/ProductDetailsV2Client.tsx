@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { ShoppingCart, Heart, Minus, Plus, Star, MoreVertical, Edit, Trash2, Settings, PlusCircle, ShieldCheck, Truck, RefreshCw, Share2 } from 'lucide-react';
+import { Heart, Minus, Plus, Star, MoreVertical, Edit, Trash2, ShieldCheck, Truck, RefreshCw, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -65,21 +65,29 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
     [product.variants]
   );
 
+  const effectiveColor = (selectedColor && uniqueColors.includes(selectedColor))
+    ? selectedColor
+    : (uniqueColors[0] || null);
+
   const availableSizes = useMemo(() =>
     (product.variants || [])
-      .filter((v: any) => !selectedColor || v.color === selectedColor)
+      .filter((v: any) => (!effectiveColor || v.color === effectiveColor) && (v.stock || 0) > 0)
       .map((v: any) => v.size)
       .filter(Boolean) as string[],
-    [product.variants, selectedColor]
+    [product.variants, effectiveColor]
   );
+
+  const effectiveSize = (selectedSize && availableSizes.includes(selectedSize))
+    ? selectedSize
+    : (availableSizes[0] || null);
 
   const activeVariant = useMemo(() =>
     (product.variants || []).find(
       (v: any) =>
-        (v.color || null) === (selectedColor || null) &&
-        (v.size || null) === (selectedSize || null)
+        String(v.color || '').trim() === String(effectiveColor || '').trim() &&
+        String(v.size || '').trim() === String(effectiveSize || '').trim()
     ),
-    [product.variants, selectedColor, selectedSize]
+    [product.variants, effectiveColor, effectiveSize]
   );
 
   const allImages = useMemo(() => {
@@ -102,28 +110,10 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
   const displaySalePrice = hasVariants ? currentVariant?.salePrice : product.salePrice;
   const displayStock = hasVariants ? (currentVariant?.stock ?? 0) : (product.stock ?? 0);
 
-  useEffect(() => {
-    if (!product) return;
-    setSelectedColor(uniqueColors[0] || null);
-    setQuantity(1);
-  }, [product?._id, uniqueColors]);
-
-  useEffect(() => {
-    if (selectedSize == null || !availableSizes.includes(selectedSize)) {
-      setSelectedSize(availableSizes[0] || null);
-    }
-  }, [selectedColor, availableSizes, selectedSize]);
-
-  useEffect(() => {
-    if (quantity > displayStock) {
-      setQuantity(Math.max(1, displayStock));
-    }
-  }, [displayStock, quantity]);
-
   const handleAddToCart = () => {
-    if (uniqueColors.length > 0 && !selectedColor) return toast.error('Select color');
-    if (uniqueSizes.length > 0 && !selectedSize) return toast.error('Select size');
-    
+    if (uniqueColors.length > 0 && !effectiveColor) return toast.error('Select color');
+    if (uniqueSizes.length > 0 && !effectiveSize) return toast.error('Select size');
+
     if (displayStock <= 0) return toast.error('Out of stock');
     if (quantity > displayStock) {
       toast.error(`Only ${displayStock} items available in stock`);
@@ -138,8 +128,8 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
       basePrice: displayPrice,
       quantity: quantity,
       image: activeVariant?.image || (product.variants && product.variants.length > 0 ? product.variants[0]?.image : product.images?.[0]),
-      color: selectedColor || undefined,
-      size: selectedSize || undefined
+      color: effectiveColor || undefined,
+      size: effectiveSize || undefined
     }));
     toast.success(`Added ${product.name} to cart`);
     return true;
@@ -147,7 +137,7 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
 
   const handleFavorite = async () => {
     if (!session) return toast.error('Please login to save masterpiece');
-    
+
     // Optimistic update
     dispatch(toggleWishlist(product._id));
     const willBeInWishlist = !isInWishlist;
@@ -158,11 +148,11 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId: product._id }),
       });
-      
+
       if (!res.ok) {
         throw new Error('Failed to update wishlist on server');
       }
-      
+
       toast.success(willBeInWishlist ? 'Added to wishlist' : 'Removed from wishlist');
     } catch (err) {
       console.error('Wishlist sync error:', err);
@@ -207,11 +197,11 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
         <div className="grid grid-cols-1 gap-6">
           {allImages?.map((img: string, i: number) => (
             <div key={i} className="relative aspect-[3/4] rounded-[3rem] overflow-hidden bg-neutral-50 dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 shadow-2xl shadow-black/5 group">
-              <Image 
-                src={img} 
-                alt={`${product.name} - ${i + 1}`} 
-                fill 
-                className="object-cover transition-transform duration-[2000ms] group-hover:scale-110" 
+              <Image
+                src={img}
+                alt={`${product.name} - ${i + 1}`}
+                fill
+                className="object-cover transition-transform duration-[2000ms] group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20" />
             </div>
@@ -229,27 +219,27 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
                 {discount > 0 && <Badge className="bg-red-500 rounded-full font-black text-[10px]">-{discount}% OFF</Badge>}
               </div>
               {isAdmin && (
-                 <DropdownMenu>
-                   <DropdownMenuTrigger asChild>
-                     <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
-                        <MoreVertical className="h-5 w-5" />
-                     </Button>
-                   </DropdownMenuTrigger>
-                   <DropdownMenuContent align="end" className="rounded-2xl w-52">
-                      <DropdownMenuItem onClick={() => router.push(`/admin/products/${product.slug}`)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setShowDeleteModal(true)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                   </DropdownMenuContent>
-                 </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
+                      <MoreVertical className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="rounded-2xl w-52">
+                    <DropdownMenuItem onClick={() => router.push(`/admin/products/${product.slug}`)}><Edit className="mr-2 h-4 w-4" /> Edit</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShowDeleteModal(true)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
 
             <div className="space-y-2">
               <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-[0.9]">{product.name}</h1>
               <div className="flex items-center gap-4">
-                 <div className="flex text-primary">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
-                 </div>
-                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Handcrafted Excellence</span>
+                <div className="flex text-primary">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
+                </div>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Handcrafted Excellence</span>
               </div>
             </div>
 
@@ -263,109 +253,109 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
 
           {/* Options Selection */}
           <div className="space-y-8">
-             {uniqueColors.length > 0 && (
-                <div className="space-y-4">
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Select Color Palette</span>
-                   <div className="flex flex-wrap gap-3">
-                      {uniqueColors.map((color) => (
-                         <button 
-                            key={color} 
-                            onClick={() => setSelectedColor(color)}
-                            className={`px-6 py-3 rounded-full border-2 transition-all font-bold text-xs uppercase tracking-widest ${selectedColor === color ? 'border-primary bg-primary text-white shadow-xl shadow-primary/20 scale-105' : 'border-neutral-100 dark:border-neutral-800 hover:border-primary/50'}`}
-                         >
-                            {color}
-                         </button>
-                      ))}
-                   </div>
+            {uniqueColors.length > 0 && (
+              <div className="space-y-4">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Select Color Palette</span>
+                <div className="flex flex-wrap gap-3">
+                  {uniqueColors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-6 py-3 rounded-full border-2 transition-all font-bold text-xs uppercase tracking-widest ${effectiveColor === color ? 'border-primary bg-primary text-white shadow-xl shadow-primary/20 scale-105' : 'border-neutral-100 dark:border-neutral-800 hover:border-primary/50'}`}
+                    >
+                      {color}
+                    </button>
+                  ))}
                 </div>
-             )}
+              </div>
+            )}
 
-             {uniqueSizes.length > 0 && (
-                <div className="space-y-4">
-                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Select Size Profile</span>
-                   <div className="flex flex-wrap gap-2">
-                      {uniqueSizes.map((size) => (
-                         <button 
-                            key={size} 
-                            disabled={!availableSizes.includes(size)}
-                            onClick={() => setSelectedSize(size)}
-                            className={`h-12 w-12 rounded-2xl border-2 flex items-center justify-center transition-all font-black text-xs disabled:opacity-20 ${selectedSize === size ? 'border-primary bg-primary text-white scale-110 shadow-lg' : 'border-neutral-100 dark:border-neutral-800 hover:border-primary/50'}`}
-                         >
-                            {size}
-                         </button>
-                      ))}
-                   </div>
+            {uniqueSizes.length > 0 && (
+              <div className="space-y-4">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Select Size Profile</span>
+                <div className="flex flex-wrap gap-2">
+                  {uniqueSizes.map((size) => (
+                    <button
+                      key={size}
+                      disabled={!availableSizes.includes(size)}
+                      onClick={() => setSelectedSize(size)}
+                      className={`h-12 w-12 rounded-2xl border-2 flex items-center justify-center transition-all font-black text-xs disabled:opacity-20 ${effectiveSize === size ? 'border-primary bg-primary text-white scale-110 shadow-lg' : 'border-neutral-100 dark:border-neutral-800 hover:border-primary/50'}`}
+                    >
+                      {size}
+                    </button>
+                  ))}
                 </div>
-             )}
+              </div>
+            )}
           </div>
 
           <div className="space-y-4 pt-6">
-             <div className="flex items-center gap-4">
-                <div className="flex items-center border-2 border-neutral-100 dark:border-neutral-800 rounded-2xl h-16 bg-neutral-50 dark:bg-neutral-900/50">
-                  <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))} 
-                    className="px-5 hover:text-primary transition-colors disabled:opacity-30"
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="h-5 w-5" />
-                  </button>
-                  <span className="w-10 text-center font-black text-lg">{quantity}</span>
-                  <button 
-                    onClick={() => setQuantity(Math.min(displayStock, quantity + 1))} 
-                    className="px-5 hover:text-primary transition-colors disabled:opacity-30"
-                    disabled={quantity >= displayStock}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </button>
-                </div>
-                <Button 
-                  onClick={handleAddToCart}
-                  disabled={displayStock <= 0}
-                  className="h-16 flex-1 rounded-2xl bg-primary text-primary-foreground font-black text-lg uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+            <div className="flex items-center gap-4">
+              <div className="flex items-center border-2 border-neutral-100 dark:border-neutral-800 rounded-2xl h-16 bg-neutral-50 dark:bg-neutral-900/50">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="px-5 hover:text-primary transition-colors disabled:opacity-30"
+                  disabled={quantity <= 1}
                 >
-                   {displayStock > 0 ? 'Inquire & Add' : 'Sold Out'}
-                </Button>
-             </div>
-             <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="h-14 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest" onClick={handleFavorite}>
-                   <Heart className={`h-4 w-4 ${isInWishlist ? 'fill-primary text-primary' : ''}`} /> Wishlist
-                </Button>
-                <Button variant="outline" className="h-14 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest" onClick={handleShare}>
-                   <Share2 className="h-4 w-4" /> Share
-                </Button>
-             </div>
+                  <Minus className="h-5 w-5" />
+                </button>
+                <span className="w-10 text-center font-black text-lg">{quantity}</span>
+                <button
+                  onClick={() => setQuantity(Math.min(displayStock, quantity + 1))}
+                  className="px-5 hover:text-primary transition-colors disabled:opacity-30"
+                  disabled={quantity >= displayStock}
+                >
+                  <Plus className="h-5 w-5" />
+                </button>
+              </div>
+              <Button
+                onClick={handleAddToCart}
+                disabled={displayStock <= 0}
+                className="h-16 flex-1 rounded-2xl bg-primary text-primary-foreground font-black text-lg uppercase tracking-widest shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                {displayStock > 0 ? 'Inquire & Add' : 'Sold Out'}
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" className="h-14 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest" onClick={handleFavorite}>
+                <Heart className={`h-4 w-4 ${isInWishlist ? 'fill-primary text-primary' : ''}`} /> Wishlist
+              </Button>
+              <Button variant="outline" className="h-14 rounded-2xl gap-2 font-black uppercase text-[10px] tracking-widest" onClick={handleShare}>
+                <Share2 className="h-4 w-4" /> Share
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-6 pt-10">
-             {[
-               { icon: Truck, label: 'Global Priority' },
-               { icon: ShieldCheck, label: 'Secure Vault' },
-               { icon: RefreshCw, label: 'Elite Returns' }
-             ].map((item, i) => (
-                <div key={i} className="flex flex-col items-center gap-3">
-                   <div className="h-12 w-12 rounded-2xl bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center text-primary shadow-sm border border-neutral-100 dark:border-neutral-800">
-                      <item.icon className="h-6 w-6 stroke-[1.5]" />
-                   </div>
-                   <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground text-center">{item.label}</span>
+            {[
+              { icon: Truck, label: 'Global Priority' },
+              { icon: ShieldCheck, label: 'Secure Vault' },
+              { icon: RefreshCw, label: 'Elite Returns' }
+            ].map((item, i) => (
+              <div key={i} className="flex flex-col items-center gap-3">
+                <div className="h-12 w-12 rounded-2xl bg-neutral-50 dark:bg-neutral-900 flex items-center justify-center text-primary shadow-sm border border-neutral-100 dark:border-neutral-800">
+                  <item.icon className="h-6 w-6 stroke-[1.5]" />
                 </div>
-             ))}
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground text-center">{item.label}</span>
+              </div>
+            ))}
           </div>
 
           {/* Details & Reviews Tabs */}
           <div className="pt-12">
             <Tabs defaultValue="specs" className="w-full">
               <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent gap-8">
-                 <TabsTrigger value="specs" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-4 font-black uppercase tracking-widest text-[10px]">Specifications</TabsTrigger>
-                 <TabsTrigger value="reviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-4 font-black uppercase tracking-widest text-[10px]">Reviews</TabsTrigger>
+                <TabsTrigger value="specs" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-4 font-black uppercase tracking-widest text-[10px]">Specifications</TabsTrigger>
+                <TabsTrigger value="reviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-0 py-4 font-black uppercase tracking-widest text-[10px]">Reviews</TabsTrigger>
               </TabsList>
               <TabsContent value="specs" className="py-8">
-                 <div 
-                    className="ProseMirror max-w-none text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: generateHtml(product.description) }}
-                 />
+                <div
+                  className="ProseMirror max-w-none text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: generateHtml(product.description) }}
+                />
               </TabsContent>
               <TabsContent value="reviews" className="py-8">
-                 <ReviewsSection productId={product._id} />
+                <ReviewsSection productId={product._id} />
               </TabsContent>
             </Tabs>
           </div>

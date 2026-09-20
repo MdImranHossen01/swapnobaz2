@@ -66,20 +66,29 @@ export default function ProductDetailsV4Client({ product }: ProductDetailsV4Clie
     [product.variants]
   );
 
+  const effectiveColor = (selectedColor && uniqueColors.includes(selectedColor))
+    ? selectedColor
+    : (uniqueColors[0] || null);
+
   const availableSizes = useMemo(() =>
     (product.variants || [])
-      .filter((v: any) => !selectedColor || v.color === selectedColor)
+      .filter((v: any) => !effectiveColor || v.color === effectiveColor)
       .map((v: any) => v.size)
       .filter(Boolean) as string[],
-    [product.variants, selectedColor]
+    [product.variants, effectiveColor]
   );
+
+  const effectiveSize = (selectedSize && availableSizes.includes(selectedSize))
+    ? selectedSize
+    : (availableSizes[0] || null);
+
   const activeVariant = useMemo(() =>
     (product.variants || []).find(
       (v: any) =>
-        (v.color || null) === (selectedColor || null) &&
-        (v.size || null) === (selectedSize || null)
+        (v.color || null) === (effectiveColor || null) &&
+        (v.size || null) === (effectiveSize || null)
     ),
-    [product.variants, selectedColor, selectedSize]
+    [product.variants, effectiveColor, effectiveSize]
   );
 
   const allImages = useMemo(() => {
@@ -102,23 +111,6 @@ export default function ProductDetailsV4Client({ product }: ProductDetailsV4Clie
   const displaySalePrice = hasVariants ? currentVariant?.salePrice : product.salePrice;
   const displayStock = hasVariants ? (currentVariant?.stock ?? 0) : (product.stock ?? 0);
 
-  useEffect(() => {
-    if (!product) return;
-    setSelectedColor(uniqueColors[0] || null);
-  }, [product?._id, uniqueColors]);
-
-  useEffect(() => {
-    if (selectedSize == null || !availableSizes.includes(selectedSize)) {
-      setSelectedSize(availableSizes[0] || null);
-    }
-  }, [selectedColor, availableSizes, selectedSize]);
-
-  useEffect(() => {
-    if (quantity > displayStock) {
-      setQuantity(Math.max(1, displayStock));
-    }
-  }, [displayStock, quantity]);
-
   const handleAddToCart = () => {
     if (displayStock <= 0) {
       toast.error('Item is currently unavailable');
@@ -138,8 +130,8 @@ export default function ProductDetailsV4Client({ product }: ProductDetailsV4Clie
       basePrice: displayPrice,
       quantity: quantity,
       image: activeVariant?.image || (product.variants && product.variants.length > 0 ? product.variants[0]?.image : product.images?.[0]),
-      color: selectedColor || undefined,
-      size: selectedSize || undefined,
+      color: effectiveColor || undefined,
+      size: effectiveSize || undefined,
       uploadedBy: product.uploadedBy || (product.productId?.uploadedBy) || null,
     });
 
@@ -283,7 +275,7 @@ export default function ProductDetailsV4Client({ product }: ProductDetailsV4Clie
                   <button
                     key={color}
                     onClick={() => setSelectedColor(color)}
-                    className={`h-12 px-6 rounded-2xl border-2 transition-all font-bold text-xs uppercase tracking-widest ${selectedColor === color ? 'border-primary bg-primary text-white shadow-xl shadow-primary/10' : 'border-neutral-100 dark:border-neutral-800 hover:border-primary/50'}`}
+                    className={`h-12 px-6 rounded-2xl border-2 transition-all font-bold text-xs uppercase tracking-widest ${effectiveColor === color ? 'border-primary bg-primary text-white shadow-xl shadow-primary/10' : 'border-neutral-100 dark:border-neutral-800 hover:border-primary/50'}`}
                   >
                     {color}
                   </button>
@@ -300,7 +292,7 @@ export default function ProductDetailsV4Client({ product }: ProductDetailsV4Clie
                     key={size}
                     disabled={!availableSizes.includes(size)}
                     onClick={() => setSelectedSize(size)}
-                    className={`h-12 w-12 rounded-2xl border-2 flex items-center justify-center font-black text-xs transition-all ${selectedSize === size ? 'border-primary bg-primary text-white shadow-lg' : 'border-neutral-100 dark:border-neutral-800 hover:border-primary/50'}`}
+                    className={`h-12 w-12 rounded-2xl border-2 flex items-center justify-center font-black text-xs transition-all ${effectiveSize === size ? 'border-primary bg-primary text-white shadow-lg' : 'border-neutral-100 dark:border-neutral-800 hover:border-primary/50'}`}
                   >
                     {size}
                   </button>

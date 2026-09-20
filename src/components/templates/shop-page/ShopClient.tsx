@@ -919,7 +919,7 @@ export default function ShopClient({ initialProducts, initialCategories, initial
               </div>
               <h2 className="text-xl font-bold">No products found</h2>
               <p className="text-muted-foreground max-w-xs">
-                Try adjusting your filters or search terms to find what you're looking for.
+                Try adjusting your filters or search terms to find what you&apos;re looking for.
               </p>
               <Button variant="outline" onClick={clearFilters}>Reset All Filters</Button>
             </div>

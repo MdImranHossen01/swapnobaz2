@@ -1,9 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import connectToDatabase from '@/lib/db';
 import Order from '@/models/Order';
-import Category from '@/models/Category';
-import Brand from '@/models/Brand';
 
 export async function GET(req: NextRequest) {
   try {

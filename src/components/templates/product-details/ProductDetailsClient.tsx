@@ -76,8 +76,8 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
   const [isDeleting, setIsDeleting] = useState(false);
   const [eligibility, setEligibility] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('description');
-  const [shouldScrollToReviewForm, setShouldScrollToReviewForm] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null);
 
   // Derive available options from variants
   const uniqueColors = useMemo(() =>
@@ -90,22 +90,30 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
     [product.variants]
   );
 
+  const effectiveColor = (selectedColor && uniqueColors.includes(selectedColor))
+    ? selectedColor
+    : (uniqueColors[0] || null);
+
   // Hierarchical filtering (only show sizes that have stock for selected color)
   const availableSizes = useMemo(() =>
     (product.variants || [])
-      .filter((v: any) => (!selectedColor || v.color === selectedColor) && (v.stock || 0) > 0)
+      .filter((v: any) => (!effectiveColor || v.color === effectiveColor) && (v.stock || 0) > 0)
       .map((v: any) => v.size)
       .filter(Boolean) as string[],
-    [product.variants, selectedColor]
+    [product.variants, effectiveColor]
   );
+
+  const effectiveSize = (selectedSize && availableSizes.includes(selectedSize))
+    ? selectedSize
+    : (availableSizes[0] || null);
 
   const activeVariant = useMemo(() =>
     (product.variants || []).find(
       (v: any) =>
-        String(v.color || '').trim() === String(selectedColor || '').trim() &&
-        String(v.size || '').trim() === String(selectedSize || '').trim()
+        String(v.color || '').trim() === String(effectiveColor || '').trim() &&
+        String(v.size || '').trim() === String(effectiveSize || '').trim()
     ),
-    [product.variants, selectedColor, selectedSize]
+    [product.variants, effectiveColor, effectiveSize]
   );
 
   const allImages = useMemo(() => {
@@ -119,30 +127,13 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
       }
     }
     return product.images || [];
-  }, [product.images, activeVariant]);
+  }, [activeVariant, product.images]);
 
-  // Reset selected image when active variant changes to avoid out-of-bounds indices
-  useEffect(() => {
-    setSelectedImage(0);
-  }, [activeVariant]);
+  const currentImageIndex = (selectedImage >= 0 && selectedImage < (allImages?.length || 0)) ? selectedImage : 0;
 
-
-  // Auto-select first available options on mount or product change
+  // Track ViewContent on mount or product change
   useEffect(() => {
     if (!product) return;
-
-    const initialColor = uniqueColors[0] || null;
-    setSelectedColor(initialColor);
-
-    const initialSizes = (product.variants || [])
-      .filter((v: any) => !initialColor || v.color === initialColor)
-      .map((v: any) => v.size)
-      .filter(Boolean);
-    const initialSize = initialSizes[0] || null;
-    setSelectedSize(initialSize);
-
-    setSelectedImage(0);
-    setQuantity(1);
 
     // Track ViewContent
     const viewContentPayload = {
@@ -161,17 +152,13 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
 
     fbEvent('ViewContent', viewContentPayload, trackingUser);
     ttEvent('ViewContent', viewContentPayload, trackingUser);
-  }, [product?._id, uniqueColors, product.variants, session]);
+  }, [product?._id, session]);
 
   // Fetch review eligibility separately to avoid unnecessary re-triggers
   useEffect(() => {
-    if (!session?.user || !product?._id) {
-      setEligibility(null);
-      return;
-    }
+    if (!session?.user || !product?._id) return;
 
     const controller = new AbortController();
-    setEligibility(null); // Reset to avoid stale UI
 
     async function checkEligibility() {
       try {
@@ -193,39 +180,28 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
     return () => controller.abort();
   }, [product?._id, session]);
 
-  // Handle scroll to review form when tab changes and scroll is requested
   useEffect(() => {
-    if (activeTab === 'reviews' && shouldScrollToReviewForm) {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setWhatsappNumber(data.socialLinks?.whatsapp || null);
+        }
+      } catch (err) {
+        console.error('Error fetching settings:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleWriteReview = () => {
+    setActiveTab('reviews');
+    setTimeout(() => {
       const element = document.getElementById('review-form');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setShouldScrollToReviewForm(false);
-      } else {
-        // If element not yet in DOM, retry briefly
-        const timer = setTimeout(() => {
-          document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setShouldScrollToReviewForm(false);
-        }, 100);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [activeTab, shouldScrollToReviewForm]);
-
-  // Adjust selection if dependencies change and current choice is unavailable
-  useEffect(() => {
-    if (selectedSize == null || !availableSizes.includes(selectedSize)) {
-      setSelectedSize(availableSizes[0] || null);
-    }
-
-    // Update main image if variant has one
-    const activeImg = activeVariant?.images?.[0] || activeVariant?.image;
-    if (activeImg) {
-      const variantImgIndex = (allImages || []).findIndex((img: string) => img === activeImg);
-      if (variantImgIndex !== -1) {
-        setSelectedImage(variantImgIndex);
-      }
-    }
-  }, [selectedColor, selectedSize, availableSizes, activeVariant, allImages]);
+      element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
 
   const hasVariants = (uniqueColors.length > 0 || uniqueSizes.length > 0);
   const currentVariant = activeVariant || defaultVariant;
@@ -235,21 +211,12 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
   const displayStock = hasVariants ? (currentVariant?.stock ?? 0) : (product.stock ?? 0);
   const displaySku = hasVariants ? (currentVariant?.sku ?? '') : product.sku;
 
-  // Debug log for troubleshooting stock discrepancies
-  useEffect(() => {
-    if (selectedSize || selectedColor) {
-      console.log('--- Variant Stock Debug ---');
-      console.log('Selected:', { color: selectedColor, size: selectedSize });
-      console.log('Active Variant:', activeVariant);
-      console.log('Computed displayStock:', displayStock);
-    }
-  }, [selectedColor, selectedSize, activeVariant, displayStock]);
   const handleAddToCart = () => {
-    if (uniqueColors.length > 0 && !selectedColor) {
+    if (uniqueColors.length > 0 && !effectiveColor) {
       toast.error('Please select a color');
       return false;
     }
-    if (uniqueSizes.length > 0 && !selectedSize) {
+    if (uniqueSizes.length > 0 && !effectiveSize) {
       toast.error('Please select a size');
       return false;
     }
@@ -272,8 +239,8 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
       basePrice: displayPrice,
       quantity: finalQuantity,
       image: activeVariant?.images?.[0] || activeVariant?.image || (product.variants && product.variants.length > 0 ? (product.variants[0]?.images?.[0] || product.variants[0]?.image) : product.images?.[0]),
-      color: selectedColor || undefined,
-      size: selectedSize || undefined
+      color: effectiveColor || undefined,
+      size: effectiveSize || undefined
     }));
 
     // Track AddToCart
@@ -305,23 +272,6 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
       router.push('/checkout');
     }
   };
-
-  const [whatsappNumber, setWhatsappNumber] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch('/api/settings');
-        if (res.ok) {
-          const data = await res.json();
-          setWhatsappNumber(data.socialLinks?.whatsapp || null);
-        }
-      } catch (err) {
-        console.error('Error fetching settings:', err);
-      }
-    };
-    fetchSettings();
-  }, []);
 
   const handleFavorite = async () => {
     if (!product?._id) return;
@@ -443,10 +393,10 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
             onMouseEnter={() => setShowZoom(true)}
             onMouseLeave={() => setShowZoom(false)}
           >
-            {allImages && allImages.length > 0 && selectedImage < allImages.length ? (
+            {allImages && allImages.length > 0 && currentImageIndex < allImages.length ? (
               <>
                 <Image
-                  src={allImages[selectedImage]}
+                  src={allImages[currentImageIndex]}
                   alt={product.name}
                   width={400}
                   height={400}
@@ -485,14 +435,14 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
 
           {/* External Zoom Preview Window - Daraz Style */}
           {/* Placed outside the overflow-hidden container so it can overlay the right column */}
-          {showZoom && allImages && allImages.length > 0 && allImages[selectedImage] && (
+          {showZoom && allImages && allImages.length > 0 && allImages[currentImageIndex] && (
             <div
               className="absolute left-full ml-10 top-0 w-[120%] h-full border-2 border-primary/20 rounded-2xl bg-white shadow-2xl z-50 pointer-events-none overflow-hidden hidden lg:block animate-in fade-in zoom-in-95 duration-200"
             >
               <div
                 className="w-full h-full bg-no-repeat"
                 style={{
-                  backgroundImage: `url(${allImages[selectedImage]})`,
+                  backgroundImage: `url(${allImages[currentImageIndex]})`,
                   backgroundSize: '300%', // Zoom level
                   backgroundPosition: `${zoomPos.percentageX}% ${zoomPos.percentageY}%`,
                 }}
@@ -510,7 +460,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
           {allImages?.map((img: string, i: number) => (
             <button
               key={i}
-              className={`relative h-20 w-20 flex-shrink-0 rounded-md border-2 overflow-hidden transition-all ${selectedImage === i ? 'border-primary ring-2 ring-primary/20 scale-105' : 'border-muted hover:border-primary/50'
+              className={`relative h-20 w-20 flex-shrink-0 rounded-md border-2 overflow-hidden transition-all ${currentImageIndex === i ? 'border-primary ring-2 ring-primary/20 scale-105' : 'border-muted hover:border-primary/50'
                 }`}
               onClick={() => setSelectedImage(i)}
               aria-label={`View product thumbnail image ${i + 1}`}
@@ -572,14 +522,11 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
               <Share2 className="h-4 w-4" />
               <span>Share</span>
             </button>
-            {eligibility?.eligible && (
+            {session?.user && eligibility?.eligible && (
               <>
                 <Separator orientation="vertical" className="h-4" />
                 <button
-                  onClick={() => {
-                    setActiveTab('reviews');
-                    setShouldScrollToReviewForm(true);
-                  }}
+                  onClick={handleWriteReview}
                   className="text-sm font-bold text-primary hover:underline cursor-pointer"
                 >
                   Write a review
@@ -621,7 +568,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold uppercase tracking-wider">Color:</span>
-                  <span className="text-sm text-primary font-medium">{selectedColor}</span>
+                  <span className="text-sm text-primary font-medium">{effectiveColor || 'Select a color'}</span>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {uniqueColors.map((color) => {
@@ -639,15 +586,17 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
                       <button
                         key={color}
                         disabled={isOutOfStock}
-                        onClick={() => setSelectedColor(color)}
+                        onClick={() => {
+                          setSelectedColor(color);
+                          setSelectedImage(0);
+                        }}
                         title={color}
-                        className={`relative rounded-lg overflow-hidden transition-all duration-200 border-2 ${
-                          selectedColor === color
-                            ? 'border-primary ring-2 ring-primary/20 scale-105 shadow-md'
-                            : isOutOfStock
-                              ? 'border-dashed border-muted bg-muted/20 opacity-40 cursor-not-allowed'
-                              : 'border-muted hover:border-primary/50 hover:scale-102'
-                        } ${imageUrl ? 'p-0.5 w-14 h-14' : 'px-4 py-2 text-xs font-bold'}`}
+                        className={`relative rounded-lg overflow-hidden transition-all duration-200 border-2 ${effectiveColor === color
+                          ? 'border-primary ring-2 ring-primary/20 scale-105 shadow-md'
+                          : isOutOfStock
+                            ? 'border-dashed border-muted bg-muted/20 opacity-40 cursor-not-allowed'
+                            : 'border-muted hover:border-primary/50 hover:scale-102'
+                          } ${imageUrl ? 'p-0.5 w-14 h-14' : 'px-4 py-2 text-xs font-bold'}`}
                       >
                         {imageUrl ? (
                           <div className="relative w-full h-full rounded-md overflow-hidden bg-white">
@@ -682,7 +631,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold uppercase tracking-wider">Size:</span>
-                  <span className="text-sm text-primary font-medium">{selectedSize || 'Select a size'}</span>
+                  <span className="text-sm text-primary font-medium">{effectiveSize || 'Select a size'}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {uniqueSizes.map((sizeName, i) => {
@@ -691,8 +640,11 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
                       <button
                         key={i}
                         disabled={!isAvailable}
-                        onClick={() => setSelectedSize(sizeName)}
-                        className={`min-w-[48px] h-12 flex flex-col items-center justify-center rounded-xl border-2 font-bold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100 disabled:cursor-not-allowed ${selectedSize === sizeName
+                        onClick={() => {
+                          setSelectedSize(sizeName);
+                          setSelectedImage(0);
+                        }}
+                        className={`min-w-[48px] h-12 flex flex-col items-center justify-center rounded-xl border-2 font-bold transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100 disabled:cursor-not-allowed ${effectiveSize === sizeName
                           ? 'border-primary bg-primary/5 ring-4 ring-primary/10 text-primary'
                           : isAvailable
                             ? 'border-muted hover:border-primary/30 text-muted-foreground'
@@ -868,7 +820,7 @@ export default function ProductDetailsClient({ product }: ProductDetailsClientPr
           <DialogHeader>
             <DialogTitle className="text-xl">Delete Product</DialogTitle>
             <DialogDescription className="pt-2">
-              Are you sure you want to delete <span className="font-bold text-foreground">"{product.name}"</span>?
+              Are you sure you want to delete <span className="font-bold text-foreground">&quot;{product.name}&quot;</span>?
               This action cannot be undone and will remove all associated data including variants and reviews.
             </DialogDescription>
           </DialogHeader>
