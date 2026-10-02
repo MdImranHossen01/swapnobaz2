@@ -222,30 +222,28 @@ export default function CategoriesPage() {
                     </FormItem>
                   )}
                 />
-                {!form.watch('parentCategory') || form.watch('parentCategory') === 'none' ? (
-                  <FormField
-                    control={form.control}
-                    name="slug"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Slug</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="category-slug" 
-                            {...field} 
-                            onChange={(e) => {
-                              field.onChange(sanitizeSlugInput(e.target.value));
-                            }}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Unique URL-friendly name.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ) : null}
+                <FormField
+                  control={form.control}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Slug</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="category-slug" 
+                          {...field} 
+                          onChange={(e) => {
+                            field.onChange(sanitizeSlugInput(e.target.value));
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Unique URL-friendly name.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="parentCategory"
@@ -281,25 +279,23 @@ export default function CategoriesPage() {
                     </FormItem>
                   )}
                 />
-                {!form.watch('parentCategory') || form.watch('parentCategory') === 'none' ? (
-                  <FormField
-                    control={form.control}
-                    name="image"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category Image</FormLabel>
-                        <FormControl>
-                          <ImageUpload 
-                            value={field.value} 
-                            onUpload={(url) => field.onChange(url)} 
-                            aspect="square"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                ) : null}
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category Image</FormLabel>
+                      <FormControl>
+                        <ImageUpload 
+                          value={field.value} 
+                          onUpload={(url) => field.onChange(url)} 
+                          aspect="square"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <DialogFooter>
                   <Button type="submit" disabled={submitting}>
                     {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
