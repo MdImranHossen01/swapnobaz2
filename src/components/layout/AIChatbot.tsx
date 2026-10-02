@@ -16,8 +16,42 @@ export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
 
+  const parseMarkdownInline = (text: string, baseKey: string | number): React.ReactNode[] => {
+    const inlineRegex = /(\*\*([^*]+)\*\*|\*([^*]+)\*)/g;
+    const result: React.ReactNode[] = [];
+    let last = 0;
+    let match;
+    let counter = 0;
+
+    while ((match = inlineRegex.exec(text)) !== null) {
+      if (match.index > last) {
+        result.push(text.substring(last, match.index));
+      }
+      if (match[2]) {
+        result.push(
+          <strong key={`${baseKey}-b-${counter++}`} className="font-bold text-foreground">
+            {match[2]}
+          </strong>
+        );
+      } else if (match[3]) {
+        result.push(
+          <em key={`${baseKey}-i-${counter++}`} className="italic">
+            {match[3]}
+          </em>
+        );
+      }
+      last = inlineRegex.lastIndex;
+    }
+
+    if (last < text.length) {
+      result.push(text.substring(last));
+    }
+
+    return result.length > 0 ? result : [text];
+  };
+
   const renderMessageContent = (content: string) => {
-    const parts = [];
+    const parts: React.ReactNode[] = [];
     const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
     let lastIndex = 0;
     let match;
@@ -27,7 +61,8 @@ export function AIChatbot() {
       const matchIndex = match.index;
 
       if (matchIndex > lastIndex) {
-        parts.push(content.substring(lastIndex, matchIndex));
+        const textSegment = content.substring(lastIndex, matchIndex);
+        parts.push(...parseMarkdownInline(textSegment, matchIndex));
       }
 
       const isRelative = url.startsWith('/') && !url.startsWith('//');
@@ -35,12 +70,12 @@ export function AIChatbot() {
       const isMailto = url.startsWith('mailto:');
 
       if (!isRelative && !isHttp && !isMailto) {
-        parts.push(fullMatch);
+        parts.push(...parseMarkdownInline(fullMatch, `raw-${matchIndex}`));
       } else {
         const isExternal = isHttp;
         parts.push(
           <Link
-            key={matchIndex}
+            key={`link-${matchIndex}`}
             href={url}
             onClick={() => setIsOpen(false)}
             className="underline text-primary hover:opacity-80 font-bold"
@@ -56,7 +91,8 @@ export function AIChatbot() {
     }
 
     if (lastIndex < content.length) {
-      parts.push(content.substring(lastIndex));
+      const remaining = content.substring(lastIndex);
+      parts.push(...parseMarkdownInline(remaining, `tail-${lastIndex}`));
     }
 
     return parts.length > 0 ? parts : content;

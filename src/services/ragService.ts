@@ -1,4 +1,4 @@
-﻿import connectToDatabase from '@/lib/db';
+import connectToDatabase from '@/lib/db';
 import { getEmbedding } from '@/lib/embeddings';
 
 // Import Mongoose models
@@ -26,8 +26,14 @@ export async function retrieveRelevantContext(
   apiKey?: string,
   limitPerModel = 3
 ): Promise<string> {
-  try {
-    await connectToDatabase();
+    // Fast path: Skip expensive embedding generation & database queries for simple greetings
+    const isGreeting = /^(hi|hello|hey|assalamu\s*alaikum|salam|হাই|হ্যালো|সালাম|hlw)[\s!.]*$/i.test(query.trim());
+    if (isGreeting) {
+      return "";
+    }
+
+    try {
+      await connectToDatabase();
 
     let queryVector: number[] | null = null;
     if (apiKey) {

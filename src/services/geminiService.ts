@@ -73,7 +73,7 @@ export const getChatResponse = async (
 
     try {
         const ai = new GoogleGenAI({ apiKey: selectedKey });
-        const model = "gemini-2.5-flash";
+        const candidateModels = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest"];
 
         // Filter history to ensure it starts with 'user' or 'model'
         let validHistory = history.filter(msg => msg.role === 'user' || msg.role === 'model');
@@ -100,24 +100,36 @@ export const getChatResponse = async (
             parts: [{ text: userPromptWithContext }]
         });
 
-        const response = await ai.models.generateContent({
-            model,
-            contents,
-            config: {
-                systemInstruction: SYSTEM_INSTRUCTION,
+        let lastError: any = null;
+
+        for (const model of candidateModels) {
+            try {
+                const response = await ai.models.generateContent({
+                    model,
+                    contents,
+                    config: {
+                        systemInstruction: SYSTEM_INSTRUCTION,
+                    }
+                });
+
+                if (response.text) {
+                    return response.text;
+                }
+            } catch (err: any) {
+                lastError = err;
+                console.warn(`⚠️ Model ${model} failed, trying fallback:`, err.message || err);
+                // If temporary capacity issue or high demand, proceed to fallback model
+                continue;
             }
-        });
-
-        const responseText = response.text;
-
-        if (responseText) {
-            return responseText;
-        } else {
-            throw new Error("Empty response from Google Gemini SDK");
         }
+
+        throw lastError || new Error("All Gemini model fallbacks exhausted");
 
     } catch (error: any) {
         console.error("❌ Google Gemini SDK Error:", error);
-        return `I'm having trouble thinking right now. Error: ${error.message}`;
+        if (error.message?.includes('503') || error.message?.includes('high demand') || error.message?.includes('UNAVAILABLE')) {
+            return "সার্ভারে সাময়িক অতিরিক্ত ট্রাফিকের কারণে সংযোগ পেতে কিছুটা বিলম্ব হচ্ছে। অনুগ্রহ করে কয়েক সেকেন্ড পর আবার চেষ্টা করুন।";
+        }
+        return `I'm having trouble thinking right now. Please try again in a moment.`;
     }
 };
