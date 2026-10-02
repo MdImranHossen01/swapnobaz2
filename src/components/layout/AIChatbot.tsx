@@ -3,13 +3,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, X, Bot, User, Loader2, MessageCircleQuestion } from 'lucide-react';
+import { Send, X, Bot, User, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import ProductCardV1 from '@/components/templates/product-cards/ProductCardV1';
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  products?: any[];
 }
 
 export function AIChatbot() {
@@ -23,9 +25,11 @@ export function AIChatbot() {
     let match;
     let counter = 0;
 
+    const cleanStr = (s: string) => s.replace(/\*\*/g, '');
+
     while ((match = inlineRegex.exec(text)) !== null) {
       if (match.index > last) {
-        result.push(text.substring(last, match.index));
+        result.push(cleanStr(text.substring(last, match.index)));
       }
       if (match[2]) {
         result.push(
@@ -44,17 +48,19 @@ export function AIChatbot() {
     }
 
     if (last < text.length) {
-      result.push(text.substring(last));
+      result.push(cleanStr(text.substring(last)));
     }
 
-    return result.length > 0 ? result : [text];
+    return result.length > 0 ? result : [cleanStr(text)];
   };
 
-  const renderMessageContent = (content: string) => {
+  const renderMessageContent = (content: string, products?: any[]) => {
     const parts: React.ReactNode[] = [];
-    const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    // Match markdown links with optional surrounding bold/italic asterisks: **[text](url)** or *[text](url)*
+    const regex = /(?:\*\*|\*)?\[([^\]]+)\]\(([^)]+)\)(?:\*\*|\*)?/g;
     let lastIndex = 0;
     let match;
+    const usedProductIds = new Set<string>();
 
     while ((match = regex.exec(content)) !== null) {
       const [fullMatch, text, url] = match;
@@ -72,19 +78,38 @@ export function AIChatbot() {
       if (!isRelative && !isHttp && !isMailto) {
         parts.push(...parseMarkdownInline(fullMatch, `raw-${matchIndex}`));
       } else {
-        const isExternal = isHttp;
-        parts.push(
-          <Link
-            key={`link-${matchIndex}`}
-            href={url}
-            onClick={() => setIsOpen(false)}
-            className="underline text-primary hover:opacity-80 font-bold"
-            target={isExternal ? "_blank" : undefined}
-            rel={isExternal ? "noopener noreferrer" : undefined}
-          >
-            {text}
-          </Link>
-        );
+        const isProductLink = url.startsWith('/product/');
+        let matchedProduct = null;
+
+        if (isProductLink && products && products.length > 0) {
+          const cleanSlug = url.replace('/product/', '').split(/[?#]/)[0];
+          matchedProduct = products.find(
+            (p: any) => p.slug === cleanSlug || String(p._id) === cleanSlug
+          );
+        }
+
+        if (matchedProduct) {
+          usedProductIds.add(String(matchedProduct._id));
+          parts.push(
+            <span key={`product-inline-${matchIndex}`} className="block my-2.5 w-full text-left">
+              <ProductCardV1 product={matchedProduct} />
+            </span>
+          );
+        } else {
+          const isExternal = isHttp;
+          parts.push(
+            <Link
+              key={`link-${matchIndex}`}
+              href={url}
+              onClick={() => setIsOpen(false)}
+              className="underline text-primary hover:opacity-80 font-bold"
+              target={isExternal ? "_blank" : undefined}
+              rel={isExternal ? "noopener noreferrer" : undefined}
+            >
+              {text}
+            </Link>
+          );
+        }
       }
 
       lastIndex = regex.lastIndex;
@@ -93,6 +118,31 @@ export function AIChatbot() {
     if (lastIndex < content.length) {
       const remaining = content.substring(lastIndex);
       parts.push(...parseMarkdownInline(remaining, `tail-${lastIndex}`));
+    }
+
+    // If there are products returned from DB that were not directly linked in the text
+    const remainingProducts = (products || []).filter(
+      (p: any) => !usedProductIds.has(String(p._id))
+    );
+
+    if (remainingProducts.length > 0) {
+      parts.push(
+        <span key="remaining-products" className="block mt-3 pt-2 border-t border-border/40 w-full">
+          <span className="text-[11px] font-bold text-muted-foreground flex items-center justify-between uppercase tracking-wider mb-2.5">
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="size-3 text-primary animate-pulse" />
+              Suggested Products
+            </span>
+          </span>
+          <span className="flex flex-col gap-3.5 w-full">
+            {remainingProducts.slice(0, 10).map((prod: any) => (
+              <span key={prod._id} className="block w-full text-left">
+                <ProductCardV1 product={prod} />
+              </span>
+            ))}
+          </span>
+        </span>
+      );
     }
 
     return parts.length > 0 ? parts : content;
@@ -134,7 +184,11 @@ export function AIChatbot() {
 
       const data = await response.json();
       if (data.message) {
-        setMessages((prev) => [...prev, { role: 'assistant', content: data.message }]);
+        setMessages((prev) => [...prev, {
+          role: 'assistant',
+          content: data.message,
+          products: data.products || []
+        }]);
       } else {
         throw new Error('No message in response');
       }
@@ -175,7 +229,7 @@ export function AIChatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-20 md:bottom-6 right-6 z-[60] w-[90vw] max-w-[400px] h-[600px] max-h-[80vh] bg-background border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            className="fixed bottom-20 md:bottom-6 right-3 md:right-6 z-[60] w-[94vw] sm:w-[440px] max-w-[460px] h-[620px] max-h-[82vh] bg-background border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
             <div className="p-4 bg-primary text-primary-foreground flex items-center justify-between shadow-md">
@@ -211,7 +265,8 @@ export function AIChatbot() {
                       initial={{ opacity: 0, x: msg.role === 'user' ? 20 : -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       className={cn(
-                        "flex gap-3 max-w-[85%]",
+                        "flex gap-2.5",
+                        msg.products && msg.products.length > 0 ? "w-full max-w-[96%]" : "max-w-[85%]",
                         msg.role === 'user' ? "ml-auto flex-row-reverse" : ""
                       )}
                     >
@@ -222,12 +277,16 @@ export function AIChatbot() {
                         {msg.role === 'user' ? <User className="size-4" /> : <Bot className="size-4" />}
                       </div>
                       <div className={cn(
-                        "p-3 rounded-2xl text-sm shadow-sm whitespace-pre-line",
+                        "p-3 rounded-2xl text-sm shadow-sm whitespace-pre-line flex flex-col gap-2 min-w-0 w-full",
                         msg.role === 'user'
                           ? "bg-primary text-primary-foreground rounded-tr-none"
                           : "bg-background text-foreground rounded-tl-none border"
                       )}>
-                        {msg.role === 'user' ? msg.content : renderMessageContent(msg.content)}
+                        <div>
+                          {msg.role === 'user'
+                            ? msg.content
+                            : renderMessageContent(msg.content, msg.products)}
+                        </div>
                       </div>
                     </motion.div>
                   ))}

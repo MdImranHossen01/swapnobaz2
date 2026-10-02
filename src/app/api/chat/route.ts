@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import { getCachedSettings } from '@/lib/data-fetching';
 import { retrieveRelevantContext } from '@/services/ragService';
 import { getChatResponse } from '@/services/geminiService';
 import { auth } from '@/auth';
+import Product from '@/models/Product';
 
 const MAX_MESSAGES = 20;
 const MAX_CONTENT_LENGTH = 2000;
@@ -61,13 +63,43 @@ export async function POST(req: NextRequest) {
       parts: msg.content
     }));
 
-    // Retrieve real-time relevant database records via vector search
-    const context = await retrieveRelevantContext(latestMessage, (session?.user as any)?.id, apiKey);
-    console.log("RAG Context retrieved, length:", context ? context.length : 0);
+    // Retrieve real-time relevant database records via vector/keyword search
+    const { contextString, matchedProducts } = await retrieveRelevantContext(latestMessage, (session?.user as any)?.id, apiKey);
+    console.log("RAG Context retrieved, length:", contextString ? contextString.length : 0);
 
-    const response = await getChatResponse(latestMessage, history, context, apiKey);
+    const response = await getChatResponse(latestMessage, history, contextString, apiKey);
 
-    return NextResponse.json({ message: response });
+    // Extract product slugs/IDs from LLM response
+    const slugMatches = Array.from(response.matchAll(/\/product\/([a-zA-Z0-9_-]+)/g)).map(m => m[1]);
+    let suggestedProducts: any[] = [];
+
+    if (slugMatches.length > 0) {
+      const uniqueSlugs = Array.from(new Set(slugMatches));
+      const objectIds = uniqueSlugs.filter(s => mongoose.Types.ObjectId.isValid(s));
+
+      const found = await Product.find({
+        $or: [{ slug: { $in: uniqueSlugs } }, { _id: { $in: objectIds } }],
+        isPublished: true,
+      })
+      .select('_id name slug price salePrice images isFeatured isNewArrival stock sku categories ratings numReviews variants')
+      .populate('categories', 'name slug')
+      .limit(10)
+      .lean();
+
+      if (found && found.length > 0) {
+        suggestedProducts = JSON.parse(JSON.stringify(found));
+      }
+    }
+
+    // Fallback: If no direct link was in the text but user asked about products and RAG found items
+    if (suggestedProducts.length === 0 && matchedProducts && matchedProducts.length > 0) {
+      const isProductInquiry = /(product|buy|price|cost|shop|collection|shirt|pant|dress|panjabi|watch|shoe|shari|শার্ট|প্যান্ট|পাঞ্জাবি|শাড়ি|প্রোডাক্ট|পণ্য|দাম|কিনব|অর্ডার|দেখাও)/i.test(latestMessage);
+      if (isProductInquiry) {
+        suggestedProducts = JSON.parse(JSON.stringify(matchedProducts.slice(0, 10)));
+      }
+    }
+
+    return NextResponse.json({ message: response, products: suggestedProducts });
   } catch (error: any) {
     console.error('Chat API Error:', error);
     return NextResponse.json({ error: 'Failed to connect to AI' }, { status: 500 });
