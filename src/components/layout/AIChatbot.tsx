@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, X, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { Send, X, Bot, User, Loader2, Sparkles, Package, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import ProductCardV1 from '@/components/templates/product-cards/ProductCardV1';
@@ -12,6 +12,8 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   products?: any[];
+  orderDraft?: any;
+  placedOrder?: any;
 }
 
 export function AIChatbot() {
@@ -151,6 +153,7 @@ export function AIChatbot() {
     { role: 'assistant', content: 'Assalamu Alaikum! I am your Swapnobaz AI assistant. How can I help you explore our products, track orders, or assist with reseller dropshipping today?' },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [orderingIndex, setOrderingIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -162,10 +165,82 @@ export function AIChatbot() {
     }
   }, [messages]);
 
+  const handleConfirmOrder = async (draft: any, msgIndex: number) => {
+    if (!draft || orderingIndex !== null) return;
+    setOrderingIndex(msgIndex);
+    try {
+      const res = await fetch('/api/chat/place-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: draft.productId || draft.product?._id,
+          quantity: draft.quantity || 1,
+          color: draft.color,
+          size: draft.size,
+          fullName: draft.fullName,
+          phone: draft.phone,
+          street: draft.street,
+          city: draft.city,
+          state: draft.state,
+          division: draft.division,
+          notes: draft.notes,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to place order');
+      }
+
+      // Update message with placed order details
+      setMessages((prev) =>
+        prev.map((m, idx) =>
+          idx === msgIndex ? { ...m, placedOrder: data.order } : m
+        )
+      );
+
+      // Add celebratory confirmation message from AI
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `🎉 ধন্যবাদ **${draft.fullName}**! আপনার অর্ডারটি নিশ্চিত করা হয়েছে এবং সিস্টেমে লিপিবদ্ধ হয়েছে।\n\n**অর্ডার আইডি:** #${data.order.shortId}\n**মোট প্রদেয় মূল্য:** ৳${data.order.totalAmount} (Cash on Delivery)\n\nখুব শীঘ্রই আমাদের ডেলিভারি টিম আপনার সাথে ফোনে যোগাযোগ করবে। আপনি চাইলে নিচে ট্র্যাকিং বাটনে ক্লিক করে লাইভ স্ট্যাটাস দেখতে পারেন।`,
+        },
+      ]);
+    } catch (error: any) {
+      console.error('Order placement error:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `দুঃখিত, অর্ডারটি কনফার্ম করতে সমস্যা হয়েছে: ${error.message || 'অনুগ্রহ করে পুনরায় চেষ্টা করুন।'}`,
+        },
+      ]);
+    } finally {
+      setOrderingIndex(null);
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    const userMessage: Message = { role: 'user', content: input };
+    const userInput = input.trim();
+    const cleanLower = userInput.toLowerCase();
+    const isConfirmWord = /^(confirm|কনফার্ম|হ্যাঁ|yes|sure|ok|order|ঠিক আছে)[\s!.]*$/i.test(cleanLower);
+
+    // If user typed "confirm" and there's an unplaced order draft in messages
+    const draftIndex = messages.map((m, i) => ({ m, i })).reverse().find(x => x.m.orderDraft && !x.m.placedOrder)?.i;
+
+    if (isConfirmWord && draftIndex !== undefined) {
+      const userMessage: Message = { role: 'user', content: userInput };
+      setMessages((prev) => [...prev, userMessage]);
+      setInput('');
+      const targetDraft = messages[draftIndex].orderDraft;
+      await handleConfirmOrder(targetDraft, draftIndex);
+      return;
+    }
+
+    const userMessage: Message = { role: 'user', content: userInput };
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
@@ -187,7 +262,8 @@ export function AIChatbot() {
         setMessages((prev) => [...prev, {
           role: 'assistant',
           content: data.message,
-          products: data.products || []
+          products: data.products || [],
+          orderDraft: data.orderDraft || null,
         }]);
       } else {
         throw new Error('No message in response');
@@ -287,6 +363,121 @@ export function AIChatbot() {
                             ? msg.content
                             : renderMessageContent(msg.content, msg.products)}
                         </div>
+
+                        {/* Interactive Order Draft / Confirmation Card */}
+                        {msg.orderDraft && !msg.placedOrder && (
+                          <div className="mt-3 p-3.5 bg-card text-card-foreground border-2 border-primary/30 rounded-xl flex flex-col gap-2.5 text-xs shadow-md">
+                            <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                              <span className="font-bold flex items-center gap-1.5 text-primary">
+                                <Package className="size-4" />
+                                অর্ডার বিবরণী (Order Draft)
+                              </span>
+                              <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                Cash on Delivery
+                              </span>
+                            </div>
+
+                            {msg.orderDraft.product && (
+                              <div className="flex items-center gap-2.5 py-1">
+                                {msg.orderDraft.product.image ? (
+                                  <img
+                                    src={msg.orderDraft.product.image}
+                                    alt={msg.orderDraft.product.name}
+                                    className="size-12 rounded-lg object-cover border shrink-0"
+                                  />
+                                ) : null}
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-xs line-clamp-1">{msg.orderDraft.product.name}</p>
+                                  <p className="text-muted-foreground text-[11px]">
+                                    পরিমাণ: {msg.orderDraft.quantity || 1}
+                                    {msg.orderDraft.size && ` | সাইজ: ${msg.orderDraft.size}`}
+                                    {msg.orderDraft.color && ` | কালার: ${msg.orderDraft.color}`}
+                                  </p>
+                                  <p className="font-bold text-primary text-xs">
+                                    ৳{msg.orderDraft.product.price}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="space-y-1 py-1.5 px-2.5 bg-muted/40 rounded-lg text-[11px]">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">গ্রাহকের নাম:</span>
+                                <span className="font-semibold">{msg.orderDraft.fullName}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">মোবাইল:</span>
+                                <span className="font-semibold">{msg.orderDraft.phone}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">ঠিকানা:</span>
+                                <span className="font-semibold text-right max-w-[65%] line-clamp-2">
+                                  {msg.orderDraft.street}, {msg.orderDraft.city}
+                                </span>
+                              </div>
+                              <div className="flex justify-between pt-1 border-t border-border/40">
+                                <span className="text-muted-foreground">ডেলিভারি চার্জ:</span>
+                                <span>৳{msg.orderDraft.deliveryCharge}</span>
+                              </div>
+                              <div className="flex justify-between pt-0.5 font-bold text-foreground">
+                                <span>সর্বমোট প্রদেয়:</span>
+                                <span className="text-primary text-xs">৳{msg.orderDraft.totalAmount}</span>
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={() => handleConfirmOrder(msg.orderDraft, index)}
+                              disabled={orderingIndex === index}
+                              className="w-full mt-1 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs py-2 rounded-lg flex items-center justify-center gap-1.5 shadow-md"
+                            >
+                              {orderingIndex === index ? (
+                                <>
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                  অর্ডার সম্পন্ন হচ্ছে...
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="size-3.5" />
+                                  অর্ডার নিশ্চিত করুন (Confirm Order)
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Placed Order Success Badge */}
+                        {msg.placedOrder && (
+                          <div className="mt-3 p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl flex flex-col gap-2 text-xs text-foreground">
+                            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-bold">
+                              <CheckCircle className="size-4 shrink-0" />
+                              <span>অর্ডার সম্পন্ন হয়েছে! (Order Placed)</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-muted-foreground">অর্ডার আইডি:</span>
+                              <span className="font-mono font-bold text-primary">#{msg.placedOrder.shortId}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-muted-foreground">মোট টাকা:</span>
+                              <span className="font-bold">৳{msg.placedOrder.totalAmount} (ক্যাশ অন ডেলিভারি)</span>
+                            </div>
+                            <div className="flex gap-2 mt-1">
+                              <Link
+                                href={`/track-order?id=${msg.placedOrder.shortId}`}
+                                className="flex-1 text-center py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-[11px] transition-colors"
+                                onClick={() => setIsOpen(false)}
+                              >
+                                ট্র্যাক করুন
+                              </Link>
+                              <Link
+                                href="/dashboard"
+                                className="flex-1 text-center py-1.5 px-2 bg-muted hover:bg-muted/80 text-foreground border rounded-lg font-medium text-[11px] transition-colors"
+                                onClick={() => setIsOpen(false)}
+                              >
+                                ড্যাশবোর্ড
+                              </Link>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   ))}

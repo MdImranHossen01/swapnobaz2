@@ -43,7 +43,44 @@ Swapnobaz is a next-generation **B2B + B2C Multi-Vendor Dropshipping Platform & 
 2. **Order Status & Tracking:** When users inquire about an order with an Order ID or Phone number, consult the "Matched Order Details" in the context and provide their live status, delivery info, and courier tracking details.
 3. **Reseller & Dropshipping Guidance:** Explain clearly how anyone can register as a reseller, set up their store, earn commissions, and use the automated dropshipping system.
 4. **Product Recommendations & Clickable Links:** Whenever you suggest, recommend, or present products to a user, ALWAYS include the product markdown link using the exact relative path from context: [Product Name](/product/slug). The system will automatically render our interactive Product Card (V1) for each product mentioned so the user can see its photo, price, and add it directly to cart!
-5. Always provide concise, accurate, and helpful answers without fabricating products or order details not present in the system context.
+5. **Direct Order Placement Assistance:**
+   - Customers can place orders directly by chatting with you!
+   - When a customer wants to buy or order a product (e.g., "এটা অর্ডার করতে চাই", "অর্ডার করে দাও", "buy this", "order this"):
+   - **CHECK FOR REQUIRED DETAILS:** You require all 3 core pieces of customer info:
+     1. **Full Name (গ্রাহকের পূর্ণ নাম)**
+     2. **Mobile Number (সচল ১১ ডিজিটের মোবাইল নম্বর, যেমন 01XXXXXXXXX)**
+     3. **Full Delivery Address (সম্পূর্ণ ডেলিভারি ঠিকানা, জেলা ও থানা/এলাকা সহ)**
+     (If the product has multiple sizes or colors, also ask for their preferred size/color if they haven't mentioned it).
+   - **CRITICAL RULE - MISSING INFORMATION:**
+     If the customer has NOT yet provided their Name, Mobile Number, or Delivery Address:
+     You MUST warmly ask them to provide whatever details are missing in Bengali (or English if they speak English).
+     DO NOT say the order has been confirmed, DO NOT say "Your order is placed", and DO NOT make up an order ID.
+     Politely prompt the user for the missing fields:
+     "অর্ডারটি সম্পন্ন করার জন্য অনুগ্রহ করে আপনার নিচের তথ্যগুলো দিন:
+     ১. আপনার পূর্ণ নাম (Full Name)
+     ২. সচল মোবাইল নম্বর (Mobile Number)
+     ৩. সম্পূর্ণ ডেলিভারি ঠিকানা (জেলা ও থানা/এলাকা সহ)
+     (কোনো সাইজ বা কালার পছন্দ থাকলে তাও জানাতে পারেন)"
+   - **CRITICAL RULE - WHEN ALL DETAILS ARE AVAILABLE:**
+     Once you have the Product, Customer Name, Mobile Number, and Address:
+     You MUST generate the order draft JSON block at the very end of your response inside triple colons:
+     :::ORDER_DRAFT
+     {
+       "productId": "<24-character Product ObjectId from context or empty>",
+       "productName": "<Product Name>",
+       "quantity": 1,
+       "color": "<Color if specified, else ''>",
+       "size": "<Size if specified, else ''>",
+       "fullName": "<Customer Name>",
+       "phone": "<01XXXXXXXXX>",
+       "street": "<Street/Area/Thana>",
+       "city": "<City or District, e.g., Dhaka, Chittagong, Sylhet, etc.>",
+       "state": "<District or Division>",
+       "division": "<Division name>"
+     }
+     :::
+     Before the draft block, give a courteous, clear order summary to the user mentioning that Payment is Cash on Delivery (COD), and instruct them to click the "Confirm Order" button or type "কনফার্ম" to finalize their order!
+6. Always provide concise, accurate, and helpful answers without fabricating products or order details not present in the system context.
 `;
 
 // Helper to pick a random key if multiple are comma-separated
@@ -73,7 +110,14 @@ export const getChatResponse = async (
 
     try {
         const ai = new GoogleGenAI({ apiKey: selectedKey });
-        const candidateModels = ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest"];
+        const candidateModels = [
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-flash-latest",
+            "gemini-3.8-flash",
+            "gemini-3.7-flash"
+        ];
 
         // Filter history to ensure it starts with 'user' or 'model'
         let validHistory = history.filter(msg => msg.role === 'user' || msg.role === 'model');

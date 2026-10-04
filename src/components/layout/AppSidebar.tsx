@@ -385,7 +385,7 @@ function NavMain({ items, pathname, role }: { items: typeof data.navMain; pathna
   const filteredItems = items.map(item => ({
     ...item,
     items: item.items.filter((subItem: any) => {
-      if (subItem.superOnly && role !== 'super_admin') return false;
+      if (subItem.superOnly && role !== 'super_admin' && role !== 'admin') return false;
       if (isLimitedStaff) {
         return allowedPrefixes.some(prefix => subItem.url === prefix || subItem.url.startsWith(prefix + "/") || subItem.url.startsWith(prefix + "?"));
       }

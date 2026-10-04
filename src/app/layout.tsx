@@ -18,6 +18,8 @@ import FacebookPixel from "./components/FacebookPixel";
 import TikTokPixel from "./components/TikTokPixel";
 import { headers } from "next/headers";
 import { getCachedSettings } from "@/lib/data-fetching";
+import dbConnect from "@/lib/db";
+import Reseller from "@/models/Reseller";
 
 
 const geistSans = Geist({
@@ -80,8 +82,45 @@ export async function generateMetadata(): Promise<Metadata> {
   const headersList = await headers();
   const hostname = headersList.get('host') || 'localhost';
   const baseUrl = `https://${hostname}`;
+  const resellerSubdomain = headersList.get('x-reseller-subdomain');
 
   try {
+    if (resellerSubdomain) {
+      await dbConnect();
+      const reseller = await Reseller.findOne({ subdomain: resellerSubdomain })
+        .select('storeName logoUrl faviconUrl description')
+        .lean();
+
+      if (reseller) {
+        const favicon = reseller.faviconUrl || reseller.logoUrl || '/favicon.ico';
+        return {
+          metadataBase: new URL(baseUrl),
+          title: {
+            default: reseller.storeName || 'Online Store',
+            template: `%s | ${reseller.storeName || 'Store'}`,
+          },
+          description: reseller.description || `Shop at ${reseller.storeName}`,
+          icons: {
+            icon: [
+              { url: favicon },
+              { url: favicon, sizes: '32x32' },
+              { url: favicon, sizes: '16x16' },
+            ],
+            shortcut: favicon,
+            apple: reseller.logoUrl || favicon,
+          },
+          openGraph: {
+            title: reseller.storeName,
+            description: reseller.description || `Shop at ${reseller.storeName}`,
+            url: baseUrl,
+            siteName: reseller.storeName,
+            images: reseller.logoUrl ? [{ url: reseller.logoUrl }] : [],
+            type: 'website',
+          },
+        };
+      }
+    }
+
     const settings = await getCachedSettings();
 
     if (!settings) throw new Error("No settings found");
@@ -156,6 +195,20 @@ export default async function RootLayout({
   // If present, we must NOT load the mother shop pixel — it would claim window.fbq first
   // and silently block the reseller's own pixel from initialising.
   const isResellerStorePage = !!headersList.get('x-reseller-subdomain');
+  const resellerSubdomain = headersList.get('x-reseller-subdomain');
+
+  let resellerFavicon: string | null = null;
+  if (isResellerStorePage && resellerSubdomain) {
+    try {
+      await dbConnect();
+      const r = await Reseller.findOne({ subdomain: resellerSubdomain }).select('faviconUrl logoUrl').lean();
+      if (r) {
+        resellerFavicon = r.faviconUrl || r.logoUrl || null;
+      }
+    } catch (e) {
+      console.error('Error fetching reseller favicon in RootLayout:', e);
+    }
+  }
 
   const settings = await getCachedSettings();
 
@@ -189,6 +242,13 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {googleFontsUrl && <link rel="stylesheet" href={googleFontsUrl} />}
+        {resellerFavicon && (
+          <>
+            <link rel="icon" href={resellerFavicon} sizes="any" />
+            <link rel="shortcut icon" href={resellerFavicon} />
+            <link rel="apple-touch-icon" href={resellerFavicon} />
+          </>
+        )}
         <link rel="preload" as="image" href="/assets/login_banner_v2.webp" />
         <link rel="preload" as="image" href="/assets/register_banner_v2.webp" />
         <link rel="preload" as="image" href="/assets/forgetpassrod.webp" />

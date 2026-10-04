@@ -37,7 +37,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: reseller.storeName,
     description: reseller.description || `Shop at ${reseller.storeName}`,
-    icons: { icon: reseller.faviconUrl || reseller.logoUrl || '/favicon.ico' },
+    icons: {
+      icon: [
+        { url: reseller.faviconUrl || reseller.logoUrl || '/favicon.ico' },
+        { url: reseller.faviconUrl || reseller.logoUrl || '/favicon.ico', sizes: '32x32' },
+        { url: reseller.faviconUrl || reseller.logoUrl || '/favicon.ico', sizes: '16x16' },
+      ],
+      shortcut: reseller.faviconUrl || reseller.logoUrl || '/favicon.ico',
+      apple: reseller.logoUrl || reseller.faviconUrl || '/favicon.ico',
+    },
     openGraph: {
       title: reseller.storeName,
       description: reseller.description || '',

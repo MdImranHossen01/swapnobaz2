@@ -137,14 +137,14 @@ export async function POST(req: NextRequest) {
       'superAdminNote'
     ];
 
-    const isSuperAdmin = (session.user as any).role === 'super_admin';
+    const canManageSystemFields = ['super_admin', 'admin'].includes((session.user as any).role);
     const allowedBody: any = {};
 
     Object.keys(body).forEach((key) => {
       if (allowedFields.includes(key)) {
         allowedBody[key] = body[key];
       }
-      if (superAdminFields.includes(key) && isSuperAdmin) {
+      if (superAdminFields.includes(key) && canManageSystemFields) {
         allowedBody[key] = body[key];
       }
     });

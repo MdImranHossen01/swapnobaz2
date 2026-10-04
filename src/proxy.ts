@@ -69,6 +69,12 @@ export const proxy = auth(async (req) => {
                       nextUrl.pathname.startsWith("/reset-password");
 
   if (targetSubdomain) {
+    if (nextUrl.pathname === '/favicon.ico') {
+      const url = nextUrl.clone();
+      url.pathname = `/api/store/${targetSubdomain}/favicon`;
+      return NextResponse.rewrite(url);
+    }
+
     const url = nextUrl.clone();
     const rewrittenPath = `/store/${targetSubdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
     url.pathname = rewrittenPath;
@@ -161,8 +167,8 @@ export const proxy = auth(async (req) => {
       }
     }
 
-    // /admin/system-design strictly for super_admin only
-    if (nextUrl.pathname.startsWith("/admin/system-design") && role !== "super_admin") {
+    // /admin/system-design for super_admin and admin
+    if (nextUrl.pathname.startsWith("/admin/system-design") && role !== "super_admin" && role !== "admin") {
       return NextResponse.redirect(new URL("/admin/dashboard", nextUrl));
     }
   }
@@ -190,6 +196,6 @@ export const proxy = auth(async (req) => {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|manifest.json|assets|icons).*)',
+    '/((?!api|_next/static|_next/image|sitemap.xml|robots.txt|manifest.json|assets|icons).*)',
   ],
 };

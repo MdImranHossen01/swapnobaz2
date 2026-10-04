@@ -65,7 +65,7 @@ export async function PUT(
     // Whitelist allowed fields to prevent mass-assignment
     const allowedFields = [
       'name', 'slug', 'description', 'price', 'salePrice', 'purchasePrice', 'resellerPrice', 'discountRate',
-      'sku', 'stock', 'categories', 'brand', 'tags', 'images', 'batches',
+      'sku', 'barcode', 'stock', 'categories', 'brand', 'tags', 'images', 'batches',
       'attributes', 'variants', 'isFeatured', 'isNewArrival', 'isFlashSale', 'isPublished', 'isShared', 'deliveryCharge'
     ];
     const safeUpdate: any = {};
@@ -91,6 +91,7 @@ export async function PUT(
             color: v.color,
             size: v.size,
             sku: v.sku,
+            barcode: v.barcode?.trim() || undefined,
             image: v.image,
             images: Array.isArray(v.images) ? v.images : (v.image ? [v.image] : []),
             price: Number.isFinite(parseFloat(v.price)) ? parseFloat(v.price) : 0,

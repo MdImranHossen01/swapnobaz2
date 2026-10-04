@@ -164,7 +164,7 @@ export async function retrieveRelevantContext(
       searchModel(
         Product,
         'Product',
-        (doc) => `Product: ${doc.name}. Price: ${doc.price} BDT. Sale Price: ${doc.salePrice || 'N/A'} BDT. SKU: ${doc.sku}. Stock: ${doc.stock}. Description: ${doc.description}`,
+        (doc) => `Product: ${doc.name}. Product ID: ${doc._id}. Price: ${doc.price} BDT. Sale Price: ${doc.salePrice || 'N/A'} BDT. SKU: ${doc.sku}. Stock: ${doc.stock}. ${doc.variants?.length ? `Available Variants: ` + doc.variants.map((v: any) => `${v.color || ''} ${v.size || ''} (stock: ${v.stock})`.trim()).join(', ') + '.' : ''} Description: ${doc.description}`,
         (doc) => `/product/${doc.slug || doc._id}`
       )
     );
