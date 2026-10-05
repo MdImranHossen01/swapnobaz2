@@ -189,53 +189,58 @@ export default function AdminResellersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Store Name</TableHead>
-                      <TableHead>Domain / Subdomain</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Total Orders</TableHead>
-                      <TableHead>Total Revenue</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="w-[220px] max-w-[240px]">Store Name</TableHead>
+                      <TableHead className="w-[190px] max-w-[200px]">Domain / Subdomain</TableHead>
+                      <TableHead className="w-[170px] max-w-[180px]">Owner</TableHead>
+                      <TableHead className="w-[100px]">Total Orders</TableHead>
+                      <TableHead className="w-[120px]">Total Revenue</TableHead>
+                      <TableHead className="w-[130px]">Status</TableHead>
+                      <TableHead className="text-right w-[150px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedResellers.map(r => (
                       <TableRow key={r._id}>
-                        <TableCell className="font-bold">
-                          <div>
-                            <span>{r.storeName}</span>
-                            {r.description && <p className="text-xs text-muted-foreground line-clamp-1 font-normal">{r.description}</p>}
+                        <TableCell className="max-w-[240px] align-top py-3">
+                          <div className="space-y-0.5">
+                            <span className="font-bold text-sm block truncate" title={r.storeName}>{r.storeName}</span>
+                            {r.description && (
+                              <p className="text-xs text-muted-foreground line-clamp-2 font-normal break-words leading-snug" title={r.description}>
+                                {r.description}
+                              </p>
+                            )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="max-w-[200px] align-top py-3">
                           <div className="space-y-1">
                             <a
                               href={`https://${r.subdomain}.swapnobaz.com`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-semibold"
+                              className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-semibold max-w-full"
+                              title={`${r.subdomain}.swapnobaz.com`}
                             >
-                              {r.subdomain}.swapnobaz.com
-                              <ExternalLink className="h-3 w-3" />
+                              <span className="truncate">{r.subdomain}.swapnobaz.com</span>
+                              <ExternalLink className="h-3 w-3 shrink-0" />
                             </a>
                             {r.customDomain && (
                               <div className="flex items-center gap-1">
-                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono">
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-mono truncate max-w-full" title={r.customDomain}>
                                   Custom: {r.customDomain}
                                 </Badge>
                               </div>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="max-w-[180px] align-top py-3">
                           <div>
-                            <p className="text-sm font-medium">{r.userId?.name || 'Unknown'}</p>
-                            <p className="text-xs text-muted-foreground">{r.contact?.phone || r.userId?.email}</p>
+                            <p className="text-sm font-medium truncate" title={r.userId?.name || 'Unknown'}>{r.userId?.name || 'Unknown'}</p>
+                            <p className="text-xs text-muted-foreground truncate" title={r.contact?.phone || r.userId?.email}>{r.contact?.phone || r.userId?.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell>{r.totalOrders}</TableCell>
-                        <TableCell>৳{r.totalRevenue?.toLocaleString()}</TableCell>
-                        <TableCell>
+                        <TableCell className="align-top py-3">{r.totalOrders}</TableCell>
+                        <TableCell className="align-top py-3">৳{r.totalRevenue?.toLocaleString()}</TableCell>
+                        <TableCell className="align-top py-3">
                           <Badge variant="outline" className={statusBadgeColor[r.status] || ''}>
                             {r.status === 'active' ? 'Active' : r.status === 'pending' ? 'Pending Approval' : 'Suspended'}
                           </Badge>
