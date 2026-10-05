@@ -112,9 +112,9 @@ export default function AdminResellersPage() {
   };
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-4 w-full min-w-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1 md:px-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
             <Store className="h-5 w-5 md:h-6 md:w-6 text-primary" />
@@ -130,7 +130,7 @@ export default function AdminResellersPage() {
       </div>
 
       {/* Status Filter Tabs */}
-      <div className="flex items-center gap-1.5 flex-wrap px-1 md:px-0">
+      <div className="flex items-center gap-1.5 flex-wrap">
         {(['all', 'pending', 'active', 'suspended'] as const).map(s => (
           <button
             key={s}
@@ -156,7 +156,7 @@ export default function AdminResellersPage() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-4 px-1 md:px-0">
+      <div className="flex items-center justify-between gap-4">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -171,7 +171,7 @@ export default function AdminResellersPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden border shadow-sm w-full">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex justify-center py-20">
@@ -185,33 +185,33 @@ export default function AdminResellersPage() {
           ) : (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block overflow-x-auto">
-                <Table>
+              <div className="hidden md:block overflow-x-auto w-full">
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[220px] max-w-[240px]">Store Name</TableHead>
-                      <TableHead className="w-[190px] max-w-[200px]">Domain / Subdomain</TableHead>
-                      <TableHead className="w-[170px] max-w-[180px]">Owner</TableHead>
-                      <TableHead className="w-[100px]">Total Orders</TableHead>
-                      <TableHead className="w-[120px]">Total Revenue</TableHead>
-                      <TableHead className="w-[130px]">Status</TableHead>
-                      <TableHead className="text-right w-[150px]">Actions</TableHead>
+                      <TableHead className="w-[24%] min-w-[170px]">Store Name</TableHead>
+                      <TableHead className="w-[20%] min-w-[150px]">Domain / Subdomain</TableHead>
+                      <TableHead className="w-[18%] min-w-[130px]">Owner</TableHead>
+                      <TableHead className="w-[10%] min-w-[75px] text-center">Total Orders</TableHead>
+                      <TableHead className="w-[11%] min-w-[85px]">Total Revenue</TableHead>
+                      <TableHead className="w-[12%] min-w-[105px]">Status</TableHead>
+                      <TableHead className="text-right w-[100px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedResellers.map(r => (
                       <TableRow key={r._id}>
-                        <TableCell className="max-w-[240px] align-top py-3">
-                          <div className="space-y-0.5">
-                            <span className="font-bold text-sm block truncate" title={r.storeName}>{r.storeName}</span>
+                        <TableCell className="w-[24%] min-w-[170px] align-top py-3 whitespace-normal">
+                          <div className="space-y-1 whitespace-normal">
+                            <span className="font-bold text-sm block leading-tight truncate" title={r.storeName}>{r.storeName}</span>
                             {r.description && (
-                              <p className="text-xs text-muted-foreground line-clamp-2 font-normal break-words leading-snug" title={r.description}>
+                              <p className="text-xs text-muted-foreground font-normal whitespace-normal break-words leading-relaxed line-clamp-2" title={r.description}>
                                 {r.description}
                               </p>
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="max-w-[200px] align-top py-3">
+                        <TableCell className="w-[20%] min-w-[150px] align-top py-3">
                           <div className="space-y-1">
                             <a
                               href={`https://${r.subdomain}.swapnobaz.com`}
@@ -232,20 +232,20 @@ export default function AdminResellersPage() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="max-w-[180px] align-top py-3">
+                        <TableCell className="w-[18%] min-w-[130px] align-top py-3">
                           <div>
                             <p className="text-sm font-medium truncate" title={r.userId?.name || 'Unknown'}>{r.userId?.name || 'Unknown'}</p>
                             <p className="text-xs text-muted-foreground truncate" title={r.contact?.phone || r.userId?.email}>{r.contact?.phone || r.userId?.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="align-top py-3">{r.totalOrders}</TableCell>
-                        <TableCell className="align-top py-3">৳{r.totalRevenue?.toLocaleString()}</TableCell>
-                        <TableCell className="align-top py-3">
-                          <Badge variant="outline" className={statusBadgeColor[r.status] || ''}>
+                        <TableCell className="w-[10%] min-w-[75px] text-center align-top py-3">{r.totalOrders}</TableCell>
+                        <TableCell className="w-[11%] min-w-[85px] align-top py-3 font-semibold">৳{r.totalRevenue?.toLocaleString()}</TableCell>
+                        <TableCell className="w-[12%] min-w-[105px] align-top py-3">
+                          <Badge variant="outline" className={`text-xs whitespace-nowrap ${statusBadgeColor[r.status] || ''}`}>
                             {r.status === 'active' ? 'Active' : r.status === 'pending' ? 'Pending Approval' : 'Suspended'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right space-x-1">
+                        <TableCell className="text-right w-[100px] align-top py-3 space-x-1">
                           {r.status === 'pending' && (
                             <Button
                               size="sm"
