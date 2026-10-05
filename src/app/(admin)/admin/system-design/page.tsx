@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 import { ImageUpload } from '@/components/ui/image-upload';
 
-const TEMPLATE_OPTIONS = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'aarong'];
+const TEMPLATE_OPTIONS = ['v1', 'v2', 'v3', 'v4', 'v5', 'v6', 'v7'];
 const THEME_OPTIONS = ['default', 'emerald', 'black', 'caffeine', 'claude', 'elegant', 'marvel', 'material', 'midnight', 'nature', 'perplexity', 'slack', 'summer', 'sunset', 'valorant', 'supabase', 'amber', 'catppuccin', 'clay', 'cyberpunk', 'darkmatter', 'ocean', 'quantum', 't3', 'tangerine', 'vintage', 'green', 'red', 'rose', 'orange', 'blue', 'yellow', 'violet'];
 
 const TEMPLATE_CONFIG = [
@@ -711,7 +711,7 @@ export default function SuperConfigPage() {
                  <div key={template.id} className="space-y-2">
                    <Label className="font-bold text-[10px] uppercase tracking-wider opacity-60">{template.label}</Label>
                    <Select 
-                     value={ui[template.id] ?? 'v1'} 
+                     value={ui[template.id] === 'aarong' ? (template.id === 'productCard' ? 'v7' : 'v6') : (ui[template.id] ?? 'v1')} 
                      onValueChange={(v) => updateTemplate(template.id, v)}
                    >
                      <SelectTrigger className="h-12 rounded-xl bg-background border-2 border-muted hover:border-primary/50 transition-colors">
@@ -720,7 +720,7 @@ export default function SuperConfigPage() {
                      <SelectContent className="rounded-xl">
                        {TEMPLATE_OPTIONS.map(o => (
                          <SelectItem key={o} value={o} className="rounded-lg">
-                           {o === 'aarong' ? 'Aarong Premium Layout' : `Version ${o.toUpperCase()}`}
+                           {`Version ${o.toUpperCase()}`}
                          </SelectItem>
                        ))}
                      </SelectContent>

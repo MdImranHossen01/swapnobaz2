@@ -30,6 +30,7 @@ import { useAppSelector } from '@/store/hooks';
 import { CartDrawer } from '@/components/layout/CartDrawer';
 import { Logo } from '@/components/ui/logo';
 import { useSettings } from '@/components/SettingsProvider';
+import { UserAvatar } from '@/components/ui/user-avatar';
 import {
   Accordion,
   AccordionContent,
@@ -745,12 +746,10 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                             aria-label="Account menu"
                           >
                             <div className="h-8 w-8 rounded-full border-2 border-primary/20 overflow-hidden group-hover/avatar:border-primary transition-all">
-                              <Image
-                                src={session.user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || 'U')}`}
-                                alt={session.user?.name || 'User'}
-                                width={32}
-                                height={32}
-                                className="h-full w-full object-cover"
+                              <UserAvatar
+                                src={profile?.image || session.user?.image}
+                                name={session.user?.name}
+                                size={32}
                               />
                             </div>
                           </button>
@@ -970,12 +969,10 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                                 aria-label="Account menu"
                               >
                                 <div className="h-7 w-7 rounded-full border-2 border-primary/20 overflow-hidden group-hover/avatar:border-primary transition-all">
-                                  <Image
-                                    src={session.user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(session.user?.name || 'U')}`}
-                                    alt={session.user?.name || 'User'}
-                                    width={28}
-                                    height={28}
-                                    className="h-full w-full object-cover"
+                                  <UserAvatar
+                                    src={profile?.image || session.user?.image}
+                                    name={session.user?.name}
+                                    size={28}
                                   />
                                 </div>
                               </button>
