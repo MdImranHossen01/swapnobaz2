@@ -18,7 +18,7 @@ export default function StorefrontResellerLayout({ children }: { children: React
       router.push('/login');
     } else if (status === 'authenticated' && session?.user) {
       const role = (session.user as any)?.role;
-      if (role !== 'reseller') {
+      if (!['reseller', 'admin', 'super_admin'].includes(role)) {
         router.push('/');
       }
     }
@@ -38,7 +38,7 @@ export default function StorefrontResellerLayout({ children }: { children: React
   if (status === 'unauthenticated') return null;
 
   const role = (session?.user as any)?.role;
-  if (role !== 'reseller') return null;
+  if (!['reseller', 'admin', 'super_admin'].includes(role)) return null;
 
   return (
     <SidebarProvider>

@@ -6,9 +6,9 @@ import { ProductForm } from '@/components/admin/ProductForm';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function EditProductPage() {
+export default function EditProductPage({ productId }: { productId?: string } = {}) {
   const params = useParams();
-  const id = params.id as string;
+  const id = (productId || (params as any)?.id || (Array.isArray((params as any)?.slug) && (params as any).slug[0] === 'products' ? (params as any).slug[1] : undefined)) as string;
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
 
