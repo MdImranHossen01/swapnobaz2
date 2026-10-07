@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { CartesianGrid, Area, AreaChart, XAxis, ResponsiveContainer, Tooltip, ReferenceLine } from "recharts";
+import { CartesianGrid, Area, AreaChart, XAxis, ResponsiveContainer, Tooltip, ReferenceLine } from"recharts";
 import {
   Card,
   CardContent,
@@ -40,26 +40,26 @@ import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
-} from "@/components/ui/chart";
+} from"@/components/ui/chart";
 import { format, subDays, parseISO, isAfter, startOfToday } from 'date-fns';
 import { AdminDashboardSkeleton } from '@/components/admin/AdminSkeletons';
 
 const chartConfig = {
   revenue: {
-    label: "Total Revenue",
-    color: "var(--primary)",
+    label:"Total Revenue",
+    color:"var(--primary)",
   },
   profit: {
-    label: "Gross Profit",
-    color: "#10b981",
+    label:"Gross Profit",
+    color:"#10b981",
   },
   orders: {
-    label: "Orders Count",
-    color: "#f59e0b",
+    label:"Orders Count",
+    color:"#f59e0b",
   },
   expense: {
-    label: "Total Expenses",
-    color: "#ef4444",
+    label:"Total Expenses",
+    color:"#ef4444",
   },
 } satisfies ChartConfig;
 
@@ -254,7 +254,7 @@ export default function AdminDashboard() {
   const { stats, lowStockProducts, last7DaysStats } = data || {};
 
   return (
-    <div className="flex-1 space-y-6 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-6">
       {/* 1. Header Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
         <div>
@@ -591,10 +591,10 @@ export default function AdminDashboard() {
           </div>
           <div className="flex overflow-x-auto border-t sm:border-t-0 no-scrollbar">
             {[
-              { key: "revenue", label: "Revenue", val: `৳${Math.round(total.revenue).toLocaleString()}` },
-              { key: "profit", label: "Gross Profit", val: `৳${Math.round(total.profit).toLocaleString()}` },
-              { key: "orders", label: "Sales Orders", val: total.orders.toLocaleString() },
-              { key: "expense", label: "Expenses", val: `৳${Math.round(total.expense).toLocaleString()}` }
+              { key:"revenue", label:"Revenue", val: `৳${Math.round(total.revenue).toLocaleString()}` },
+              { key:"profit", label:"Gross Profit", val: `৳${Math.round(total.profit).toLocaleString()}` },
+              { key:"orders", label:"Sales Orders", val: total.orders.toLocaleString() },
+              { key:"expense", label:"Expenses", val: `৳${Math.round(total.expense).toLocaleString()}` }
             ].map((item) => {
               const chart = item.key as keyof typeof chartConfig;
               return (
@@ -655,7 +655,7 @@ export default function AdminDashboard() {
                 fill="url(#fillRevenue)"
                 stroke="var(--primary)"
                 strokeWidth={2}
-                hide={activeChart !== "revenue"}
+                hide={activeChart !=="revenue"}
               />
               <Area
                 dataKey="profit"
@@ -663,7 +663,7 @@ export default function AdminDashboard() {
                 fill="url(#fillProfit)"
                 stroke="#10b981"
                 strokeWidth={2}
-                hide={activeChart !== "profit"}
+                hide={activeChart !=="profit"}
               />
               <Area
                 dataKey="orders"
@@ -671,7 +671,7 @@ export default function AdminDashboard() {
                 fill="url(#fillOrders)"
                 stroke="#f59e0b"
                 strokeWidth={2}
-                hide={activeChart !== "orders"}
+                hide={activeChart !=="orders"}
               />
               <Area
                 dataKey="expense"
@@ -679,7 +679,7 @@ export default function AdminDashboard() {
                 fill="url(#fillExpense)"
                 stroke="#ef4444"
                 strokeWidth={2}
-                hide={activeChart !== "expense"}
+                hide={activeChart !=="expense"}
               />
             </AreaChart>
           </ChartContainer>

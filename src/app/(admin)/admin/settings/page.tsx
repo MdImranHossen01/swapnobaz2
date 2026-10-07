@@ -327,7 +327,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Global Settings</h1>
         <Button type="submit" form="settings-form" disabled={submitting}>

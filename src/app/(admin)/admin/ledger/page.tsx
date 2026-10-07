@@ -335,7 +335,7 @@ function AccountsLedgerContent() {
   );
 
   return (
-    <div className="space-y-4 md:space-y-6 px-0 py-2 md:p-8">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3">
         <div>
           <h2 className="text-xl md:text-3xl font-bold tracking-tight">Accounts Ledger</h2>
@@ -785,8 +785,8 @@ function AccountsLedgerContent() {
                 autoFocus
                 placeholder={
                   activeTab === 'journal'
-                    ? "e.g. Sales Income or Facebook Ads Cost"
-                    : "e.g. Account Transfer"
+                    ?"e.g. Sales Income or Facebook Ads Cost"
+                    :"e.g. Account Transfer"
                 }
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

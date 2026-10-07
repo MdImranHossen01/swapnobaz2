@@ -53,7 +53,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup,
-} from "@/components/ui/dropdown-menu";
+} from"@/components/ui/dropdown-menu";
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
@@ -363,7 +363,7 @@ function OrdersContent() {
 
     const result = await Swal.fire({
       title: 'Bulk Update?',
-      text: `Are you sure you want to update ${selectedIds.length} orders to "${status}"?`,
+      text: `Are you sure you want to update ${selectedIds.length} orders to"${status}"?`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#00D1B2',
@@ -514,7 +514,7 @@ function OrdersContent() {
   const deleteOrder = async (id: string) => {
     const result = await Swal.fire({
       title: 'Are you sure?',
-      text: "This order will be permanently deleted from the database!",
+      text:"This order will be permanently deleted from the database!",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#00D1B2',
@@ -607,7 +607,7 @@ function OrdersContent() {
   const handleCancelOrder = async (orderId: string) => {
     const result = await Swal.fire({
       title: 'Cancel Order?',
-      text: "Are you sure you want to cancel this order?",
+      text:"Are you sure you want to cancel this order?",
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -648,7 +648,7 @@ function OrdersContent() {
   }
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between gap-4">
         <div className="flex-shrink-0">
           <h2 className="text-2xl md:text-3xl font-bold tracking-tight whitespace-nowrap">Order Management</h2>
@@ -690,7 +690,7 @@ function OrdersContent() {
                     setResellerFilter('all');
                     setCurrentPage(1);
                   }}
-                  className={resellerFilter === 'all' ? "bg-accent font-bold" : ""}
+                  className={resellerFilter === 'all' ?"bg-accent font-bold" :""}
                 >
                   All Resellers
                 </DropdownMenuItem>
@@ -701,7 +701,7 @@ function OrdersContent() {
                       setResellerFilter(r._id);
                       setCurrentPage(1);
                     }}
-                    className={resellerFilter === r._id ? "bg-accent font-bold" : ""}
+                    className={resellerFilter === r._id ?"bg-accent font-bold" :""}
                   >
                     {r.storeName}
                   </DropdownMenuItem>
@@ -774,7 +774,7 @@ function OrdersContent() {
                       setStatusFilter(status.value);
                       setCurrentPage(1);
                     }}
-                    className={statusFilter === status.value ? "bg-accent font-bold" : ""}
+                    className={statusFilter === status.value ?"bg-accent font-bold" :""}
                   >
                     <div className="flex items-center justify-between w-full text-xs">
                       <span>{status.label}</span>
@@ -975,7 +975,7 @@ function OrdersContent() {
                 </TableRow>
               ) : (
                 filteredOrders.map((order) => (
-                  <TableRow key={order._id} className={selectedIds.includes(order._id) ? "bg-muted/50" : ""}>
+                  <TableRow key={order._id} className={selectedIds.includes(order._id) ?"bg-muted/50" :""}>
                     <TableCell>
                       <Checkbox
                         checked={selectedIds.includes(order._id)}
@@ -1238,7 +1238,7 @@ function OrdersContent() {
                 <div
                   key={order._id}
                   className={`bg-card border border-border/90 rounded-xl p-3 text-xs space-y-2 shadow-xs transition-colors ${
-                    selectedIds.includes(order._id) ? "border-primary bg-primary/5" : ""
+                    selectedIds.includes(order._id) ?"border-primary bg-primary/5" :""
                   }`}
                 >
                   {/* Card Header */}

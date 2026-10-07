@@ -26,7 +26,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from"@/components/ui/select";
 
 const marketingSettingsSchema = z.object({
   subscriptionConfig: z.object({
@@ -301,7 +301,7 @@ export default function MarketingSettingsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Marketing & Integration Settings</h1>
         <Button type="submit" form="marketing-settings-form" disabled={submitting}>

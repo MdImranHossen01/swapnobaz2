@@ -54,7 +54,7 @@ export default function AdminResellersPage() {
     const actionText = status === 'active' ? 'Approved' : 'Suspended';
     const confirmResult = await Swal.fire({
       title: 'Are you sure?',
-      text: `Do you want to ${actionVerb} "${name}" store?`,
+      text: `Do you want to ${actionVerb}"${name}" store?`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Yes',

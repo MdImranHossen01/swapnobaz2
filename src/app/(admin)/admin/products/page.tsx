@@ -121,7 +121,7 @@ function ProductsContent() {
   const handleDelete = async (id: string) => {
     const result = await Swal.fire({
       title: 'Are you sure?',
-      text: "This product will be permanently deleted!",
+      text:"This product will be permanently deleted!",
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#00D1B2',
@@ -169,7 +169,7 @@ function ProductsContent() {
 
   const cleanDescription = (html: string | undefined): string => {
     if (!html) return '';
-    return html.replace(/<[^>]*>?/gm, '').replace(/(\r\n|\n|\r)/gm, " ").trim();
+    return html.replace(/<[^>]*>?/gm, '').replace(/(\r\n|\n|\r)/gm,"").trim();
   };
 
   const getAbsoluteUrl = (url: string): string => {
@@ -400,7 +400,7 @@ function ProductsContent() {
   );
 
   return (
-    <div className="flex-1 space-y-3 sm:space-y-4 px-0 py-2 sm:p-6 md:p-8">
+    <div className="flex-1 space-y-3 sm:space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div>
           <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Products</h2>
@@ -488,7 +488,7 @@ function ProductsContent() {
 
                   return (
                     <React.Fragment key={product._id}>
-                      <TableRow className={selectedIds.includes(product._id) ? "bg-muted/50" : ""}>
+                      <TableRow className={selectedIds.includes(product._id) ?"bg-muted/50" :""}>
                         <TableCell>
                           <Checkbox
                             checked={selectedIds.includes(product._id)}
@@ -685,7 +685,7 @@ function ProductsContent() {
                 <div
                   key={product._id}
                   className={`bg-card border border-border/90 rounded-xl p-3 text-xs space-y-2 shadow-xs transition-colors ${
-                    selectedIds.includes(product._id) ? "border-primary bg-primary/5" : ""
+                    selectedIds.includes(product._id) ?"border-primary bg-primary/5" :""
                   }`}
                 >
                   <div className="flex items-start gap-2.5">

@@ -66,7 +66,7 @@ export default function DailyReportPage() {
   const years = Array.from({ length: 5 }, (_, i) => (currentDate.getFullYear() - i).toString());
 
   return (
-    <div className="flex-1 space-y-6 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-6">
       {/* Top Header - Hidden in Print */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4 print:hidden">
         <div>

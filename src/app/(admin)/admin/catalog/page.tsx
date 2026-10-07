@@ -422,7 +422,7 @@ export default function AdminCatalogPage() {
 
           {categories.length === 0 && (
             <div className="text-center py-12 text-muted-foreground text-sm">
-              No categories yet. Click "Add Category" to get started.
+              No categories yet. Click"Add Category" to get started.
             </div>
           )}
         </div>
