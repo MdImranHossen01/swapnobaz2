@@ -31,11 +31,12 @@ export default function HeroV1({ banners, layout }: HeroSliderProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const slides = banners && banners.length > 0 ? banners : null;
 
-  // Initialize Embla Carousel
+  // Initialize Embla Carousel with smooth physics
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
       loop: true,
-      duration: 40,
+      duration: 22,
+      skipSnaps: false,
     },
     [Autoplay({ delay: AUTOPLAY_DELAY, stopOnInteraction: false })]
   );
@@ -104,11 +105,11 @@ export default function HeroV1({ banners, layout }: HeroSliderProps) {
 
       {/* Embla Viewport */}
       <div className="w-full h-full overflow-hidden" ref={emblaRef}>
-        <div className="flex h-full">
+        <div className="flex h-full touch-pan-y">
           {activeSlides.map((slide, index) => {
             const slideLink = slide.primaryBtnLink || slide.link || '/shop';
             return (
-              <div key={slide._id || index} className="relative flex-none w-full h-full select-none">
+              <div key={slide._id || index} className="relative flex-[0_0_100%] min-w-0 h-full select-none">
                 <Link
                   href={slideLink}
                   className="block relative w-full h-full cursor-pointer"
@@ -117,6 +118,7 @@ export default function HeroV1({ banners, layout }: HeroSliderProps) {
                     src={slide.image || '/placeholder.png'}
                     alt={slide.title || 'Aarong Collection'}
                     fill
+                    sizes="100vw"
                     className="object-cover w-full h-full object-center"
                     priority={index === 0}
                   />
