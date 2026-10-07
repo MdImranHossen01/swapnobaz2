@@ -98,6 +98,18 @@ const resellerNav = [
   },
 ]
 
+// Build nav items optionally with a custom basePath (for reseller's own domain)
+function buildNav(basePath?: string) {
+  if (!basePath) return resellerNav;
+  return resellerNav.map(section => ({
+    ...section,
+    items: section.items.map(item => ({
+      ...item,
+      url: item.url.replace('/reseller', basePath),
+    })),
+  }));
+}
+
 function NavMain({ items, pathname }: { items: typeof resellerNav; pathname: string }) {
   const { setOpenMobile, isMobile } = useSidebar()
 
@@ -165,8 +177,9 @@ function NavMain({ items, pathname }: { items: typeof resellerNav; pathname: str
   )
 }
 
-export function ResellerAppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function ResellerAppSidebar({ basePath, ...props }: React.ComponentProps<typeof Sidebar> & { basePath?: string }) {
   const pathname = usePathname()
+  const navItems = buildNav(basePath);
 
   return (
     <Sidebar {...props}>
@@ -174,7 +187,7 @@ export function ResellerAppSidebar({ ...props }: React.ComponentProps<typeof Sid
         <Logo textClassName="text-sm md:text-base font-black tracking-wide whitespace-nowrap" />
       </SidebarHeader>
       <SidebarContent className="gap-0">
-        <NavMain items={resellerNav} pathname={pathname} />
+        <NavMain items={navItems} pathname={pathname} />
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

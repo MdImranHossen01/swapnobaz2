@@ -75,8 +75,20 @@ export const proxy = auth(async (req) => {
       return NextResponse.rewrite(url);
     }
 
+    // ── Reseller Dashboard via own domain ──────────────────────────────
+    // If the reseller visits /dashboard or /reseller-dashboard/* from their
+    // own shop domain, rewrite it to the storefront reseller-panel route.
+    const isDashboardRoute =
+      nextUrl.pathname === '/dashboard' ||
+      nextUrl.pathname.startsWith('/dashboard/') ||
+      nextUrl.pathname === '/reseller-dashboard' ||
+      nextUrl.pathname.startsWith('/reseller-dashboard/');
+
+    const rewrittenPath = isDashboardRoute
+      ? `/store/${targetSubdomain}/reseller-panel${nextUrl.pathname === '/dashboard' || nextUrl.pathname === '/reseller-dashboard' ? '' : nextUrl.pathname.replace('/reseller-dashboard', '')}`
+      : `/store/${targetSubdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
+
     const url = nextUrl.clone();
-    const rewrittenPath = `/store/${targetSubdomain}${nextUrl.pathname === '/' ? '' : nextUrl.pathname}`;
     url.pathname = rewrittenPath;
     
     // To pass headers to Server Components (like app/layout.tsx headers()), 
