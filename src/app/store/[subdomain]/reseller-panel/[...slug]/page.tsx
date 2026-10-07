@@ -39,15 +39,6 @@ export default function ResellerPanelSubPage({
   const { slug } = use(params);
   const key = slug.join('/');
 
-  // Handle dynamic product edit: products/[id]/edit
-  if (slug.length === 3 && slug[0] === 'products' && slug[2] === 'edit') {
-    const ProductEditPage = dynamic(
-      () => import('@/app/(reseller)/reseller/products/[id]/edit/page'),
-      { loading: Fallback }
-    );
-    return <ProductEditPage params={Promise.resolve({ id: slug[1] })} />;
-  }
-
   const Page = PAGE_MAP[key];
   if (!Page) return notFound();
 
