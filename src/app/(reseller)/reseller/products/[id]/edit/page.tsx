@@ -61,7 +61,7 @@ export default function EditProductPage() {
   }
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-4 md:p-8">
+    <div className="flex-1 space-y-4">
       <ProductForm initialData={product} isReseller={true} />
     </div>
   );

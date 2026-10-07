@@ -81,9 +81,9 @@ export default function ResellerDashboard() {
   };
 
   return (
-    <div className="flex-1 space-y-4 px-0 py-2 md:p-8 md:space-y-6">
+    <div className="flex-1 space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1 md:px-0">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight">{reseller.storeName}</h1>
@@ -120,7 +120,7 @@ export default function ResellerDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 px-1 md:px-0">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
         {[
           { label: 'মোট অর্ডার', value: reseller.totalOrders, icon: ShoppingBag, color: 'text-blue-500' },
           { label: 'পেন্ডিং কমিশন', value: `৳${(reseller.pendingBalance ?? 0).toLocaleString()}`, icon: Clock, color: 'text-yellow-500' },
@@ -141,7 +141,7 @@ export default function ResellerDashboard() {
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-3 px-1 md:px-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 md:gap-3">
         {[
           { label: 'অর্ডার দেখুন', href: '/reseller/orders', icon: ShoppingBag },
           { label: 'পণ্য যোগ করুন', href: '/reseller/products/new', icon: Package },
@@ -158,7 +158,7 @@ export default function ResellerDashboard() {
       </div>
 
       {/* Recent Data */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 px-1 md:px-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6 pb-2 md:pb-2">
             <CardTitle className="text-xs md:text-sm font-black">সাম্প্রতিক অর্ডার</CardTitle>
