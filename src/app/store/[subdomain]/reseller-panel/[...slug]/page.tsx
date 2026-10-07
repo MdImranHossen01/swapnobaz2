@@ -57,14 +57,12 @@ export default function ResellerPanelSubPage({
 
   // Handle dynamic products/[id]/edit
   if (slug.length === 3 && slug[0] === 'products' && slug[2] === 'edit') {
-    const productId = slug[1];
-    return <DynamicEditProduct productId={productId} />;
+    return <DynamicEditProduct />;
   }
 
   // Handle dynamic cms/banners/[id]/edit
   if (slug.length === 4 && slug[0] === 'cms' && slug[1] === 'banners' && slug[3] === 'edit') {
-    const bannerId = slug[2];
-    return <DynamicEditBanner params={Promise.resolve({ id: bannerId })} />;
+    return <DynamicEditBanner />;
   }
 
   return notFound();
