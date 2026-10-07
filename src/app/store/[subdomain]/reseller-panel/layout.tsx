@@ -45,7 +45,7 @@ export default function StorefrontResellerLayout({ children }: { children: React
       <ResellerAppSidebar basePath="/reseller-dashboard" />
       <SidebarInset>
         <ResellerTopbar />
-        <main className="flex-1 items-start gap-4 px-4 pt-6 pb-24 md:px-8 md:py-8 md:gap-8">
+        <main className="flex-1 items-start gap-4 px-[2px] pt-6 pb-24 md:px-4 md:py-6 md:gap-8 md:pb-8">
           {children}
         </main>
       </SidebarInset>
