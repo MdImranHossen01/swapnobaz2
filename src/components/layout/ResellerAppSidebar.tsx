@@ -1,7 +1,8 @@
 "use client"
 
-import * as React from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import {
@@ -15,8 +16,8 @@ import {
   Users,
   Rocket,
   LogOut,
+  Store,
 } from "lucide-react"
-import { Logo } from "@/components/ui/logo"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import {
@@ -203,37 +204,89 @@ export function ResellerAppSidebar({ basePath, ...props }: React.ComponentProps<
   const user = session?.user
   const navItems = buildNav(basePath)
 
+  const [storeLogo, setStoreLogo] = useState<string>("")
+  const [storeName, setStoreName] = useState<string>("")
+  const [subdomain, setSubdomain] = useState<string>("")
+
+  useEffect(() => {
+    let isMounted = true
+    fetch("/api/reseller/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data?.reseller) {
+          if (data.reseller.logoUrl) setStoreLogo(data.reseller.logoUrl)
+          if (data.reseller.storeName) setStoreName(data.reseller.storeName)
+          if (data.reseller.subdomain) setSubdomain(data.reseller.subdomain)
+        }
+      })
+      .catch(() => {})
+    return () => {
+      isMounted = false
+    }
+  }, [user?.image])
+
   return (
     <Sidebar {...props} className="border-r border-slate-800/80 bg-[#0a152e] text-slate-100">
-      <SidebarHeader className="border-b border-slate-800/80 h-16 px-4 flex items-center justify-between bg-[#0a152e]">
-        <Logo textClassName="text-base font-black tracking-wide text-white whitespace-nowrap" />
+      <SidebarHeader className="border-b border-slate-800/80 h-14 px-3.5 flex items-center justify-between bg-[#0a152e]">
+        <Link href={basePath || "/reseller/dashboard"} className="flex items-center gap-2 min-w-0 max-w-full">
+          {storeLogo ? (
+            <div className="relative h-6 w-auto max-w-[120px] flex items-center">
+              <Image
+                src={storeLogo}
+                alt={storeName || "Store"}
+                width={120}
+                height={24}
+                className="max-h-6 max-w-[120px] w-auto h-auto object-contain"
+                unoptimized
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="h-6 w-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center shrink-0 border border-primary/30">
+                <Store className="h-3.5 w-3.5" />
+              </div>
+              <div className="min-w-0 flex flex-col">
+                <span className="text-xs font-black tracking-tight text-white truncate max-w-[140px]">
+                  {storeName || user?.name || "My Store"}
+                </span>
+                {subdomain && (
+                  <span className="text-[9px] text-slate-400 truncate max-w-[140px]">
+                    {subdomain}.swapnobaz.com
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+        </Link>
       </SidebarHeader>
 
       <SidebarContent className="gap-0 bg-[#0a152e] scrollbar-thin scrollbar-thumb-slate-800">
         <NavMain items={navItems} pathname={pathname} />
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-slate-800/80 p-3 bg-[#081024]">
+      <SidebarFooter className="border-t border-slate-800/80 p-2.5 bg-[#081024]">
         {/* User Profile Mini Footer */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <Avatar className="h-8 w-8 border border-slate-700">
-              <AvatarImage src={user?.image || ""} alt={user?.name || "Reseller"} />
-              <AvatarFallback className="bg-primary text-white font-bold text-xs">
-                {user?.name ? user.name.slice(0, 2).toUpperCase() : "RS"}
+          <div className="flex items-center gap-2 min-w-0">
+            <Avatar className="h-7 w-7 border border-slate-700 shrink-0">
+              <AvatarImage src={storeLogo || user?.image || ""} alt={storeName || user?.name || "Reseller"} />
+              <AvatarFallback className="bg-primary text-white font-bold text-[10px]">
+                {(storeName || user?.name || "RS").slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-slate-100 truncate">{user?.name || "Reseller Partner"}</p>
+              <p className="text-xs font-bold text-slate-100 truncate max-w-[125px]">
+                {storeName || user?.name || "Reseller Partner"}
+              </p>
               <p className="text-[10px] text-emerald-400 font-medium">Verified Reseller</p>
             </div>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 rounded-lg transition-colors"
+            className="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-800/60 rounded-lg transition-colors shrink-0"
             title="Log Out"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-3.5 w-3.5" />
           </button>
         </div>
       </SidebarFooter>
