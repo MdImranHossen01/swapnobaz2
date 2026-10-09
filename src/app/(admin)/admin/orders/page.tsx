@@ -163,6 +163,9 @@ function OrdersContent() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [settings, setSettings] = useState<any>(null);
+  const isSteadfastConfigured = Boolean(settings?.courierConfig?.steadfast?.apiKey && settings?.courierConfig?.steadfast?.secretKey);
+  const isPathaoConfigured = Boolean(settings?.courierConfig?.pathao?.clientId && settings?.courierConfig?.pathao?.clientSecret);
+  const isRedxConfigured = Boolean(settings?.courierConfig?.redx?.apiKey);
  
   // Debounce search term
   useEffect(() => {
@@ -574,6 +577,80 @@ function OrdersContent() {
       toast.error('Error sending to Steadfast');
     } finally {
       setBulkActionLoading(false);
+    }
+  };
+
+  const handleSendToPathao = async (ids: string[]) => {
+    if (ids.length === 0) return;
+
+    const result = await Swal.fire({
+      title: 'Send to Pathao?',
+      text: `Are you sure you want to send ${ids.length} order(s) to Pathao Courier?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#e11d48',
+      confirmButtonText: 'Yes, send to Pathao!'
+    });
+
+    if (!result.isConfirmed) return;
+
+    setBulkActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/courier/pathao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderIds: ids }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        const hasFailures = data.results && data.results.some((r: any) => !r.success);
+        if (hasFailures) {
+          const firstFail = data.results.find((r: any) => !r.success);
+          toast.error(`${data.message || 'Partial booking'}. Reason: ${firstFail?.message || 'Unknown error'}`);
+        } else {
+          toast.success(data.message || 'Orders sent to Pathao successfully');
+        }
+        if (ids.length > 1) setSelectedIds([]);
+        fetchOrders();
+      } else {
+        toast.error(data.message || 'Pathao submission failed');
+      }
+    } catch (error) {
+      toast.error('Error sending to Pathao');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleSendToRedx = async (orderId: string) => {
+    const result = await Swal.fire({
+      title: 'Send to RedX?',
+      text: 'Are you sure you want to send this order to RedX Courier?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      confirmButtonText: 'Yes, send to RedX!'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/book-courier`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'redx' }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(data.message || 'Order sent to RedX successfully');
+        fetchOrders();
+      } else {
+        toast.error(data.message || 'RedX submission failed');
+      }
+    } catch (error) {
+      toast.error('Error sending to RedX');
     }
   };
 

@@ -207,6 +207,7 @@ export function ResellerAppSidebar({ basePath, ...props }: React.ComponentProps<
   const [storeLogo, setStoreLogo] = useState<string>("")
   const [storeName, setStoreName] = useState<string>("")
   const [subdomain, setSubdomain] = useState<string>("")
+  const [customDomain, setCustomDomain] = useState<string>("")
 
   useEffect(() => {
     let isMounted = true
@@ -217,6 +218,7 @@ export function ResellerAppSidebar({ basePath, ...props }: React.ComponentProps<
           if (data.reseller.logoUrl) setStoreLogo(data.reseller.logoUrl)
           if (data.reseller.storeName) setStoreName(data.reseller.storeName)
           if (data.reseller.subdomain) setSubdomain(data.reseller.subdomain)
+          if (data.reseller.customDomain) setCustomDomain(data.reseller.customDomain)
         }
       })
       .catch(() => {})
@@ -225,10 +227,22 @@ export function ResellerAppSidebar({ basePath, ...props }: React.ComponentProps<
     }
   }, [user?.image])
 
+  const storeHomeUrl = customDomain?.trim()
+    ? (customDomain.trim().startsWith("http") ? customDomain.trim() : `https://${customDomain.trim()}`)
+    : subdomain?.trim()
+    ? `https://${subdomain.trim()}.swapnobaz.com`
+    : "/"
+
   return (
     <Sidebar {...props} className="border-r border-slate-800/80 bg-[#0a152e] text-slate-100">
       <SidebarHeader className="border-b border-slate-800/80 h-14 px-3.5 flex items-center justify-between bg-[#0a152e]">
-        <Link href={basePath || "/reseller/dashboard"} className="flex items-center gap-2 min-w-0 max-w-full">
+        <a
+          href={storeHomeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 min-w-0 max-w-full hover:opacity-90 transition-opacity"
+          title={`Visit ${storeName || "Store"} Home Page`}
+        >
           {storeLogo ? (
             <div className="relative h-6 w-auto max-w-[120px] flex items-center">
               <Image
@@ -257,7 +271,7 @@ export function ResellerAppSidebar({ basePath, ...props }: React.ComponentProps<
               </div>
             </div>
           )}
-        </Link>
+        </a>
       </SidebarHeader>
 
       <SidebarContent className="gap-0 bg-[#0a152e] scrollbar-thin scrollbar-thumb-slate-800">

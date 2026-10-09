@@ -25,7 +25,10 @@ import {
   ChevronDown,
   ChevronRight,
   PackagePlus,
-  Store
+  Store,
+  Eye,
+  EyeOff,
+  ExternalLink
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -150,6 +153,43 @@ function ProductsContent() {
       } catch (error) {
         toast.error('An error occurred while deleting the product');
       }
+    }
+  };
+
+  const handleTogglePublish = async (product: AdminProduct) => {
+    const newStatus = !product.isPublished;
+    const actionVerb = newStatus ? 'publish' : 'hide';
+    const actionTitle = newStatus ? 'Publish Product' : 'Hide from Store';
+
+    const confirmResult = await Swal.fire({
+      title: `${actionTitle}?`,
+      text: `Do you want to ${actionVerb} "${product.name}" ${newStatus ? 'on' : 'from'} the storefront?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: `Yes, ${actionVerb}!`,
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#00D1B2',
+      cancelButtonColor: '#d33',
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/api/products/${product._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublished: newStatus }),
+      });
+
+      if (res.ok) {
+        toast.success(`Product ${newStatus ? 'published' : 'hidden'} successfully`);
+        setProducts(prev => prev.map(p => p._id === product._id ? { ...p, isPublished: newStatus } : p));
+      } else {
+        const err = await res.json();
+        toast.error(err.message || `Failed to ${actionVerb} product`);
+      }
+    } catch {
+      toast.error('Network error while updating product visibility');
     }
   };
 
@@ -613,16 +653,55 @@ function ProductsContent() {
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40">
-                              <DropdownMenuItem onClick={() => openAddStockModal(product)} className="text-primary font-semibold gap-2">
-                                <PackagePlus className="h-4 w-4" /> Add Stock
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => router.push(`/admin/products/${product._id}/edit`)} className="gap-2">
-                                <Edit className="h-4 w-4" /> Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDelete(product._id)} className="text-destructive gap-2">
-                                <Trash className="h-4 w-4" /> Delete
-                              </DropdownMenuItem>
+                            <DropdownMenuContent align="end" className="w-48">
+                              {product.uploadedBy ? (
+                                <>
+                                  <DropdownMenuItem onClick={() => handleTogglePublish(product)} className="gap-2 font-medium">
+                                    {product.isPublished ? (
+                                      <>
+                                        <EyeOff className="h-4 w-4 text-amber-600" />
+                                        <span className="text-amber-700 dark:text-amber-400">Hide from Store</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Eye className="h-4 w-4 text-green-600" />
+                                        <span className="text-green-700 dark:text-green-400">Publish Product</span>
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem asChild className="gap-2">
+                                    <Link href={`/product/${product.slug}`} target="_blank" className="flex items-center gap-2 w-full">
+                                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                                      <span>View Storefront</span>
+                                    </Link>
+                                  </DropdownMenuItem>
+                                </>
+                              ) : (
+                                <>
+                                  <DropdownMenuItem onClick={() => openAddStockModal(product)} className="text-primary font-semibold gap-2">
+                                    <PackagePlus className="h-4 w-4" /> Add Stock
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => router.push(`/admin/products/${product._id}/edit`)} className="gap-2">
+                                    <Edit className="h-4 w-4" /> Edit
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleTogglePublish(product)} className="gap-2">
+                                    {product.isPublished ? (
+                                      <>
+                                        <EyeOff className="h-4 w-4 text-amber-600" />
+                                        <span>Hide / Unpublish</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Eye className="h-4 w-4 text-green-600" />
+                                        <span>Publish</span>
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleDelete(product._id)} className="text-destructive gap-2">
+                                    <Trash className="h-4 w-4" /> Delete
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -796,35 +875,75 @@ function ProductsContent() {
 
                   {/* Card Bottom Actions */}
                   <div className="flex items-center justify-between pt-2 border-t gap-1">
-                    <Badge variant={product.isPublished ? 'default' : 'secondary'} className="text-[10px]">
-                      {product.isPublished ? 'Published' : 'Draft'}
-                    </Badge>
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant={product.isPublished ? 'default' : 'secondary'} className="text-[10px]">
+                        {product.isPublished ? 'Published' : 'Draft/Hidden'}
+                      </Badge>
+                      {product.uploadedBy && (
+                        <span className="text-[10px] text-muted-foreground italic">
+                          (Reseller)
+                        </span>
+                      )}
+                    </div>
 
                     <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-primary font-semibold"
-                        onClick={() => openAddStockModal(product)}
-                      >
-                        <PackagePlus className="h-3.5 w-3.5 mr-1" /> +Stock
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => router.push(`/admin/products/${product._id}/edit`)}
-                      >
-                        <Edit className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(product._id)}
-                      >
-                        <Trash className="h-3.5 w-3.5" />
-                      </Button>
+                      {product.uploadedBy ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2.5 text-xs font-semibold gap-1"
+                            onClick={() => handleTogglePublish(product)}
+                          >
+                            {product.isPublished ? (
+                              <>
+                                <EyeOff className="h-3.5 w-3.5 text-amber-600" /> Hide
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="h-3.5 w-3.5 text-green-600" /> Publish
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-muted-foreground"
+                            asChild
+                          >
+                            <Link href={`/product/${product.slug}`} target="_blank">
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-primary font-semibold"
+                            onClick={() => openAddStockModal(product)}
+                          >
+                            <PackagePlus className="h-3.5 w-3.5 mr-1" /> +Stock
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => router.push(`/admin/products/${product._id}/edit`)}
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDelete(product._id)}
+                          >
+                            <Trash className="h-3.5 w-3.5" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
