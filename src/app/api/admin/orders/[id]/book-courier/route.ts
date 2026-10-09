@@ -150,6 +150,9 @@ export async function POST(
       });
       courierName = 'Pathao';
     } else if (requestedProvider === 'redx') {
+      if (!redx?.apiKey) {
+        return NextResponse.json({ message: 'RedX API Key is missing in Settings > Courier.' }, { status: 400 });
+      }
       provider = new RedXProvider({
         apiKey: redx.apiKey,
         isSandbox: redx.isSandbox,

@@ -1,7 +1,7 @@
 import { ShippingOrderData, ShippingOrderResponse, ShippingProvider } from '../index';
 
 export interface RedXConfig {
-  apiKey: string;
+  apiKey?: string;
   isSandbox?: boolean;
 }
 
@@ -15,7 +15,7 @@ export class RedXProvider implements ShippingProvider {
       this.apiKey = config;
       this.isSandbox = false;
     } else {
-      this.apiKey = config.apiKey;
+      this.apiKey = config.apiKey || '';
       this.isSandbox = Boolean(config.isSandbox);
     }
 
