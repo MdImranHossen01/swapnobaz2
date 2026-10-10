@@ -413,7 +413,9 @@ export default function LoansPage() {
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {accounts.map(a => (
+                  {accounts
+                    .filter(a => a.code !== 'AR' && a.code !== 'AP')
+                    .map(a => (
                     <SelectItem key={a._id} value={a._id} className="text-xs">
                       {a.name} ({a.category})
                     </SelectItem>

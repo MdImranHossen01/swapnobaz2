@@ -370,20 +370,7 @@ function AccountsLedgerContent() {
               </CardHeader>
               <CardContent className="space-y-1.5 p-2.5 sm:p-3 md:p-4 pt-0">
                 <div className="text-lg sm:text-2xl font-bold tracking-tight">৳{Math.round(acc.currentBalance).toLocaleString()}</div>
-                <div className="flex flex-wrap items-center justify-between gap-1 text-[10px] sm:text-xs text-muted-foreground border-t pt-1.5">
-                  <span className="truncate">Opening: ৳{Math.round(acc.openingBalance || 0).toLocaleString()}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setEditingAccount(acc);
-                      setNewOpeningBalance(acc.openingBalance || 0);
-                    }}
-                    className="h-5 sm:h-6 px-1.5 text-[10px] sm:text-xs hover:bg-muted"
-                  >
-                    <Edit2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1" /> Edit
-                  </Button>
-                </div>
+
               </CardContent>
             </Card>
           );
