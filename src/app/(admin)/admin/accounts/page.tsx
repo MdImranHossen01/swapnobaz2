@@ -244,24 +244,7 @@ export default function AccountsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <Button 
-            size="sm" 
-            onClick={() => handleOpenCredit(null)} 
-            className="gap-1.5 font-bold h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Credit + (Add Money)</span>
-          </Button>
 
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => handleOpenTransfer(null)} 
-            className="gap-1.5 font-bold h-9 text-xs"
-          >
-            <ArrowRightLeft className="h-3.5 w-3.5 text-primary" />
-            <span>Transfer Funds</span>
-          </Button>
 
           <Button 
             variant="outline" 
