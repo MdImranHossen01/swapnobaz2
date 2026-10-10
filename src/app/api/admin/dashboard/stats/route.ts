@@ -10,6 +10,7 @@ import LedgerAccount from '@/models/LedgerAccount';
 import Bill from '@/models/Bill';
 import Subscriber from '@/models/Subscriber';
 import ResellerWalletTransaction from '@/models/ResellerWalletTransaction';
+import BusinessLoan from '@/models/BusinessLoan';
 
 export async function GET(req: NextRequest) {
   try {
@@ -78,7 +79,8 @@ export async function GET(req: NextRequest) {
       dueBillsStats,
       chartData,
       sevenDaysOrders,
-      sevenDaysExpenses
+      sevenDaysExpenses,
+      activeLoansStats
     ] = await Promise.all([
       // 1. Revenue, COGS, Delivery charge stats (Current Period)
       Order.aggregate([
@@ -348,7 +350,18 @@ export async function GET(req: NextRequest) {
             expense: { $sum: '$amount' }
           }
         }
-      ])
+      ]),
+
+      // 15. Active Business Loans Liability
+      BusinessLoan.aggregate([
+        { $match: { status: 'Active' } },
+        {
+          $group: {
+            _id: null,
+            totalActiveLoansDue: { $sum: '$dueAmount' }
+          }
+        }
+      ]).catch(() => [])
     ]);
 
     // Process Current Revenue Stats
@@ -438,6 +451,9 @@ export async function GET(req: NextRequest) {
     const billDueTotal = dueBillsStats[0]?.totalDueBills || 0;
     const pendingOrderReceivable = Math.max(0, totalRevenue - paidRevenue);
     const totalReceivable = billDueTotal + pendingOrderReceivable;
+
+    // Process Liabilities (Loans)
+    const totalActiveLoansDue = (activeLoansStats as any[])?.[0]?.totalActiveLoansDue || 0;
 
     // Total Assets Calculation
     const totalLiquidBalance = cashBalance + bankBalance;
@@ -544,7 +560,8 @@ export async function GET(req: NextRequest) {
         pendingPayoutsCount,
         billDueTotal,
         totalReceivable,
-        totalAssetValue
+        totalAssetValue,
+        totalActiveLoansDue
       },
       lowStockProducts,
       chartData: completeChartData,

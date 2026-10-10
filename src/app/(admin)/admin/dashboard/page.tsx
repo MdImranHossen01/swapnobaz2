@@ -164,6 +164,10 @@ const payablesChartConfig = {
     label: 'In-Transit Profit',
     color: 'var(--chart-4)',
   },
+  loans: {
+    label: 'Business Loans',
+    color: 'var(--chart-5)',
+  },
 } satisfies ChartConfig;
 
 const CustomChartTooltip = ({ active, payload, label, activeChart }: any) => {
@@ -403,11 +407,13 @@ export default function AdminDashboard() {
   const payablesDistributionData = useMemo(() => {
     const cleared = data?.stats?.resellerWalletTotal || 0;
     const transit = data?.stats?.resellerPendingTotal || 0;
+    const loans = data?.stats?.totalActiveLoansDue || 0;
 
     return [
       { type: 'Cleared', amount: cleared, fill: 'var(--color-cleared)' },
       { type: 'In-Transit', amount: transit, fill: 'var(--color-transit)' },
-    ];
+      { type: 'Loans', amount: loans, fill: 'var(--color-loans)' },
+    ].filter(d => d.amount > 0);
   }, [data?.stats]);
 
   if (loading && !data) {
@@ -1008,12 +1014,16 @@ export default function AdminDashboard() {
 
               <div className="space-y-1.5 text-xs border-t pt-2">
                 <div className="flex justify-between items-center text-muted-foreground">
-                  <span>Reseller Wallets (Cleared):</span>
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[var(--chart-1)] shrink-0" /> Reseller Wallets (Cleared):</span>
                   <span className="font-semibold text-foreground">৳{Math.round(stats?.resellerWalletTotal || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-muted-foreground">
-                  <span>In-Transit Reseller Profits:</span>
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[var(--chart-4)] shrink-0" /> In-Transit Reseller Profits:</span>
                   <span className="font-semibold text-foreground">৳{Math.round(stats?.resellerPendingTotal || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[var(--chart-5)] shrink-0" /> Business Loans (Active):</span>
+                  <span className="font-semibold text-rose-600 dark:text-rose-400">৳{Math.round(stats?.totalActiveLoansDue || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -1021,7 +1031,7 @@ export default function AdminDashboard() {
 
           <div className="p-4 bg-sky-500/5 border-t border-sky-500/10 flex justify-between items-center font-bold text-sm text-sky-600 dark:text-sky-400">
             <span>Total Payable Obligations:</span>
-            <span className="text-base">৳{Math.round(stats?.resellerWalletTotal || 0).toLocaleString()}</span>
+            <span className="text-base">৳{Math.round((stats?.resellerWalletTotal || 0) + (stats?.totalActiveLoansDue || 0)).toLocaleString()}</span>
           </div>
         </div>
       </div>
