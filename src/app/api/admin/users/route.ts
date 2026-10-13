@@ -249,6 +249,28 @@ export async function DELETE(req: NextRequest) {
       }, { status: 400 });
     }
 
+    // If deleting a user who is a reseller, cascade delete their reseller profile, products, and links
+    try {
+      const Reseller = (await import('@/models/Reseller')).default;
+      const reseller = await Reseller.findOne({ userId });
+      if (reseller) {
+        const Product = (await import('@/models/Product')).default;
+        const ResellerProduct = (await import('@/models/ResellerProduct')).default;
+        const ResellerOrder = (await import('@/models/ResellerOrder')).default;
+        const ResellerWalletTransaction = (await import('@/models/ResellerWalletTransaction')).default;
+
+        // Cascade delete products uploaded by this reseller
+        await Product.deleteMany({ uploadedBy: reseller._id });
+        // Cascade delete catalog links, wallet transactions & reseller orders
+        await ResellerProduct.deleteMany({ resellerId: reseller._id });
+        await ResellerWalletTransaction.deleteMany({ resellerId: reseller._id });
+        await ResellerOrder.deleteMany({ resellerId: reseller._id });
+        await Reseller.deleteOne({ _id: reseller._id });
+      }
+    } catch (cascadeErr) {
+      console.error('[Delete User Cascade Error]', cascadeErr);
+    }
+
     await User.deleteOne({ _id: userId });
 
     return NextResponse.json({ message: 'User deleted successfully' });
