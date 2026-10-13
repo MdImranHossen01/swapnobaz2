@@ -93,15 +93,31 @@ export default function FooterV2() {
     setDeferredPrompt(null);
   };
 
-  const footerNav = settings?.footerNavigation && settings.footerNavigation.length > 0
+  const isResellerStore = Boolean(
+    settings?.isReseller ||
+    (typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/store/') ||
+      (window.location.hostname !== 'localhost' &&
+       window.location.hostname !== '127.0.0.1' &&
+       window.location.hostname !== 'swapnobaz.com' &&
+       window.location.hostname !== 'www.swapnobaz.com' &&
+       window.location.hostname !== 'dhakafairprice.com' &&
+       window.location.hostname !== 'www.dhakafairprice.com')
+    ))
+  );
+
+  const rawFooterNav = settings?.footerNavigation && settings.footerNavigation.length > 0
     ? settings.footerNavigation
     : [
       { label: 'Shop All', href: '/shop' },
-      { label: 'Become Reseller', href: '/reseller-program' },
+      ...(isResellerStore ? [] : [{ label: 'Become Reseller', href: '/reseller-program' }]),
       { label: 'New Arrivals', href: '/shop?filter=new' },
       { label: 'Order Tracking', href: '/track-order' },
       { label: 'Contact Support', href: '/contact' }
     ];
+  const footerNav = rawFooterNav
+    .filter((link: any) => link.label !== 'Contact Support')
+    .filter((link: any) => !(isResellerStore && (link.href === '/reseller-program' || link.label?.toLowerCase().includes('reseller'))));
 
   return (
     <footer className="bg-background border-t border-muted text-foreground pt-16 pb-8 px-6 font-jost">
@@ -119,7 +135,7 @@ export default function FooterV2() {
             </p>
 
             {/* PWA Download App Button */}
-            {!isStandalone && (
+            {!isStandalone && !isResellerStore && (
               <Button
                 onClick={handleInstallClick}
                 variant="outline"

@@ -205,6 +205,7 @@ export default async function ResellerStorePage({ params }: Props) {
   const freeDeliveryThreshold = reseller.deliveryConfig?.freeDeliveryThreshold || 0;
 
   const settingsData = {
+    isReseller: true,
     brandName: storeName,
     logoUrl: logo,
     freeDeliveryThreshold,

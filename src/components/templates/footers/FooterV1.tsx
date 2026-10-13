@@ -106,16 +106,31 @@ export default function FooterV1() {
     setDeferredPrompt(null);
   };
 
+  const isResellerStore = Boolean(
+    settings?.isReseller ||
+    (typeof window !== 'undefined' && (
+      window.location.pathname.startsWith('/store/') ||
+      (window.location.hostname !== 'localhost' &&
+       window.location.hostname !== '127.0.0.1' &&
+       window.location.hostname !== 'swapnobaz.com' &&
+       window.location.hostname !== 'www.swapnobaz.com' &&
+       window.location.hostname !== 'dhakafairprice.com' &&
+       window.location.hostname !== 'www.dhakafairprice.com')
+    ))
+  );
+
   const rawFooterNav = settings?.footerNavigation && settings.footerNavigation.length > 0
     ? settings.footerNavigation
     : [
       { label: 'Shop All', href: '/shop' },
-      { label: 'Become Reseller', href: '/reseller-program' },
+      ...(isResellerStore ? [] : [{ label: 'Become Reseller', href: '/reseller-program' }]),
       { label: 'New Arrivals', href: '/shop?filter=new' },
       { label: 'Order Tracking', href: '/track-order' },
       { label: 'Contact Support', href: '/contact' }
     ];
-  const footerNav = rawFooterNav.filter((link: any) => link.label !== 'Contact Support');
+  const footerNav = rawFooterNav
+    .filter((link: any) => link.label !== 'Contact Support')
+    .filter((link: any) => !(isResellerStore && (link.href === '/reseller-program' || link.label?.toLowerCase().includes('reseller'))));
 
   return (
     <footer className="border-t bg-background pt-6 md:pt-12 mt-4 md:mt-10">
@@ -128,7 +143,7 @@ export default function FooterV1() {
             </p>
 
             {/* PWA Download App Button */}
-            {!isStandalone && (
+            {!isStandalone && !isResellerStore && (
               <Button
                 onClick={handleInstallClick}
                 variant="outline"
@@ -154,9 +169,11 @@ export default function FooterV1() {
           <div className="flex flex-col items-center text-center md:items-start md:text-left md:pt-3">
             <h2 className="mb-4 text-sm font-bold uppercase tracking-widest text-foreground">Information</h2>
             <ul className="grid gap-2 text-sm text-muted-foreground">
-              <li>
-                <Link href="/faq" className="hover:text-primary transition-colors">FAQs</Link>
-              </li>
+              {!isResellerStore && (
+                <li>
+                  <Link href="/faq" className="hover:text-primary transition-colors">FAQs</Link>
+                </li>
+              )}
               <li>
                 <Link href="/contact" className="hover:text-primary transition-colors">Contact Us</Link>
               </li>
