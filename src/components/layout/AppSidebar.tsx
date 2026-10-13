@@ -11,6 +11,7 @@ import {
   FileText,
   Users,
   Image as ImageIcon,
+  Monitor,
   Settings,
   Store,
   Mail,
@@ -304,6 +305,17 @@ const data = {
         {
           title: "Banners",
           url: "/admin/cms/banners",
+        },
+      ],
+    },
+    {
+      title: "Landing Pages",
+      url: "#",
+      icon: Monitor,
+      items: [
+        {
+          title: "All Landing Pages",
+          url: "/admin/landing-pages",
         },
       ],
     },
