@@ -108,7 +108,7 @@ export default function MonthlyReportPage() {
             <table className="w-full text-xs md:text-sm text-center border-collapse">
               <thead>
                 <tr className="bg-muted/30 border-b text-muted-foreground font-semibold">
-                  <th className="p-2.5 text-left font-bold text-foreground">Month (মাস)</th>
+                  <th className="p-2.5 text-left font-bold text-foreground">Month</th>
                   <th className="p-2.5 font-bold text-emerald-600">Net Sales</th>
                   <th className="p-2.5 font-bold text-slate-600">Delivery Cost</th>
                   <th className="p-2.5 font-bold text-foreground">Total</th>
