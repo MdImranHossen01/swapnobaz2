@@ -96,7 +96,6 @@ export function ResellerSidebar({
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-black text-sm leading-tight truncate">{reseller.storeName}</p>
-            <p className="text-[11px] text-muted-foreground truncate">{reseller.subdomain}.swapnobaz.com</p>
           </div>
         </div>
         <div className="flex items-center justify-between pt-1">
