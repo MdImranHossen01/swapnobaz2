@@ -8,27 +8,67 @@ import LedgerTransaction from '@/models/LedgerTransaction';
 export async function seedLedgerAccounts() {
   await connectToDatabase();
 
-  const accounts: { name: string; code: 'CASH' | 'BANK' | 'AR' | 'AP'; type: 'asset' | 'liability'; category: 'Cash' | 'Bank' | 'Other' }[] = [
-    { name: 'Cash', code: 'CASH', type: 'asset', category: 'Cash' },
-    { name: 'Bank', code: 'BANK', type: 'asset', category: 'Bank' },
-    { name: 'Accounts Receivable', code: 'AR', type: 'asset', category: 'Other' },
-    { name: 'Accounts Payable', code: 'AP', type: 'liability', category: 'Other' },
+  const accounts: { name: string; code: 'CASH' | 'BANK' | 'AR' | 'AP'; type: 'asset' | 'liability'; category: 'Cash' | 'Bank' | 'Other'; description: string }[] = [
+    { name: 'Cash in Hand', code: 'CASH', type: 'asset', category: 'Cash', description: 'Default System Primary Cash Account' },
+    { name: 'Bank', code: 'BANK', type: 'asset', category: 'Bank', description: 'Direct account' },
+    { name: 'Accounts Receivable', code: 'AR', type: 'asset', category: 'Other', description: 'Direct account' },
+    { name: 'Accounts Payable', code: 'AP', type: 'liability', category: 'Other', description: 'Direct account' },
   ];
 
   for (const acc of accounts) {
-    const exists = await LedgerAccount.findOne({ code: acc.code });
+    const exists = await LedgerAccount.findOne({ resellerId: null, code: acc.code });
     if (!exists) {
       await LedgerAccount.create({
         name: acc.name,
         code: acc.code,
         type: acc.type,
         category: acc.category,
+        description: acc.description,
         openingBalance: 0,
         currentBalance: 0,
+        resellerId: null,
       });
     } else if (exists.category !== acc.category) {
       exists.category = acc.category;
       await exists.save();
+    }
+  }
+}
+
+/**
+ * Seed primary default 4 ledger accounts for a reseller:
+ * Bank, Cash in Hand, Accounts Payable, Accounts Receivable
+ */
+export async function seedResellerLedgerAccounts(resellerId: any) {
+  if (!resellerId) return;
+  await connectToDatabase();
+
+  const accounts: { name: string; code: 'CASH' | 'BANK' | 'AR' | 'AP'; type: 'asset' | 'liability'; category: 'Cash' | 'Bank' | 'Other'; description: string }[] = [
+    { name: 'Bank', code: 'BANK', type: 'asset', category: 'Bank', description: 'Direct account' },
+    { name: 'Cash in Hand', code: 'CASH', type: 'asset', category: 'Cash', description: 'Default Store Primary Cash Account' },
+    { name: 'Accounts Payable', code: 'AP', type: 'liability', category: 'Other', description: 'Direct account' },
+    { name: 'Accounts Receivable', code: 'AR', type: 'asset', category: 'Other', description: 'Direct account' },
+  ];
+
+  for (const acc of accounts) {
+    const exists = await LedgerAccount.findOne({ resellerId, code: acc.code });
+    if (!exists) {
+      await LedgerAccount.create({
+        name: acc.name,
+        code: acc.code,
+        type: acc.type,
+        category: acc.category,
+        description: acc.description,
+        openingBalance: 0,
+        currentBalance: 0,
+        resellerId,
+      });
+    } else {
+      if (acc.code === 'CASH' && exists.name !== 'Cash in Hand') {
+        exists.name = 'Cash in Hand';
+        exists.category = 'Cash';
+        await exists.save();
+      }
     }
   }
 }
