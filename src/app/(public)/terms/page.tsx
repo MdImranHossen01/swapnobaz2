@@ -21,8 +21,8 @@ import {
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | Swapnobaz',
-  description: 'Terms and conditions governing the use of the Swapnobaz B2B + B2C Multi-Vendor Dropshipping Platform & SaaS.',
+  title: `Terms of Service | ${process.env.NEXT_PUBLIC_STORE_NAME || 'Store'}`,
+  description: 'Terms and conditions governing the use of our B2B + B2C Multi-Vendor Dropshipping Platform & SaaS.',
 };
 
 async function getSettings() {
@@ -31,9 +31,9 @@ async function getSettings() {
     const settings = await GlobalSettings.findOne().lean();
     if (!settings) {
       return {
-        brandName: "Swapnobaz",
+        brandName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
         contact: {
-          email: "support@swapnobaz.com",
+          email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : ""),
           phone: "+8801234567890",
           address: "Dhaka, Bangladesh"
         }
@@ -43,9 +43,9 @@ async function getSettings() {
   } catch (error) {
     console.error('Error fetching settings for terms page:', error);
     return {
-      brandName: "Swapnobaz",
+      brandName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
       contact: {
-        email: "support@swapnobaz.com",
+        email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : ""),
         phone: "+8801234567890",
         address: "Dhaka, Bangladesh"
       }
@@ -55,8 +55,8 @@ async function getSettings() {
 
 export default async function TermsPage() {
   const settings = await getSettings();
-  const brandName = settings?.brandName || "Swapnobaz";
-  const contactEmail = settings?.contact?.email || "support@swapnobaz.com";
+  const brandName = settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || "Store";
+  const contactEmail = settings?.contact?.email || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : "");
   const contactPhone = settings?.contact?.phone || "+880 1234-567890";
   const effectiveDate = "July 19, 2026";
 

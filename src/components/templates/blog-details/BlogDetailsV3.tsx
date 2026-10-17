@@ -136,7 +136,7 @@ export default function BlogDetailsV3({ blog, readingTime }: BlogDetailsV3Props)
                   )}
                 </div>
                 <div>
-                  <h4 className="font-black text-xl uppercase tracking-tighter leading-none">{blog.author?.name || 'Swapnobaz Intelligence'}</h4>
+                  <h4 className="font-black text-xl uppercase tracking-tighter leading-none">{blog.author?.name || process.env.NEXT_PUBLIC_STORE_NAME || 'Intelligence'}</h4>
                   <p className="text-[10px] font-mono font-black text-primary uppercase tracking-widest mt-2">Logistics Analyst</p>
                 </div>
               </div>

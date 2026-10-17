@@ -266,7 +266,7 @@ export default function ResetPasswordPage() {
         </motion.div>
 
         <div className="mt-auto pt-6 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Swapnobaz. All rights reserved.
+          &copy; {new Date().getFullYear()} {process.env.NEXT_PUBLIC_STORE_NAME || 'Store'}. All rights reserved.
         </div>
       </div>
     </div>

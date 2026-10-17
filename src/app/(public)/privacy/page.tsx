@@ -20,8 +20,8 @@ import {
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Swapnobaz',
-  description: 'Learn how Swapnobaz protects your personal data, enforces multi-tenant database isolation, and secures e-commerce transactions.',
+  title: `Privacy Policy | ${process.env.NEXT_PUBLIC_STORE_NAME || 'Store'}`,
+  description: 'Learn how we protect your personal data, enforces multi-tenant database isolation, and secures e-commerce transactions.',
 };
 
 async function getSettings() {
@@ -30,9 +30,9 @@ async function getSettings() {
     const settings = await GlobalSettings.findOne().lean();
     if (!settings) {
       return {
-        brandName: "Swapnobaz",
+        brandName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
         contact: {
-          email: "support@swapnobaz.com",
+          email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : ""),
           phone: "+8801234567890",
           address: "Dhaka, Bangladesh"
         }
@@ -42,9 +42,9 @@ async function getSettings() {
   } catch (error) {
     console.error('Error fetching settings for privacy page:', error);
     return {
-      brandName: "Swapnobaz",
+      brandName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
       contact: {
-        email: "support@swapnobaz.com",
+        email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : ""),
         phone: "+8801234567890",
         address: "Dhaka, Bangladesh"
       }
@@ -54,8 +54,8 @@ async function getSettings() {
 
 export default async function PrivacyPage() {
   const settings = await getSettings();
-  const brandName = settings?.brandName || "Swapnobaz";
-  const contactEmail = settings?.contact?.email || "support@swapnobaz.com";
+  const brandName = settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || "Store";
+  const contactEmail = settings?.contact?.email || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : "");
   const contactPhone = settings?.contact?.phone || "+880 1234-567890";
   const effectiveDate = "July 19, 2026";
 

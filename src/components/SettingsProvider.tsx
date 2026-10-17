@@ -105,10 +105,15 @@ export function SettingsProvider({
 
 export function useSettings() {
   const context = useContext(SettingsContext);
-  if (context === undefined || context === null) {
-    // Return empty settings instead of throwing or returning null
-    return {} as SettingsContextType;
-  }
-  return context;
+  const base = context || {};
+  return {
+    ...base,
+    brandName: base.brandName || process.env.NEXT_PUBLIC_STORE_NAME || 'Store',
+    contact: {
+      ...base.contact,
+      email: base.contact?.email || process.env.NEXT_PUBLIC_SUPPORT_EMAIL || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : ''),
+      phone: base.contact?.phone || process.env.NEXT_PUBLIC_SUPPORT_PHONE || '',
+    }
+  } as SettingsContextType;
 }
 

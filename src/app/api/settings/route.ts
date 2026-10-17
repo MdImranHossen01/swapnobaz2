@@ -38,9 +38,9 @@ export async function GET() {
     const settings = await GlobalSettings.findOne().sort({ updatedAt: -1 });
     if (!settings) {
       return NextResponse.json({
-        brandName: process.env.NEXT_PUBLIC_STORE_NAME || "Swapnobaz",
+        brandName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
         contact: {
-          email: "support@swapnobaz.com",
+          email: (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : ""),
           phone: "+8801234567890",
           address: "Dhaka, Bangladesh"
         },
@@ -53,8 +53,8 @@ export async function GET() {
           tiktok: '',
           whatsapp: ''
         },
-        marqueeText: "Welcome to Swapnobaz!",
-        metaTitle: process.env.NEXT_PUBLIC_STORE_NAME || "Swapnobaz",
+        marqueeText: `Welcome to ${process.env.NEXT_PUBLIC_STORE_NAME || "our store"}!`,
+        metaTitle: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
         metaDescription: "The most popular online shop in Bangladesh.",
         logoUrl: "/logo.webp",
         freeDeliveryThreshold: 0,

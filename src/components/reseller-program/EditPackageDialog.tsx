@@ -65,7 +65,7 @@ export function EditPackageDialog({ open, onOpenChange, pkg, onSave }: EditPacka
         btnColor: 'bg-purple-600 hover:bg-purple-700 text-white',
         features: [
           { text: '১,০০০ প্রোডাক্ট আপলোড লিমিট', highlight: false },
-          { text: 'Swapnobaz Store Admin Panel', highlight: false },
+          { text: 'Store Admin Panel', highlight: false },
         ],
       });
     }

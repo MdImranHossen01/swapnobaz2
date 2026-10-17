@@ -150,7 +150,7 @@ export function AIChatbot() {
     return parts.length > 0 ? parts : content;
   };
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Assalamu Alaikum! I am your Swapnobaz AI assistant. How can I help you explore our products, track orders, or assist with reseller dropshipping today?' },
+    { role: 'assistant', content: 'Assalamu Alaikum! I am your AI assistant. How can I help you explore our products, track orders, or assist with reseller dropshipping today?' },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [orderingIndex, setOrderingIndex] = useState<number | null>(null);
@@ -314,7 +314,7 @@ export function AIChatbot() {
                   <Bot className="size-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">Swapnobaz AI</h3>
+                  <h3 className="font-bold text-sm">{process.env.NEXT_PUBLIC_STORE_NAME || 'Store'} AI</h3>
                   <p className="text-[10px] text-primary-foreground/70">Always active for you</p>
                 </div>
               </div>

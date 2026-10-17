@@ -22,8 +22,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
-  title: 'Contact Us | Swapnobaz',
-  description: 'Get in touch with Swapnobaz for reseller onboarding, supplier partnerships, customer support, and dropshipping platform inquiries.',
+  title: `Contact Us | ${process.env.NEXT_PUBLIC_STORE_NAME || 'Store'}`,
+  description: 'Get in touch with us for reseller onboarding, supplier partnerships, customer support, and dropshipping platform inquiries.',
 };
 
 async function getSettings() {
@@ -32,9 +32,9 @@ async function getSettings() {
     const settings = await GlobalSettings.findOne().lean();
     if (!settings) {
       return {
-        brandName: "Swapnobaz",
+        brandName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
         contact: {
-          email: "support@swapnobaz.com",
+          email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : ""),
           phone: "+8801234567890",
           address: "Dhaka, Bangladesh"
         },
@@ -45,9 +45,9 @@ async function getSettings() {
   } catch (error) {
     console.error('Error fetching settings for contact page:', error);
     return {
-      brandName: "Swapnobaz",
+      brandName: process.env.NEXT_PUBLIC_STORE_NAME || "Store",
       contact: {
-        email: "support@swapnobaz.com",
+        email: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : ""),
         phone: "+8801234567890",
         address: "Dhaka, Bangladesh"
       },
@@ -59,7 +59,7 @@ async function getSettings() {
 export default async function ContactPage() {
   const settings = await getSettings();
 
-  const { contact = {}, socialLinks, brandName = "Swapnobaz" } = settings as {
+  const { contact = {}, socialLinks, brandName = settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || "Store" } = settings as {
     contact?: { email?: string; phone?: string; address?: string };
     socialLinks?: { 
       facebook?: string; 
@@ -72,7 +72,7 @@ export default async function ContactPage() {
     brandName?: string;
   };
 
-  const contactEmail = contact?.email || "support@swapnobaz.com";
+  const contactEmail = contact?.email || (process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `support@${process.env.NEXT_PUBLIC_ROOT_DOMAIN}` : "");
   const contactPhone = contact?.phone || "+8801234567890";
   const contactAddress = contact?.address || "Dhaka, Bangladesh";
 
@@ -259,7 +259,7 @@ export default async function ContactPage() {
 
               <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-md border border-border bg-muted">
                 <iframe
-                  title="Swapnobaz Hub Location"
+                  title="Hub Location"
                   width="100%"
                   height="100%"
                   style={{ border: 0 }}

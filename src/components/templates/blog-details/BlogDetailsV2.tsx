@@ -74,7 +74,7 @@ export default function BlogDetailsV2({ blog, readingTime }: BlogDetailsV2Props)
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Words by</span>
-              <span className="text-sm font-bold">Swapnobaz Editorial</span>
+              <span className="text-sm font-bold">{process.env.NEXT_PUBLIC_STORE_NAME || 'Editorial'}</span>
             </div>
           </div>
         </header>
