@@ -629,9 +629,9 @@ export async function POST(req: NextRequest) {
                 },
               },
               items: orderItemsWithRP,
-              subtotal: uploaderSubtotal,
+              subtotal: uploaderCommission,
               deliveryCharge: 0,
-              totalAmount: uploaderSubtotal,
+              totalAmount: uploaderCommission,
               paymentMethod: paymentMethod || 'COD',
               paymentStatus: newOrder.paymentStatus || 'Pending',
               status: newOrder.status || 'Order Placed',
@@ -648,11 +648,16 @@ export async function POST(req: NextRequest) {
           { session }
         );
 
-        // Update reseller stats atomically
+        // Update reseller stats atomically (reseller's revenue from mother shop sale is their base payout)
+        const isAlreadyPaidOrDelivered = newOrder.status === 'Delivered' || newOrder.paymentStatus === 'Paid';
         await Reseller.findByIdAndUpdate(
           uploaderId,
           {
-            $inc: { totalOrders: 1, totalRevenue: uploaderSubtotal },
+            $inc: {
+              totalOrders: 1,
+              totalRevenue: uploaderCommission,
+              pendingBalance: isAlreadyPaidOrDelivered ? 0 : uploaderCommission,
+            },
           },
           { session }
         );
