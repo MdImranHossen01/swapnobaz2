@@ -70,9 +70,9 @@ export default async function ResellerStorePage({ params }: Props) {
             <Clock className="h-8 w-8 text-yellow-500" />
           </div>
           <h1 className="text-2xl font-black text-gray-800 mb-2">{reseller.storeName}</h1>
-          <p className="text-sm font-semibold text-yellow-600 mb-3">🕐 অনুমোদনের অপেক্ষায়</p>
+          <p className="text-sm font-semibold text-yellow-600 mb-3">🕐 Pending Approval</p>
           <p className="text-gray-500 text-sm">
-            এই স্টোরটি শীঘ্রই চালু হবে। অ্যাডমিন অনুমোদনের পর স্টোরটি সক্রিয় হবে।
+            This store will be launching soon. It will become active upon administrator approval.
           </p>
           <div className="mt-6 pt-4 border-t border-gray-100">
             <a href={`https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
@@ -84,6 +84,13 @@ export default async function ResellerStorePage({ params }: Props) {
     );
   }
 
+  // Check if active but expired
+  const isOverdue = reseller.status === 'active' && reseller.expiresAt && new Date(reseller.expiresAt) <= new Date();
+  if (isOverdue) {
+    reseller.status = 'expired';
+    Reseller.findByIdAndUpdate(reseller._id, { $set: { status: 'expired' } }).exec().catch(() => {});
+  }
+
   // Suspended/expired/rejected → Store Suspended page
   if (reseller.status === 'suspended' || reseller.status === 'expired' || reseller.status === 'rejected') {
     return (
@@ -93,9 +100,13 @@ export default async function ResellerStorePage({ params }: Props) {
             <ShieldOff className="h-8 w-8 text-red-500" />
           </div>
           <h1 className="text-2xl font-black text-gray-800 mb-2">{reseller.storeName}</h1>
-          <p className="text-sm font-semibold text-red-500 mb-3">⛔ স্টোরটি বর্তমানে বন্ধ আছে</p>
+          <p className="text-sm font-semibold text-red-500 mb-3">
+            {reseller.status === 'expired' ? '⌛ Store Subscription Expired' : '⛔ Store Currently Suspended'}
+          </p>
           <p className="text-gray-500 text-sm">
-            {reseller.suspendReason || 'এই স্টোরটি সাময়িকভাবে স্থগিত করা হয়েছে।'}
+            {reseller.status === 'expired'
+              ? 'This reseller store subscription has expired. Please contact administration to renew membership.'
+              : reseller.suspendReason || 'This store has been temporarily suspended.'}
           </p>
           <div className="mt-6 pt-4 border-t border-gray-100">
             <a href={`https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
