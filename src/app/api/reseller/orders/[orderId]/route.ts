@@ -29,18 +29,18 @@ export async function GET(
     }
 
     const order = await ResellerOrder.findOne({ _id: orderId, resellerId: reseller._id })
-      .populate('resellerId', 'storeName subdomain customDomain')
+      .populate('resellerId', 'storeName subdomain customDomain contact pickupAddress logoUrl')
       .populate({
         path: 'motherOrderId',
         select: 'storefrontResellerId resellerId orderSource shortId systemNote totalAmount deliveryCharge systemFee resellerCommission subtotal items',
         populate: [
           {
             path: 'storefrontResellerId',
-            select: 'storeName subdomain customDomain'
+            select: 'storeName subdomain customDomain contact pickupAddress logoUrl'
           },
           {
             path: 'resellerId',
-            select: 'storeName subdomain customDomain'
+            select: 'storeName subdomain customDomain contact pickupAddress logoUrl'
           }
         ]
       })
@@ -117,17 +117,34 @@ export async function GET(
     }
 
     const isOwnProductSale = !supplierPart && !!sellerPart && (motherFee > 0 || Number((order as any).systemFee) > 0);
-    const distributedSoFar = deliveryCharge + motherFee + (supplierPart?.amount || 0) + (sellerPart?.amount || 0);
-    const motherProfit = Math.max(0, orderValue - distributedSoFar);
+
+    // PRIVACY & VENDOR CONFIDENTIALITY:
+    // Never expose another vendor's fee agreement or platform rate.
+    // If a reseller sells a third-party supplier's product, absorb the supplier's platform fee into
+    // the supplier wholesale cost so the seller only sees base cost without fee percentages.
+    let sanitizedSupplierPart = supplierPart ? { ...supplierPart } : null;
+    let sanitizedMotherFee = 0;
+
+    if (isOwnProductSale) {
+      // Reseller's own product -> fee is reseller's own platform agreement
+      sanitizedMotherFee = motherFee;
+    } else if (sanitizedSupplierPart && !sanitizedSupplierPart.isYou) {
+      // External supplier: absorb platform fee into product cost; hide mother fee
+      sanitizedSupplierPart.amount = sanitizedSupplierPart.amount + motherFee;
+      sanitizedMotherFee = 0;
+    } else if (sanitizedSupplierPart && sanitizedSupplierPart.isYou) {
+      // Supplier viewing own fulfillment order: only sees own fee if any
+      sanitizedMotherFee = Math.round(Number((order as any).systemFee) || 0);
+    }
 
     const disbursement = {
       orderValue,
       deliveryCharge,
-      supplier: supplierPart,
+      supplier: sanitizedSupplierPart,
       seller: sellerPart,
       isOwnProductSale,
-      motherFee,
-      motherProfit,
+      motherFee: sanitizedMotherFee,
+      motherProfit: 0, // Never leak platform internal margins to reseller
     };
 
     const finalDeliveryCharge = deliveryCharge;
@@ -152,6 +169,37 @@ export async function GET(
       });
     }
 
+    // Determine the selling storefront store (White-label invoice branding)
+    let sellingStoreInfo: any = null;
+    const isFulfillment = Boolean((order as any).shortId?.includes('-F'));
+    if (isFulfillment) {
+      const sfReseller = (motherOrder as any)?.storefrontResellerId || (motherOrder as any)?.resellerId;
+      if (sfReseller && sfReseller.storeName) {
+        sellingStoreInfo = {
+          storeName: sfReseller.storeName,
+          domain: sfReseller.customDomain || (sfReseller.subdomain ? `${sfReseller.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'swapnobaz.com'}` : ''),
+          email: sfReseller.contact?.email || '',
+          phone: sfReseller.contact?.phone || sfReseller.pickupAddress?.phone || '',
+          address: sfReseller.contact?.address || sfReseller.pickupAddress?.address || '',
+          logoUrl: sfReseller.logoUrl || '',
+          isReseller: true,
+        };
+      }
+    } else {
+      const myReseller = (order as any).resellerId;
+      if (myReseller && myReseller.storeName) {
+        sellingStoreInfo = {
+          storeName: myReseller.storeName,
+          domain: myReseller.customDomain || (myReseller.subdomain ? `${myReseller.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'swapnobaz.com'}` : ''),
+          email: myReseller.contact?.email || '',
+          phone: myReseller.contact?.phone || myReseller.pickupAddress?.phone || '',
+          address: myReseller.contact?.address || myReseller.pickupAddress?.address || '',
+          logoUrl: myReseller.logoUrl || '',
+          isReseller: true,
+        };
+      }
+    }
+
     return NextResponse.json({
       ...order,
       items: finalItems,
@@ -160,6 +208,7 @@ export async function GET(
       totalAmount: finalOrderValue,
       disbursement,
       fullOrderValue: finalOrderValue,
+      sellingStore: sellingStoreInfo,
     });
   } catch (error: any) {
     console.error('Error fetching reseller order:', error);
