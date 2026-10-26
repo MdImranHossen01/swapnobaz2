@@ -135,7 +135,7 @@ export async function addProductToReseller(
     // Own products retain base purchasePrice.
     const effectivePurchasePrice = isOwnProduct
       ? (product.purchasePrice || 0)
-      : (product.resellerPrice || (product.purchasePrice ? Math.round(product.purchasePrice * 1.15) : 0));
+      : (product.resellerPrice || (product.purchasePrice ? Math.round(product.purchasePrice * 1.10) : 0));
 
     await ResellerProduct.findOneAndUpdate(
       { resellerId, productId },

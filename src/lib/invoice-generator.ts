@@ -43,7 +43,7 @@ export function getSellingStoreInfo(order: any, settings?: any) {
   }
 
   if (targetReseller && targetReseller.storeName) {
-    const domain = targetReseller.customDomain || (targetReseller.subdomain ? `${targetReseller.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'dhakafairprice.com'}` : '');
+    const domain = targetReseller.customDomain || (targetReseller.subdomain ? `${targetReseller.subdomain}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'swapnobaz.com'}` : '');
     return {
       isReseller: true,
       name: targetReseller.storeName,
@@ -63,19 +63,19 @@ export function getSellingStoreInfo(order: any, settings?: any) {
       email: '',
       phone: '',
       address: '',
-      website: `${parsedNameFromNote.toLowerCase()}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'dhakafairprice.com'}`,
+      website: `${parsedNameFromNote.toLowerCase()}.${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'swapnobaz.com'}`,
     };
   }
 
   // 5. Default Mother Shop info
   return {
     isReseller: false,
-    name: settings?.brandName || settings?.siteName || process.env.NEXT_PUBLIC_STORE_NAME || "DHAKA FAIR PRICE",
+    name: settings?.brandName || settings?.siteName || process.env.NEXT_PUBLIC_STORE_NAME || "SWAPNOBAZ",
     logoUrl: settings?.logoUrl || settings?.brandLogo || '',
-    email: settings?.contact?.email || "dhakafairprice@gmail.com",
+    email: settings?.contact?.email || "swapnobaz@gmail.com",
     phone: settings?.contact?.phone || "+88013148177112",
-    address: settings?.contact?.address || "House: 2/B/E Tolarbag, Darus Salam Road, Mirpur-1, Dhaka-1216, Bangladesh.",
-    website: process.env.NEXT_PUBLIC_ROOT_DOMAIN || "dhakafairprice.com",
+    address: settings?.contact?.address || "Dhaka, Bangladesh.",
+    website: process.env.NEXT_PUBLIC_ROOT_DOMAIN || "swapnobaz.com",
   };
 }
 
