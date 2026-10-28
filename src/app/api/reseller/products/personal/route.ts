@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
     const currentSlug = slug || slugify(name);
     const uniqueSlug = await generateUniqueSlug(Product, currentSlug);
 
-    const commissionPct = reseller.systemFeePercent ?? 15;
+    const commissionPct = reseller.systemFeePercent ?? 10;
     const computedResellerPrice = numPurchasePrice > 0 ? Math.round(numPurchasePrice * (1 + commissionPct / 100)) : (numPrice || 0);
 
     // Coerce variant numeric fields
@@ -215,7 +215,7 @@ export async function PATCH(request: NextRequest) {
     if (variants !== undefined) {
       product.variants = (variants || []).map((v: any) => {
         const vPurchase = Number.isFinite(parseFloat(v.purchasePrice)) ? parseFloat(v.purchasePrice) : undefined;
-        const vResellerPrice = vPurchase && vPurchase > 0 ? Math.round(vPurchase * (1 + (reseller.systemFeePercent ?? 15) / 100)) : undefined;
+        const vResellerPrice = vPurchase && vPurchase > 0 ? Math.round(vPurchase * (1 + (reseller.systemFeePercent ?? 10) / 100)) : undefined;
         return {
           _id: v._id || v.id,
           color: v.color,
@@ -241,7 +241,7 @@ export async function PATCH(request: NextRequest) {
     if (salePrice !== undefined) product.salePrice = salePrice !== '' ? Number(salePrice) : undefined;
     if (purchasePrice !== undefined) {
       product.purchasePrice = Number(purchasePrice);
-      const commissionPct = reseller.systemFeePercent ?? 15;
+      const commissionPct = reseller.systemFeePercent ?? 10;
       product.resellerPrice = product.purchasePrice > 0 ? Math.round(product.purchasePrice * (1 + commissionPct / 100)) : product.price;
     }
     if (discountRate !== undefined) product.discountRate = discountRate !== '' ? Number(discountRate) : undefined;
