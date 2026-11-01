@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
 
     const search = searchParams.get('search') || '';
     const sourceFilter = searchParams.get('source') || 'all'; // 'all' | 'top_selling' | 'admin' | 'reseller' | 'sourced'
+    const resellerParam = searchParams.get('resellerId') || searchParams.get('uploadedBy');
 
     // Build query based on source filter
     let query: Record<string, any> = { isPublished: true };
@@ -101,6 +102,24 @@ export async function GET(request: NextRequest) {
         { uploadedBy: { $exists: false } },
         { uploadedBy: { $ne: resellerId }, isShared: true, isApprovedByAdmin: true },
       ];
+    }
+
+    // Apply resellerId filter if provided
+    if (resellerParam && resellerParam !== 'all') {
+      if (['admin', 'main', 'null', 'mother'].includes(resellerParam.toLowerCase())) {
+        query.$or = [
+          { uploadedBy: null },
+          { uploadedBy: { $exists: false } },
+        ];
+        delete query.uploadedBy;
+        delete query['$and'];
+      } else {
+        query.uploadedBy = resellerParam;
+        query.isShared = true;
+        query.isApprovedByAdmin = true;
+        delete query.$or;
+        delete query['$and'];
+      }
     }
 
     if (search) {
@@ -200,16 +219,49 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Find distinct other resellers who have approved shared B2B products
+    const sharedResellerIds = await Product.find({
+      isPublished: true,
+      uploadedBy: { $ne: resellerId, $exists: true, $nin: [null] },
+      isShared: true,
+      isApprovedByAdmin: true,
+    }).distinct('uploadedBy');
+
+    const availableResellers = await Reseller.find({
+      _id: { $in: sharedResellerIds }
+    }).select('_id storeName subdomain customDomain').sort({ storeName: 1 }).lean();
+
     // Count totals for tab badges
+    let countBaseQuery: any = {
+      isPublished: true,
+      $or: [
+        { uploadedBy: null },
+        { uploadedBy: { $exists: false } },
+        { uploadedBy: { $ne: resellerId }, isShared: true, isApprovedByAdmin: true },
+      ],
+    };
+
+    if (resellerParam && resellerParam !== 'all') {
+      if (['admin', 'main', 'null', 'mother'].includes(resellerParam.toLowerCase())) {
+        countBaseQuery = {
+          isPublished: true,
+          $or: [
+            { uploadedBy: null },
+            { uploadedBy: { $exists: false } },
+          ],
+        };
+      } else {
+        countBaseQuery = {
+          isPublished: true,
+          uploadedBy: resellerParam,
+          isShared: true,
+          isApprovedByAdmin: true,
+        };
+      }
+    }
+
     const [allProducts, sourcedCount] = await Promise.all([
-      Product.find({
-        isPublished: true,
-        $or: [
-          { uploadedBy: null },
-          { uploadedBy: { $exists: false } },
-          { uploadedBy: { $ne: resellerId }, isShared: true, isApprovedByAdmin: true },
-        ],
-      }).select('_id uploadedBy totalSales').lean(),
+      Product.find(countBaseQuery).select('_id uploadedBy totalSales').lean(),
       ResellerProduct.countDocuments({ resellerId }),
     ]);
 
@@ -232,6 +284,7 @@ export async function GET(request: NextRequest) {
         reseller: resellerCount,
         sourced: sourcedCount,
       },
+      resellers: availableResellers || [],
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
