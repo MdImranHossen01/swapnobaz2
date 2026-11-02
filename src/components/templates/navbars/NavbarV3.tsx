@@ -236,7 +236,7 @@ export default function NavbarV3() {
               </div>
 
               <Link
-                href="/dashboard/wishlist"
+                href="/dashboard/wishlist" prefetch={false}
                 aria-label="Wishlist"
                 className="relative hidden sm:block group hover:scale-110 transition-all"
                 onClick={(e) => {

@@ -444,7 +444,7 @@ export default function NavbarV4() {
 
               {/* Wishlist */}
               <Link
-                href="/dashboard/wishlist"
+                href="/dashboard/wishlist" prefetch={false}
                 className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl transition-all cursor-pointer hover:text-primary hover:scale-110"
                 aria-label="Wishlist"
                 onClick={(e) => {

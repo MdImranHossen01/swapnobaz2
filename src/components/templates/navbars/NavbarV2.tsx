@@ -313,7 +313,7 @@ export default function NavbarV2() {
                 <ModeToggle />
               </div>
 
-              <Link href="/dashboard/wishlist" aria-label="Wishlist">
+              <Link href="/dashboard/wishlist" prefetch={false} aria-label="Wishlist">
                 <Button variant="ghost" size="icon" aria-label="Wishlist" className={`rounded-full relative group ${!isHomePage || isScrolled ? 'text-foreground hover:bg-muted' : 'text-white hover:bg-white/10'}`}>
                   <Heart className={`h-5 w-5 transition-all ${wishlistCount > 0 ? 'fill-primary text-primary' : ((!isHomePage || isScrolled) ? 'group-hover:text-primary' : 'group-hover:text-white')}`} />
                   {wishlistCount > 0 && (

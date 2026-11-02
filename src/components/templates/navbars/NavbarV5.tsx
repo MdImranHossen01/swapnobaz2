@@ -228,7 +228,7 @@ export default function NavbarV5() {
               </div>
 
               <Link
-                href="/dashboard/wishlist"
+                href="/dashboard/wishlist" prefetch={false}
                 className={`relative hidden sm:flex h-12 w-12 rounded-2xl bg-transparent items-center justify-center hover:text-primary hover:scale-110 transition-all ${wishlistCount > 0 ? 'text-primary' : ''}`}
                 aria-label={`Wishlist (${wishlistCount})`}
                 onClick={(e) => {

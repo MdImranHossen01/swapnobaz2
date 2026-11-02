@@ -973,7 +973,7 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                     {!isResellerStore && <BecomeResellerButton className="hidden lg:inline-flex px-4 py-1.5 text-xs whitespace-nowrap" />}
 
                     {/* Wishlist Link */}
-                    <Link href="/dashboard/wishlist" className="relative p-1.5 text-foreground hover:text-primary transition-colors">
+                    <Link href="/dashboard/wishlist" prefetch={false} className="relative p-1.5 text-foreground hover:text-primary transition-colors">
                       <Heart className="h-4 w-4" />
                       {wishlistCount > 0 && (
                         <span className="absolute top-0 right-0 h-3.5 min-w-[14px] px-0.5 bg-primary text-primary-foreground text-[8px] font-black rounded-full flex items-center justify-center animate-bounce shadow-md">
