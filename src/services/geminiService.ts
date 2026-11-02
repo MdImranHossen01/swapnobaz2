@@ -104,7 +104,7 @@ export const getChatResponse = async (
     const selectedGeminiKey = getRandomKey(effectiveGeminiKey);
 
     // Resolve OpenRouter Key (strictly from database configuration)
-    const effectiveOpenRouterKey = openRouterApiKey || "";
+    const effectiveOpenRouterKey = openRouterApiKey || process.env.OPENROUTER_API_KEY || "";
 
     // Filter history to ensure it starts with 'user' or 'model'
     let validHistory = history.filter(msg => msg.role === 'user' || msg.role === 'model');
@@ -136,7 +136,7 @@ export const getChatResponse = async (
             });
 
             // Fast models with official support
-            const fastModels = ["gemini-2.5-flash", "gemini-2.0-flash"];
+            const fastModels = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.5-flash"];
             for (const model of fastModels) {
                 try {
                     const response = await ai.models.generateContent({
@@ -163,45 +163,54 @@ export const getChatResponse = async (
 
     // Second line of defense: OpenRouter Fallback
     if (effectiveOpenRouterKey) {
-        try {
-            console.log("🚀 Falling back to OpenRouter (google/gemini-2.5-flash)...");
-            const messages = [
-                { role: "system", content: SYSTEM_INSTRUCTION },
-                ...validHistory.map(msg => ({
-                    role: msg.role === 'user' ? 'user' : 'assistant',
-                    content: msg.parts
-                })),
-                { role: "user", content: userPromptWithContext }
-            ];
+        const candidateModels = [
+            "openrouter/free",
+            "nvidia/nemotron-3.5-lightning:free",
+            "google/gemini-2.0-flash-001",
+            "google/gemini-2.5-flash"
+        ];
 
-            const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${effectiveOpenRouterKey}`,
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://swapnobaz.com",
-                    "X-Title": "Store AI Assistant"
-                },
-                body: JSON.stringify({
-                    model: "google/gemini-2.5-flash",
-                    messages: messages,
-                    max_tokens: 1500,
-                })
-            });
+        const messages = [
+            { role: "system", content: SYSTEM_INSTRUCTION },
+            ...validHistory.map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'assistant',
+                content: msg.parts
+            })),
+            { role: "user", content: userPromptWithContext }
+        ];
 
-            if (openRouterRes.ok) {
-                const data = await openRouterRes.json();
-                const text = data.choices?.[0]?.message?.content;
-                if (text) {
-                    console.log("✅ OpenRouter fallback successful!");
-                    return text;
+        for (const model of candidateModels) {
+            try {
+                console.log(`🚀 Falling back to OpenRouter (${model})...`);
+                const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${effectiveOpenRouterKey}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://swapnobaz.com",
+                        "X-Title": "Swapnobaz AI Assistant"
+                    },
+                    body: JSON.stringify({
+                        model,
+                        messages,
+                        max_tokens: 1500,
+                    })
+                });
+
+                if (openRouterRes.ok) {
+                    const data = await openRouterRes.json();
+                    const text = data.choices?.[0]?.message?.content;
+                    if (text) {
+                        console.log(`✅ OpenRouter fallback successful with model: ${model}!`);
+                        return text;
+                    }
+                } else {
+                    const errorText = await openRouterRes.text();
+                    console.warn(`⚠️ OpenRouter model ${model} failed (${openRouterRes.status}):`, errorText);
                 }
-            } else {
-                const errorText = await openRouterRes.text();
-                console.error("❌ OpenRouter fallback failed with status:", openRouterRes.status, errorText);
+            } catch (openRouterErr: any) {
+                console.warn(`⚠️ OpenRouter model ${model} encountered an exception:`, openRouterErr.message || openRouterErr);
             }
-        } catch (openRouterErr: any) {
-            console.error("❌ OpenRouter fallback encountered an exception:", openRouterErr.message || openRouterErr);
         }
     }
 
