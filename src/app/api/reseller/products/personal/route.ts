@@ -333,6 +333,28 @@ export async function DELETE(request: NextRequest) {
     }
 
     await Product.deleteOne({ _id: productId });
+
+    // Automatically clean up all product images from Cloudflare R2
+    try {
+      const { deleteMultipleFromR2 } = await import('@/lib/r2');
+      const imagesToDelete: string[] = [];
+      if (Array.isArray(product.images)) {
+        imagesToDelete.push(...product.images);
+      }
+      if ((product as any).image) {
+        imagesToDelete.push((product as any).image);
+      }
+      if (Array.isArray(product.variants)) {
+        product.variants.forEach((v: any) => {
+          if (v?.image) imagesToDelete.push(v.image);
+        });
+      }
+      if (imagesToDelete.length > 0) {
+        await deleteMultipleFromR2(imagesToDelete);
+      }
+    } catch (r2CleanErr) {
+      console.error('Failed to clean up reseller product images from Cloudflare R2:', r2CleanErr);
+    }
     // Only delete the owner's own ResellerProduct record.
     // Other resellers who sourced this product will have their entries
     // automatically hidden via isAvailableOnMother: false (set by unpublishProductFromResellers).
