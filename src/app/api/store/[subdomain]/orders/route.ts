@@ -619,8 +619,8 @@ export async function POST(
         const { sendWebPushNotification } = await import('@/lib/webpush');
         const { createAdminNotification, createNotification } = await import('@/lib/notifications');
         createAdminNotification({
-          title: '🛒 নতুন অর্ডার #' + order.shortId + '! (৳' + calculatedFinalTotal + ')',
-          message: 'রিসেলার: ' + (reseller.storeName || subdomain) + ' — ' + customer.name + ' (' + customer.phone + ')',
+          title: '🛒 New Order #' + order.shortId + ' (৳' + calculatedFinalTotal + ')',
+          message: 'Reseller: ' + (reseller.storeName || subdomain) + ' — ' + customer.name + ' (' + customer.phone + ')',
           type: 'order',
           link: '/admin/orders',
           sendPush: false,
@@ -628,8 +628,8 @@ export async function POST(
         createNotification({
           userId: reseller.userId,
           resellerId: reseller._id,
-          title: '🎉 নতুন অর্ডার #' + order.shortId + '! (৳' + calculatedFinalTotal + ')',
-          message: 'কাস্টমার: ' + customer.name + ' (' + customer.phone + ') • প্রফিট: ৳' + totalCommission,
+          title: '🎉 New Order #' + order.shortId + ' (৳' + calculatedFinalTotal + ')',
+          message: 'Customer: ' + customer.name + ' (' + customer.phone + ') • Profit: ৳' + totalCommission,
           type: 'order',
           link: '/reseller/orders',
           sendPush: false,

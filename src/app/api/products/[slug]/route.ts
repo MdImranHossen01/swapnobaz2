@@ -289,8 +289,8 @@ export async function PUT(
           await createNotification({
             userId: reseller.userId,
             resellerId: reseller._id,
-            title: '🚀 প্রডাক্ট অনুমোদিত হয়েছে!',
-            message: 'আপনার "' + updatedProduct.name + '" প্রডাক্টটি অনুমোদিত হয়েছে এবং স্টোরে লাইভ হয়েছে।',
+            title: '🚀 Product Approved!',
+            message: 'Your product "' + updatedProduct.name + '" has been approved and is now live in store.',
             type: 'product',
             link: '/reseller/products',
             sendPush: true,
