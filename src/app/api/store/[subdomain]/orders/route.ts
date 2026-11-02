@@ -613,6 +613,47 @@ export async function POST(
         console.error('[Sync Error after storefront order creation]', syncErr);
       }
 
+            // Instant Telegram & Web Push Notifications Alert for Reseller Store Order
+      try {
+        const { sendTelegramOrderNotification } = await import('@/lib/telegram');
+        const { sendWebPushNotification } = await import('@/lib/webpush');
+        const itemsForNotification = Array.isArray(validatedItems)
+          ? validatedItems.map((it: any) => ({
+              name: it.name,
+              quantity: it.quantity,
+              price: it.retailPrice || it.price || 0,
+              size: it.size,
+              color: it.color,
+            }))
+          : [];
+        const fullAddressStr = [
+          customer.address,
+          customer.city,
+          customer.district,
+        ].filter(Boolean).join(', ');
+        sendTelegramOrderNotification({
+          orderId: order._id?.toString(),
+          shortId: order.shortId,
+          name: customer.name,
+          phone: customer.phone,
+          address: fullAddressStr,
+          totalAmount: calculatedFinalTotal,
+          deliveryCharge: calculatedDeliveryCharge,
+          paymentMethod: paymentMethod || 'COD',
+          paymentStatus: order.paymentStatus || 'Pending',
+          resellerStoreName: reseller.storeName || subdomain,
+          customerNote: notes,
+          items: itemsForNotification,
+        }).catch(err => console.error('[Reseller Order Telegram Alert Error]', err));
+        sendWebPushNotification({
+          title: '🛒 নতুন অর্ডার #' + order.shortId + '! (৳' + calculatedFinalTotal + ')',
+          body: 'রিসেলার: ' + (reseller.storeName || subdomain) + ' — ' + customer.name + ' (' + customer.phone + ')',
+          url: '/admin/orders',
+        }).catch(err => console.error('[Reseller Order WebPush Alert Error]', err));
+      } catch (notifErr) {
+        console.error('[Reseller Store Order Notification Error]', notifErr);
+      }
+
       return NextResponse.json({
         success: true,
         orderId: order._id,
