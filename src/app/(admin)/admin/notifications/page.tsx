@@ -29,6 +29,7 @@ interface QueueStats {
   pendingOrders: number;
   pendingPayouts: number;
   pendingResellers: number;
+  pendingProducts: number;
   lowStock: number;
   totalQueueActions: number;
 }
@@ -49,6 +50,7 @@ export default function AdminNotificationsPage() {
     pendingOrders: 0,
     pendingPayouts: 0,
     pendingResellers: 0,
+    pendingProducts: 0,
     lowStock: 0,
     totalQueueActions: 0,
   });
@@ -69,6 +71,7 @@ export default function AdminNotificationsPage() {
             pendingOrders: 0,
             pendingPayouts: 0,
             pendingResellers: 0,
+            pendingProducts: 0,
             lowStock: 0,
             totalQueueActions: 0,
           }
@@ -308,15 +311,15 @@ export default function AdminNotificationsPage() {
           <Card className="hover:border-amber-500/50 hover:shadow-md transition-all">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">Low Stock Items</span>
+                <span className="text-xs font-medium text-muted-foreground">Pending Products</span>
                 <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
                   <Package className="h-4 w-4" />
                 </div>
               </div>
               <div className="mt-3 flex items-baseline justify-between">
-                <span className="text-2xl font-black">{queues.lowStock}</span>
+                <span className="text-2xl font-black">{queues.pendingProducts}</span>
                 <span className="text-[11px] text-amber-600 font-semibold group-hover:underline flex items-center gap-0.5">
-                  Inspect <ExternalLink className="h-2.5 w-2.5" />
+                  Approve <ExternalLink className="h-2.5 w-2.5" />
                 </span>
               </div>
             </CardContent>
@@ -332,8 +335,8 @@ export default function AdminNotificationsPage() {
               <strong>Inventory Warning:</strong> {queues.lowStock} products currently have fewer than 5 units left in stock.
             </span>
           </div>
-          <Link href="/admin/products" className="text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline shrink-0">
-            Manage Products &rarr;
+          <Link href="/admin/low-stock" className="text-xs font-bold text-amber-700 dark:text-amber-300 hover:underline shrink-0">
+            Manage Stock &rarr;
           </Link>
         </div>
       )}
