@@ -16,6 +16,7 @@ import ResellerProductDetailsClient from '@/components/reseller/ResellerProductD
 import { ResellerPixels } from '@/components/reseller/ResellerPixels';
 import { ChevronRight } from 'lucide-react';
 import { ProductCard } from '@/components/storefront/ProductCard';
+import { Button } from '@/components/ui/button';
 
 export const dynamic = 'force-dynamic';
 
@@ -404,10 +405,12 @@ export default async function ResellerProductPage({ params, searchParams }: Prop
             <section className="mt-20">
               <div className="flex items-end justify-between mb-8 gap-4">
                 <div>
-                  <h2 className="text-2xl md:text-3xl font-black tracking-tight">আরো পণ্য দেখুন</h2>
-                  <p className="text-muted-foreground mt-1">একই ক্যাটাগরির আরো পণ্য।</p>
+                  <h2 className="text-2xl md:text-3xl font-black tracking-tight">You May Also Like</h2>
+                  <p className="text-muted-foreground mt-1">Similar picks based on this product&apos;s category and tags.</p>
                 </div>
-                <Link href="/shop" className="text-sm font-bold text-primary hover:underline">সব দেখুন →</Link>
+                <Button variant="outline" render={<Link href="/shop" />} nativeButton={false}>
+                  Explore More
+                </Button>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {relatedProducts.map((item: any) => (
