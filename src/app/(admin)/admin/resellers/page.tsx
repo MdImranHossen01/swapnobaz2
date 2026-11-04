@@ -668,10 +668,21 @@ export default function AdminResellersPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="w-[14%] min-w-[120px] align-top py-3">
-                          <div>
-                            <p className="text-sm font-medium truncate" title={r.userId?.name || 'Unknown'}>{r.userId?.name || 'Unknown'}</p>
-                            <p className="text-xs text-muted-foreground truncate" title={r.contact?.phone || r.userId?.email}>{r.contact?.phone || r.userId?.email}</p>
+                        <TableCell className="w-[14%] min-w-[130px] align-top py-3">
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-semibold text-foreground truncate" title={r.userId?.name || r.pickupAddress?.contactPerson || 'Unknown'}>
+                              {r.userId?.name || r.pickupAddress?.contactPerson || 'Unknown'}
+                            </p>
+                            {(r.contact?.phone || r.userId?.phone) && (
+                              <p className="text-xs text-muted-foreground truncate font-medium" title={r.contact?.phone || r.userId?.phone}>
+                                {r.contact?.phone || r.userId?.phone}
+                              </p>
+                            )}
+                            {(r.contact?.email || r.userId?.email) && (
+                              <p className="text-[11px] text-muted-foreground/90 truncate font-mono" title={r.contact?.email || r.userId?.email}>
+                                {r.contact?.email || r.userId?.email}
+                              </p>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="w-[7%] min-w-[60px] text-center align-top py-3">{r.totalOrders || 0}</TableCell>
@@ -842,7 +853,8 @@ export default function AdminResellersPage() {
                             Fee: {r.systemFeePercent !== undefined ? r.systemFeePercent : (r.commissionRate ?? 10)}%
                           </Badge>
                         </div>
-                        <p className="text-[11px] text-muted-foreground">{r.userId?.name || 'Unknown'} • {r.contact?.phone || r.userId?.email}</p>
+                        <p className="text-[11px] text-muted-foreground font-semibold text-foreground">{r.userId?.name || r.pickupAddress?.contactPerson || 'Unknown'}</p>
+                        <p className="text-[10px] text-muted-foreground">{r.contact?.phone || r.userId?.phone || ''} {((r.contact?.phone || r.userId?.phone) && (r.contact?.email || r.userId?.email)) ? '• ' : ''}{r.contact?.email || r.userId?.email || ''}</p>
                         {r.createdAt && (
                           <p className="text-[10px] text-muted-foreground mt-0.5">
                             Date: {new Date(r.createdAt).toLocaleDateString()}
