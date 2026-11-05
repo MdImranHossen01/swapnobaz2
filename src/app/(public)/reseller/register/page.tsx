@@ -133,6 +133,7 @@ export default function ResellerRegisterPage() {
   const subdomainValue = form.watch('subdomain');
   const selectedDivision = form.watch('division');
   const selectedDistrict = form.watch('district');
+  const selectedThana = form.watch('thana');
 
   const availableDistricts = selectedDivision ? getDistrictsByDivision(selectedDivision) : [];
   const availableThanas = selectedDistrict ? getThanasByDistrict(selectedDistrict) : [];
@@ -140,14 +141,22 @@ export default function ResellerRegisterPage() {
   const handleDivisionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     form.setValue('division', val, { shouldValidate: true });
-    form.setValue('district', '', { shouldValidate: true });
-    form.setValue('thana', '', { shouldValidate: true });
+    form.setValue('district', '', { shouldValidate: false });
+    form.setValue('thana', '', { shouldValidate: false });
+    form.clearErrors(['district', 'thana']);
   };
 
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value;
     form.setValue('district', val, { shouldValidate: true });
-    form.setValue('thana', '', { shouldValidate: true });
+    form.setValue('thana', '', { shouldValidate: false });
+    form.clearErrors('thana');
+  };
+
+  const handleThanaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    form.setValue('thana', val, { shouldValidate: true });
+    if (val) form.clearErrors('thana');
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -511,7 +520,8 @@ export default function ResellerRegisterPage() {
                   </label>
                   <div className="relative flex items-center bg-[#07080c] border border-neutral-800 rounded-xl px-4 py-3.5 focus-within:border-[#dfb248] transition-all">
                     <select
-                      {...form.register('thana')}
+                      value={selectedThana}
+                      onChange={handleThanaChange}
                       disabled={!selectedDistrict}
                       className="w-full bg-transparent text-white text-sm md:text-base outline-none appearance-none cursor-pointer font-medium disabled:text-neutral-500 disabled:cursor-not-allowed"
                     >
