@@ -635,6 +635,28 @@ export async function POST(
           link: '/reseller/orders',
           sendPush: false,
         }).catch(err => console.error('[Reseller Order Reseller Log Error]', err));
+
+        // Notify Supplier Resellers (whose uploaded products were ordered on this storefront)
+        if (uploaderItemsMap.size > 0) {
+          let supIdx = 1;
+          for (const [uploaderId, fItems] of uploaderItemsMap.entries()) {
+            const supCommission = fItems.reduce((sum: number, item: any) => sum + (Number(item.purchasePrice) || 0) * item.quantity, 0);
+            const supItemCount = fItems.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 1), 0);
+            const supShortId = `${order.shortId}-F${supIdx}`;
+            Reseller.findById(uploaderId).select('userId').lean().then((supReseller: any) => {
+              createNotification({
+                userId: supReseller?.userId,
+                resellerId: uploaderId,
+                title: `📦 নতুন সাপ্লাই অর্ডার #${supShortId} (পে-আউট: ৳${supCommission})`,
+                message: `আপনার আপলোড করা প্রোডাক্টের ${supItemCount}টি আইটেম অর্ডার হয়েছে • আপনার সাপ্লাই পে-আউট: ৳${supCommission}`,
+                type: 'order',
+                link: '/reseller/orders',
+                sendPush: true,
+              }).catch(err => console.error('[Supplier Reseller Order Notif Error]', err));
+            }).catch(() => {});
+            supIdx++;
+          }
+        }
         const itemsForNotification = Array.isArray(validatedItems)
           ? validatedItems.map((it: any) => ({
               name: it.name,

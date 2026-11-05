@@ -713,6 +713,41 @@ export async function POST(request: NextRequest) {
       console.error('[Sync Error after manual order creation]', syncErr);
     }
 
+    // Notify Admin & Supplier Resellers for Manual Order
+    try {
+      const { createAdminNotification, createNotification } = await import('@/lib/notifications');
+      createAdminNotification({
+        title: `🛒 Manual Order #${shortId} (৳${finalTotal})`,
+        message: `Reseller: ${reseller.storeName} — ${customer.name} (${customerPhone})`,
+        type: 'order',
+        link: '/admin/orders',
+        sendPush: true,
+      }).catch(err => console.error('[Manual Order Admin Notif Error]', err));
+
+      if (uploaderItemsMap.size > 0) {
+        let supIdx = 1;
+        for (const [uploaderId, fItems] of uploaderItemsMap.entries()) {
+          const supCommission = fItems.reduce((sum: number, item: any) => sum + (Number(item.purchasePrice) || 0) * item.quantity, 0);
+          const supItemCount = fItems.reduce((sum: number, item: any) => sum + (Number(item.quantity) || 1), 0);
+          const supShortId = `${shortId}-F${supIdx}`;
+          Reseller.findById(uploaderId).select('userId').lean().then((supReseller: any) => {
+            createNotification({
+              userId: supReseller?.userId,
+              resellerId: uploaderId,
+              title: `📦 নতুন সাপ্লাই অর্ডার #${supShortId} (পে-আউট: ৳${supCommission})`,
+              message: `আপনার আপলোড করা প্রোডাক্টের ${supItemCount}টি আইটেম অর্ডার হয়েছে • আপনার সাপ্লাই পে-আউট: ৳${supCommission}`,
+              type: 'order',
+              link: '/reseller/orders',
+              sendPush: true,
+            }).catch(err => console.error('[Manual Order Supplier Notif Error]', err));
+          }).catch(() => {});
+          supIdx++;
+        }
+      }
+    } catch (notifErr) {
+      console.error('[Manual Order Notif Error]', notifErr);
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Manual order created successfully!',
