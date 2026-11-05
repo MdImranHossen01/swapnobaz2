@@ -529,17 +529,25 @@ export async function PATCH(
 
       await dbSession.commitTransaction();
 
-      // Send Email 2 (Order Confirmed) or Email 3 (Order Delivered) to Customer
+      // Send Email 2 (Order Confirmed) or Email 3 (Order Delivered) to Customer (Strictly ONCE, always under Storefront Seller / Mother Shop identity)
       if (updatedOrder && updateData.status && updateData.status !== order.status) {
-        const customerEmail = updatedOrder.shippingAddress?.email;
-        if (customerEmail && !customerEmail.endsWith('@store.com')) {
+        let customerEmail = updatedOrder.shippingAddress?.email;
+        const isMotherShopOrder = updatedOrder.orderSource === 'mother';
+        const storefrontResellerId = !isMotherShopOrder
+          ? (updatedOrder.storefrontResellerId || updatedOrder.resellerId)
+          : null;
+        if (!customerEmail && (storefrontResellerId || updatedOrder.resellerId)) {
+          const roDoc = await ResellerOrder.findOne({ motherOrderId: updatedOrder._id }).select('customer.email').lean() as any;
+          if (roDoc?.customer?.email) customerEmail = roDoc.customer.email;
+        }
+        if (customerEmail && !customerEmail.endsWith('@store.com') && !customerEmail.endsWith('@guest.com')) {
           try {
             const { sendCustomerOrderConfirmedEmail, sendCustomerOrderDeliveredEmail } = await import('@/lib/mail');
             let storeName: string | undefined;
             let storeUrl: string | undefined;
-            if (updatedOrder.orderSource === 'reseller_storefront' && updatedOrder.storefrontResellerId) {
+            if (storefrontResellerId) {
               const ResellerModel = (await import('@/models/Reseller')).default;
-              const resDoc = await ResellerModel.findById(updatedOrder.storefrontResellerId).select('storeName subdomain customDomain').lean() as any;
+              const resDoc = await ResellerModel.findById(storefrontResellerId).select('storeName subdomain customDomain').lean() as any;
               if (resDoc) {
                 storeName = resDoc.storeName;
                 const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'swapnobaz.com';
