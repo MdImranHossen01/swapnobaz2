@@ -27,7 +27,9 @@ export default async function PublicLayout({ children }: { children: React.React
     console.error('Failed to fetch settings/categories/brands:', error);
   }
 
-  const marqueeText = settings?.marqueeText || `Welcome to ${settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || 'our store'}! Free shipping available.`;
+  const marqueeText = settings?.marqueeText !== undefined
+    ? settings.marqueeText
+    : `Welcome to ${settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || 'our store'}! Free shipping available.`;
   const ui = {
     layout: settings?.uiTemplates?.layout || 'v1',
     navbar: settings?.uiTemplates?.navbar || 'v1',
@@ -36,6 +38,7 @@ export default async function PublicLayout({ children }: { children: React.React
 
   return (
     <>
+      <Marquee marqueeText={marqueeText} />
       <Navbar style={ui.navbar} initialCategories={initialCategories} initialBrands={initialBrands} />
       <main className="flex-1">{children}</main>
       <div className="pb-16 md:pb-0">

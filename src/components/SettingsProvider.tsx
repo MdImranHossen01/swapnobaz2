@@ -7,6 +7,7 @@ interface SettingsContextType {
   brandName?: string;
   siteDescription?: string;
   logoUrl?: string;
+  marqueeText?: string;
   socialLinks?: {
     facebook?: string;
     twitter?: string;
