@@ -24,6 +24,7 @@ import {
   LogOut,
 } from "lucide-react"
 import { Logo } from "@/components/ui/logo"
+import { useSettings } from "@/components/SettingsProvider"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import {
@@ -589,17 +590,33 @@ function NavMainWithSearchParams({
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { brandName } = useSettings()
   const role = (session?.user as any)?.role
   const user = session?.user
+
+  const rawBrand = (brandName || process.env.NEXT_PUBLIC_STORE_NAME || "SWAPNOBAZ").trim()
+  const upperBrand = rawBrand.toUpperCase()
+
+  const brandDisplay = upperBrand.endsWith("BAZ") ? (
+    <>
+      <span className="text-white group-hover:text-white">{upperBrand.slice(0, -3)}</span>
+      <span className="text-primary group-hover:text-primary">BAZ</span>
+    </>
+  ) : (
+    <span className="text-white group-hover:text-white">{upperBrand}</span>
+  )
 
   return (
     <Sidebar {...props} className="border-r border-slate-800/80 bg-[#0a152e] text-slate-100">
       <SidebarHeader className="border-b border-slate-800/80 h-14 px-3 flex flex-row items-center justify-center bg-[#0a152e]">
         <Logo
+          href="/admin/dashboard"
           className="flex items-center justify-center gap-2.5 w-full mx-auto"
-          imageClassName="!size-7 shrink-0 rounded-md"
-          textClassName="!text-xs md:!text-sm font-black tracking-tight text-white truncate max-w-[170px] group-data-[collapsible=icon]:hidden"
-        />
+          imageClassName="!size-8 shrink-0 rounded-md"
+          textClassName="!text-lg md:!text-xl font-black tracking-tight font-logo truncate max-w-[190px] group-data-[collapsible=icon]:hidden"
+        >
+          {brandDisplay}
+        </Logo>
       </SidebarHeader>
 
       <SidebarContent className="gap-0 bg-[#0a152e] scrollbar-thin scrollbar-thumb-slate-800">
