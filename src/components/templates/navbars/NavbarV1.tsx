@@ -19,6 +19,8 @@ import {
   Package,
   Truck,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   X,
   Sparkles,
   Store
@@ -214,10 +216,157 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
     return catObj.parentCategory;
   };
 
-  // Reverse the main categories so they appear in chronological order (Women, Men, Kids', Home Décor...)
-  const mainCategories = categories.filter(c => !getParentId(c)).reverse();
-  const visibleMainCategories = mainCategories.slice(0, 8);
-  const moreMainCategories = mainCategories.slice(8);
+  // Master category slug order matching category.md (01 to 10)
+  const MASTER_CATEGORY_ORDER = [
+    'fashion-wear-lifestyle',
+    'electronics-gadgets',
+    'health-beauty',
+    'home-decor-living',
+    'sports-fitness',
+    'gifts-promotional-items',
+    'land-housing',
+    'automotive-bike-accessories',
+    'travel-outdoor',
+    'organic-foods',
+  ];
+
+  // Map of full category names to clean, compact navbar display labels
+  const getCategoryShortName = (name: string) => {
+    const map: Record<string, string> = {
+      'Fashion Wear & Lifestyle': 'Fashion Wear',
+      'Electronics & Gadgets': 'Electronics',
+      'Health & Beauty': 'Health & Beauty',
+      'Home Decor & Living': 'Home Decor',
+      'Sports & Fitness': 'Sports & Fitness',
+      'Gifts & Promotional Items': 'Gifts & Crafts',
+      'Land & Housing': 'Real Estate',
+      'Automotive & Bike Accessories': 'Automotive',
+      'Travel & Outdoor': 'Travel & Outdoor',
+      'Organic Foods': 'Organic Foods',
+    };
+    return map[name] || name;
+  };
+
+  // Master category order sorted strictly according to MASTER_CATEGORY_ORDER
+  const mainCategories = categories
+    .filter(c => !getParentId(c))
+    .sort((a, b) => {
+      const idxA = MASTER_CATEGORY_ORDER.indexOf(a.slug);
+      const idxB = MASTER_CATEGORY_ORDER.indexOf(b.slug);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return 0;
+    });
+
+  // Sticky Mode Scroll Strip Logic (Arrows + Drag to scroll)
+  const stickyNavRef = useRef<HTMLDivElement>(null);
+  const [canStickyScrollLeft, setCanStickyScrollLeft] = useState(false);
+  const [canStickyScrollRight, setCanStickyScrollRight] = useState(false);
+  const [isStickyDragging, setIsStickyDragging] = useState(false);
+  const [stickyDragStartX, setStickyDragStartX] = useState(0);
+  const [stickyDragScrollLeft, setStickyDragScrollLeft] = useState(0);
+
+  const checkStickyScroll = () => {
+    if (stickyNavRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = stickyNavRef.current;
+      setCanStickyScrollLeft(scrollLeft > 10);
+      setCanStickyScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(checkStickyScroll, 200);
+    window.addEventListener('resize', checkStickyScroll);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkStickyScroll);
+    };
+  }, [mainCategories]);
+
+  const handleStickyScroll = (direction: 'left' | 'right') => {
+    if (stickyNavRef.current) {
+      const offset = direction === 'left' ? -220 : 220;
+      stickyNavRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+      setTimeout(checkStickyScroll, 300);
+    }
+  };
+
+  const handleStickyMouseDown = (e: React.MouseEvent) => {
+    if (!stickyNavRef.current) return;
+    setIsStickyDragging(true);
+    setStickyDragStartX(e.pageX - stickyNavRef.current.offsetLeft);
+    setStickyDragScrollLeft(stickyNavRef.current.scrollLeft);
+  };
+
+  const handleStickyMouseLeaveOrUp = () => {
+    setIsStickyDragging(false);
+  };
+
+  const handleStickyMouseMove = (e: React.MouseEvent) => {
+    if (!isStickyDragging || !stickyNavRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - stickyNavRef.current.offsetLeft;
+    const walk = (x - stickyDragStartX) * 1.5;
+    stickyNavRef.current.scrollLeft = stickyDragScrollLeft - walk;
+    checkStickyScroll();
+  };
+
+  // Row 2 Category Scroll Strip Logic (Arrows + Drag to scroll)
+  const row2NavRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [dragScrollLeft, setDragScrollLeft] = useState(0);
+
+  const checkRow2Scroll = () => {
+    if (row2NavRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = row2NavRef.current;
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkRow2Scroll();
+    const t1 = setTimeout(checkRow2Scroll, 100);
+    const t2 = setTimeout(checkRow2Scroll, 400);
+    window.addEventListener('resize', checkRow2Scroll);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      window.removeEventListener('resize', checkRow2Scroll);
+    };
+  }, [mainCategories]);
+
+  const handleRow2Scroll = (direction: 'left' | 'right') => {
+    if (row2NavRef.current) {
+      const offset = direction === 'left' ? -240 : 240;
+      row2NavRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+      setTimeout(checkRow2Scroll, 300);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!row2NavRef.current) return;
+    setIsDragging(true);
+    setDragStartX(e.pageX - row2NavRef.current.offsetLeft);
+    setDragScrollLeft(row2NavRef.current.scrollLeft);
+  };
+
+  const handleMouseLeaveOrUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !row2NavRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - row2NavRef.current.offsetLeft;
+    const walk = (x - dragStartX) * 1.5;
+    row2NavRef.current.scrollLeft = dragScrollLeft - walk;
+    checkRow2Scroll();
+  };
 
   const getSubcategories = (catId: string) => {
     return categories.filter(c => getParentId(c) === catId);
@@ -509,132 +658,78 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                 </Link>
               </div>
 
-              {/* Center: Category Navigation Menu Tabs */}
-              <div className="flex-1 flex justify-center min-w-0">
-                <nav className="flex items-center gap-3.5 xl:gap-4 flex-nowrap">
-                  {/* 1. Main Categories (First 8) */}
-                  {visibleMainCategories.map((cat) => {
-                    const subs = getSubcategories(cat._id);
-                    return (
-                      <div
-                        key={cat._id}
-                        className="py-1"
-                        onMouseEnter={() => handleMegaMenuEnter(cat._id)}
-                        onMouseLeave={handleMegaMenuLeave}
-                      >
-                        <Link
-                          href={`/shop?category=${cat.slug}`}
-                          onClick={handleCloseMegaMenu}
-                          className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.1em] text-foreground/85 hover:text-primary transition-colors flex items-center whitespace-nowrap"
-                        >
-                          {cat.name}
-                        </Link>
-
-                        {/* Mega Menu Dropdown */}
-                        {subs.length > 0 && megaMenuHovered === cat._id && (
-                          <div
-                            onMouseEnter={() => handleMegaMenuEnter(cat._id)}
-                            onMouseLeave={handleMegaMenuLeave}
-                            className="absolute top-full left-0 right-0 w-full bg-background border-t border-b border-border shadow-2xl rounded-none p-6 flex gap-6 animate-in fade-in slide-in-from-top-2 duration-200 z-50 before:content-[''] before:absolute before:-top-4 before:left-0 before:right-0 before:h-4"
-                          >
-                            {/* Subcategories columns */}
-                            <div className="flex-1 grid grid-cols-4 gap-6 max-h-[400px] overflow-y-auto pr-2">
-                              {subs.map((sub) => {
-                                const children = getChildren(sub._id);
-                                return (
-                                  <div key={sub._id} className="space-y-2">
-                                    <Link
-                                      href={`/shop?category=${sub.slug}`}
-                                      onClick={handleCloseMegaMenu}
-                                      className="text-xs font-semibold uppercase tracking-wider text-foreground hover:text-primary transition-colors block pb-1 border-b border-border/40"
-                                    >
-                                      {sub.name}
-                                    </Link>
-                                    {children.length > 0 && (
-                                      <div className="flex flex-col gap-1">
-                                        {children.map((child) => (
-                                          <Link
-                                            key={child._id}
-                                            href={`/shop?category=${child.slug}`}
-                                            onClick={handleCloseMegaMenu}
-                                            className="text-[12px] font-normal text-muted-foreground hover:text-primary transition-colors block py-0.5"
-                                          >
-                                            {child.name}
-                                          </Link>
-                                        ))}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            {/* Right part: Category Banner Image */}
-                            {cat.image && (
-                              <div className="w-[200px] h-[280px] relative hidden xl:block flex-shrink-0 bg-muted">
-                                <Image
-                                  src={cat.image}
-                                  alt={cat.name}
-                                  fill
-                                  sizes="200px"
-                                  className="object-cover"
-                                  priority
-                                />
-                                <div className="absolute inset-0 bg-black/10 hover:bg-black/0 transition-colors duration-300" />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {/* 2. More Categories Dropdown (Visible only when categories > 8) */}
-                  {moreMainCategories.length > 0 && (
-                    <div
-                      className="py-1 relative group/more"
-                      onMouseEnter={() => handleMegaMenuEnter('more_categories')}
-                      onMouseLeave={handleMegaMenuLeave}
+              {/* Center: Category Navigation Menu Slider + Pinned (Brand, Shop) */}
+              <div className="flex-1 flex items-center min-w-0 px-2 gap-2 overflow-hidden">
+                {/* Left: Scrollable Category Strip with Left & Right arrows */}
+                <div className="relative flex-1 flex items-center min-w-0 group/stickyscroll">
+                  {/* Left Scroll Arrow */}
+                  {canStickyScrollLeft && (
+                    <button
+                      type="button"
+                      onClick={() => handleStickyScroll('left')}
+                      aria-label="Previous categories"
+                      className="shrink-0 h-6 w-5 bg-muted/60 hover:bg-muted text-foreground/80 hover:text-primary rounded flex items-center justify-center transition-all cursor-pointer mr-1 shadow-sm border border-border/40 z-10"
                     >
-                      <button
-                        type="button"
-                        className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
-                      >
-                        More <ChevronDown className="h-3 w-3 transition-transform group-hover/more:rotate-180" />
-                      </button>
-
-                      {megaMenuHovered === 'more_categories' && (
-                        <div
-                          onMouseEnter={() => handleMegaMenuEnter('more_categories')}
-                          onMouseLeave={handleMegaMenuLeave}
-                          className="absolute top-full right-0 mt-1 w-64 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
-                        >
-                          {moreMainCategories.map((mCat) => (
-                            <Link
-                              key={mCat._id}
-                              href={`/shop?category=${mCat.slug}`}
-                              onClick={handleCloseMegaMenu}
-                              className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-muted/60 hover:text-primary rounded-lg transition-colors flex items-center justify-between"
-                            >
-                              <span>{mCat.name}</span>
-                              <span className="text-[10px] text-muted-foreground font-normal">Explore →</span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    </button>
                   )}
 
-                  {/* 3. Brands Tab with Dropdown */}
+                  {/* Scrollable Container with Drag Support */}
                   <div
-                    className="py-1 relative group/brand"
+                    ref={stickyNavRef}
+                    onScroll={checkStickyScroll}
+                    onMouseDown={handleStickyMouseDown}
+                    onMouseLeave={handleStickyMouseLeaveOrUp}
+                    onMouseUp={handleStickyMouseLeaveOrUp}
+                    onMouseMove={handleStickyMouseMove}
+                    className="flex-1 overflow-x-auto scroll-smooth min-w-0 select-none"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  >
+                    <nav className="flex items-center gap-0.5 xl:gap-1 flex-nowrap w-max py-0.5 px-0.5">
+                      {mainCategories.map((cat) => (
+                        <div
+                          key={cat._id}
+                          className="py-1 shrink-0"
+                          onMouseEnter={() => handleMegaMenuEnter(cat._id)}
+                          onMouseLeave={handleMegaMenuLeave}
+                        >
+                          <Link
+                            href={`/shop?category=${cat.slug}`}
+                            onClick={handleCloseMegaMenu}
+                            className="text-[12px] xl:text-[13px] font-medium uppercase tracking-tight text-foreground/85 hover:text-primary transition-colors flex items-center whitespace-nowrap py-0.5 px-1.5 rounded-md hover:bg-muted/40 cursor-pointer"
+                          >
+                            {getCategoryShortName(cat.name)}
+                          </Link>
+                        </div>
+                      ))}
+                    </nav>
+                  </div>
+
+                  {/* Right Scroll Arrow */}
+                  {canStickyScrollRight && (
+                    <button
+                      type="button"
+                      onClick={() => handleStickyScroll('right')}
+                      aria-label="Next categories"
+                      className="shrink-0 h-6 w-5 bg-muted/60 hover:bg-muted text-foreground/80 hover:text-primary rounded flex items-center justify-center transition-all cursor-pointer ml-1 shadow-sm border border-border/40 z-10"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Right: Pinned Fixed Actions (Brand & Shop) */}
+                <div className="flex items-center gap-1 shrink-0 border-l border-border/20 pl-2">
+                  {/* Brand Tab */}
+                  <div
+                    className="py-1 relative group/brand shrink-0"
                     onMouseEnter={() => handleMegaMenuEnter('brands_menu')}
                     onMouseLeave={handleMegaMenuLeave}
                   >
                     <Link
                       href="/shop"
                       onClick={handleCloseMegaMenu}
-                      className="text-[12px] xl:text-[13px] font-semibold uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap"
+                      className="text-[12px] xl:text-[13px] font-semibold uppercase tracking-tight text-foreground/85 hover:text-primary transition-colors flex items-center gap-0.5 whitespace-nowrap py-0.5 px-1.5 rounded-md hover:bg-muted/40 cursor-pointer"
                     >
                       Brand <ChevronDown className="h-3 w-3 transition-transform group-hover/brand:rotate-180" />
                     </Link>
@@ -643,7 +738,7 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                       <div
                         onMouseEnter={() => handleMegaMenuEnter('brands_menu')}
                         onMouseLeave={handleMegaMenuLeave}
-                        className="absolute top-full left-0 mt-1 w-60 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150 max-h-72 overflow-y-auto"
+                        className="absolute top-full right-0 mt-1 w-60 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150 max-h-72 overflow-y-auto"
                       >
                         <div className="text-[10px] font-bold text-muted-foreground uppercase px-2 py-1 border-b border-border/50 mb-1">
                           Popular Brands
@@ -669,17 +764,17 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                     )}
                   </div>
 
-                  {/* 4. Shop Tab */}
-                  <div className="py-1">
+                  {/* Shop Tab */}
+                  <div className="py-1 shrink-0">
                     <Link
                       href="/shop"
                       onClick={handleCloseMegaMenu}
-                      className={`text-[12px] xl:text-[13px] font-semibold uppercase tracking-[0.14em] transition-colors flex items-center whitespace-nowrap ${pathname === '/shop' ? 'text-primary' : 'text-foreground/85 hover:text-primary'}`}
+                      className={`text-[12px] xl:text-[13px] font-semibold uppercase tracking-tight transition-colors flex items-center whitespace-nowrap py-0.5 px-1.5 rounded-md hover:bg-muted/40 ${pathname === '/shop' ? 'text-primary font-bold' : 'text-foreground/85 hover:text-primary'}`}
                     >
                       Shop
                     </Link>
                   </div>
-                </nav>
+                </div>
               </div>
 
               {/* Right: Utilities */}
@@ -875,10 +970,10 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
             </div>
           ) : (
             /* 2-Row Default Desktop Layout */
-            <div className="hidden lg:flex gap-3 items-center">
+            <div className="hidden lg:flex gap-1.5 xl:gap-2 items-center w-full min-w-0">
 
               {/* Logo Image Column */}
-              <div className="flex items-center justify-center border-r border-border/10 pr-3 shrink-0">
+              <div className="flex items-center justify-center border-r border-border/10 pr-1.5 shrink-0">
                 <Link href="/" className="relative block w-[64px] h-[64px] transition-transform hover:scale-105">
                   <Image
                     src={settings.logoUrl || "/logo.webp"}
@@ -892,7 +987,7 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
               </div>
 
               {/* Content Column (Row 1 and Row 2) */}
-              <div className="flex-1 flex flex-col justify-center gap-1">
+              <div className="flex-1 flex flex-col justify-center gap-1 min-w-0">
 
                 {/* Row 1: Logo Brand Name, Sub-Brands, Utilities */}
                 <div className="flex items-center justify-between w-full border-b border-border/10 pb-1 gap-4">
@@ -1118,132 +1213,78 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                   </div>
                 </div>
 
-                {/* Row 2: Category Navigation Menu */}
-                <div className="flex pt-0.5 pb-0.5">
-                  <nav className="flex items-center gap-3.5 xl:gap-4 flex-nowrap">
-                    {/* 1. Main Categories (First 8) */}
-                    {visibleMainCategories.map((cat) => {
-                      const subs = getSubcategories(cat._id);
-                      return (
-                        <div
-                          key={cat._id}
-                          className="py-1"
-                          onMouseEnter={() => handleMegaMenuEnter(cat._id)}
-                          onMouseLeave={handleMegaMenuLeave}
-                        >
-                          <Link
-                            href={`/shop?category=${cat.slug}`}
-                            onClick={handleCloseMegaMenu}
-                            className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.1em] text-foreground/85 hover:text-primary transition-colors flex items-center whitespace-nowrap"
-                          >
-                            {cat.name}
-                          </Link>
-
-                          {/* Mega Menu Dropdown */}
-                          {subs.length > 0 && megaMenuHovered === cat._id && (
-                            <div
-                              onMouseEnter={() => handleMegaMenuEnter(cat._id)}
-                              onMouseLeave={handleMegaMenuLeave}
-                              className="absolute top-full left-0 right-0 w-full bg-background border-t border-b border-border shadow-2xl rounded-none p-6 flex gap-6 animate-in fade-in slide-in-from-top-2 duration-200 z-50 before:content-[''] before:absolute before:-top-4 before:left-0 before:right-0 before:h-4"
-                            >
-                              {/* Subcategories columns (Left part) */}
-                              <div className="flex-1 grid grid-cols-4 gap-6 max-h-[400px] overflow-y-auto pr-2">
-                                {subs.map((sub) => {
-                                  const children = getChildren(sub._id);
-                                  return (
-                                    <div key={sub._id} className="space-y-2">
-                                      <Link
-                                        href={`/shop?category=${sub.slug}`}
-                                        onClick={handleCloseMegaMenu}
-                                        className="text-xs font-semibold uppercase tracking-wider text-foreground hover:text-primary transition-colors block pb-1 border-b border-border/40"
-                                      >
-                                        {sub.name}
-                                      </Link>
-                                      {children.length > 0 && (
-                                        <div className="flex flex-col gap-1">
-                                          {children.map((child) => (
-                                            <Link
-                                              key={child._id}
-                                              href={`/shop?category=${child.slug}`}
-                                              onClick={handleCloseMegaMenu}
-                                              className="text-[12px] font-normal text-muted-foreground hover:text-primary transition-colors block py-0.5"
-                                            >
-                                              {child.name}
-                                            </Link>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Right part: Category Banner Image (like Aarong) */}
-                              {cat.image && (
-                                <div className="w-[200px] h-[280px] relative hidden xl:block flex-shrink-0 bg-muted">
-                                  <Image
-                                    src={cat.image}
-                                    alt={cat.name}
-                                    fill
-                                    sizes="200px"
-                                    className="object-cover"
-                                    priority
-                                  />
-                                  <div className="absolute inset-0 bg-black/10 hover:bg-black/0 transition-colors duration-300" />
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    {/* 2. More Categories Dropdown (Visible only when categories > 8) */}
-                    {moreMainCategories.length > 0 && (
-                      <div
-                        className="py-1 relative group/more"
-                        onMouseEnter={() => handleMegaMenuEnter('more_categories')}
-                        onMouseLeave={handleMegaMenuLeave}
+                {/* Row 2: Category Slider (Full available width, arrows for overflow) + Brand & Shop */}
+                <div className="flex items-center justify-between w-full min-w-0 pt-0.5 pb-0.5 gap-2">
+                  {/* Category Slider Container: Takes full available space */}
+                  <div className="relative flex-1 flex items-center min-w-0">
+                    {/* Left Scroll Arrow */}
+                    {canScrollLeft && (
+                      <button
+                        type="button"
+                        onClick={() => handleRow2Scroll('left')}
+                        aria-label="Previous categories"
+                        className="shrink-0 h-6 w-5 bg-muted/60 hover:bg-muted text-foreground/80 hover:text-primary rounded flex items-center justify-center transition-all cursor-pointer mr-1 shadow-sm border border-border/40 z-10"
                       >
-                        <button
-                          type="button"
-                          className="text-[12px] xl:text-[13px] font-medium uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
-                        >
-                          More <ChevronDown className="h-3 w-3 transition-transform group-hover/more:rotate-180" />
-                        </button>
-
-                        {megaMenuHovered === 'more_categories' && (
-                          <div
-                            onMouseEnter={() => handleMegaMenuEnter('more_categories')}
-                            onMouseLeave={handleMegaMenuLeave}
-                            className="absolute top-full right-0 mt-1 w-64 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150"
-                          >
-                            {moreMainCategories.map((mCat) => (
-                              <Link
-                                key={mCat._id}
-                                href={`/shop?category=${mCat.slug}`}
-                                onClick={handleCloseMegaMenu}
-                                className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-muted/60 hover:text-primary rounded-lg transition-colors flex items-center justify-between"
-                              >
-                                <span>{mCat.name}</span>
-                                <span className="text-[10px] text-muted-foreground font-normal">Explore →</span>
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
                     )}
 
-                    {/* 3. Brands Tab with Dropdown */}
+                    {/* Scrollable Container with Drag Support */}
                     <div
-                      className="py-1 relative group/brand"
+                      ref={row2NavRef}
+                      onScroll={checkRow2Scroll}
+                      onMouseDown={handleMouseDown}
+                      onMouseLeave={handleMouseLeaveOrUp}
+                      onMouseUp={handleMouseLeaveOrUp}
+                      onMouseMove={handleMouseMove}
+                      className="flex-1 overflow-x-auto scroll-smooth min-w-0 select-none"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                      <nav className="flex items-center gap-0.5 xl:gap-1 flex-nowrap w-max py-0.5 px-0.5">
+                        {mainCategories.map((cat) => (
+                          <div
+                            key={cat._id}
+                            className="py-1 shrink-0"
+                            onMouseEnter={() => handleMegaMenuEnter(cat._id)}
+                            onMouseLeave={handleMegaMenuLeave}
+                          >
+                            <Link
+                              href={`/shop?category=${cat.slug}`}
+                              onClick={handleCloseMegaMenu}
+                              className="text-[12px] xl:text-[13px] font-medium uppercase tracking-tight text-foreground/85 hover:text-primary transition-colors flex items-center whitespace-nowrap py-0.5 px-1.5 rounded-md hover:bg-muted/40 cursor-pointer"
+                            >
+                              {getCategoryShortName(cat.name)}
+                            </Link>
+                          </div>
+                        ))}
+                      </nav>
+                    </div>
+
+                    {/* Right Scroll Arrow */}
+                    {canScrollRight && (
+                      <button
+                        type="button"
+                        onClick={() => handleRow2Scroll('right')}
+                        aria-label="Next categories"
+                        className="shrink-0 h-6 w-5 bg-muted/60 hover:bg-muted text-foreground/80 hover:text-primary rounded flex items-center justify-center transition-all cursor-pointer ml-1 shadow-sm border border-border/40 z-10"
+                      >
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Brand & Shop Tabs pinned right after slider */}
+                  <div className="flex items-center gap-1 xl:gap-1.5 shrink-0 border-l border-border/20 pl-2">
+                    {/* Brand Tab */}
+                    <div
+                      className="py-1 relative group/brand shrink-0"
                       onMouseEnter={() => handleMegaMenuEnter('brands_menu')}
                       onMouseLeave={handleMegaMenuLeave}
                     >
                       <Link
                         href="/shop"
                         onClick={handleCloseMegaMenu}
-                        className="text-[12px] xl:text-[13px] font-semibold uppercase tracking-[0.14em] text-foreground/85 hover:text-primary transition-colors flex items-center gap-1 whitespace-nowrap"
+                        className="text-[12px] xl:text-[13px] font-semibold uppercase tracking-tight text-foreground/85 hover:text-primary transition-colors flex items-center gap-0.5 whitespace-nowrap py-0.5 px-1.5 rounded-md hover:bg-muted/40 cursor-pointer"
                       >
                         Brand <ChevronDown className="h-3 w-3 transition-transform group-hover/brand:rotate-180" />
                       </Link>
@@ -1252,7 +1293,7 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                         <div
                           onMouseEnter={() => handleMegaMenuEnter('brands_menu')}
                           onMouseLeave={handleMegaMenuLeave}
-                          className="absolute top-full left-0 mt-1 w-60 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150 max-h-72 overflow-y-auto"
+                          className="absolute top-full right-0 mt-1 w-60 bg-background border border-border shadow-2xl rounded-xl p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-1 duration-150 max-h-72 overflow-y-auto"
                         >
                           <div className="text-[10px] font-bold text-muted-foreground uppercase px-2 py-1 border-b border-border/50 mb-1">
                             Popular Brands
@@ -1278,18 +1319,82 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                       )}
                     </div>
 
-                    {/* 4. Shop Tab */}
-                    <div className="py-1">
+                    {/* Shop Tab */}
+                    <div className="py-1 shrink-0">
                       <Link
                         href="/shop"
                         onClick={handleCloseMegaMenu}
-                        className={`text-[12px] xl:text-[13px] font-semibold uppercase tracking-[0.14em] transition-colors flex items-center whitespace-nowrap ${pathname === '/shop' ? 'text-primary' : 'text-foreground/85 hover:text-primary'}`}
+                        className={`text-[12px] xl:text-[13px] font-semibold uppercase tracking-tight transition-colors flex items-center whitespace-nowrap py-0.5 px-1.5 rounded-md hover:bg-muted/40 ${pathname === '/shop' ? 'text-primary font-bold' : 'text-foreground/85 hover:text-primary'}`}
                       >
                         Shop
                       </Link>
                     </div>
-                  </nav>
+                  </div>
                 </div>
+
+                {/* Active Category Mega Menu Dropdown */}
+                {(() => {
+                  const activeCat = mainCategories.find(c => c._id === megaMenuHovered);
+                  if (!activeCat) return null;
+                  const subs = getSubcategories(activeCat._id);
+                  if (subs.length === 0) return null;
+
+                  return (
+                    <div
+                      onMouseEnter={() => handleMegaMenuEnter(activeCat._id)}
+                      onMouseLeave={handleMegaMenuLeave}
+                      className="absolute top-full left-0 right-0 w-full bg-background border-t border-b border-border shadow-2xl rounded-none p-6 flex gap-6 animate-in fade-in slide-in-from-top-2 duration-200 z-50 before:content-[''] before:absolute before:-top-4 before:left-0 before:right-0 before:h-4"
+                    >
+                      {/* Subcategories columns (Left part) */}
+                      <div className="flex-1 grid grid-cols-4 gap-6 max-h-[400px] overflow-y-auto pr-2">
+                        {subs.map((sub) => {
+                          const children = getChildren(sub._id);
+                          return (
+                            <div key={sub._id} className="space-y-2">
+                              <Link
+                                href={`/shop?category=${sub.slug}`}
+                                onClick={handleCloseMegaMenu}
+                                className="text-xs font-semibold uppercase tracking-wider text-foreground hover:text-primary transition-colors block pb-1 border-b border-border/40"
+                              >
+                                {sub.name}
+                              </Link>
+                              {children.length > 0 && (
+                                <div className="flex flex-col gap-1">
+                                  {children.map((child) => (
+                                    <Link
+                                      key={child._id}
+                                      href={`/shop?category=${child.slug}`}
+                                      onClick={handleCloseMegaMenu}
+                                      className="text-[12px] font-normal text-muted-foreground hover:text-primary transition-colors block py-0.5"
+                                    >
+                                      {child.name}
+                                    </Link>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Right part: Category Banner Image (like Aarong) */}
+                      {activeCat.image && (
+                        <div className="w-[200px] h-[280px] relative hidden xl:block flex-shrink-0 bg-muted">
+                          <Image
+                            src={activeCat.image}
+                            alt={activeCat.name}
+                            fill
+                            sizes="200px"
+                            className="object-cover"
+                            priority
+                          />
+                          <div className="absolute inset-0 bg-black/10 hover:bg-black/0 transition-colors duration-300" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
 
               </div>
 
