@@ -610,7 +610,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props} className="border-r border-slate-800/80 bg-[#0a152e] text-slate-100">
       <SidebarHeader className="border-b border-slate-800/80 h-14 px-3 flex flex-row items-center justify-center bg-[#0a152e]">
         <Logo
-          href="/admin/dashboard"
+          href="/"
           className="flex items-center justify-center gap-2.5 w-full mx-auto"
           imageClassName="!size-8 shrink-0 rounded-md"
           textClassName="!text-lg md:!text-xl font-black tracking-tight font-logo truncate max-w-[190px] group-data-[collapsible=icon]:hidden"
