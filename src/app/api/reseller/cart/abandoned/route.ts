@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       ).lean();
 
       const placedPhones = new Set<string>();
-      placedOrders.forEach(o => {
+      placedOrders.forEach((o: any) => {
         const p = (o.customer?.phone || '').replace(/\s+/g, '');
         if (p) {
           placedPhones.add(p);
