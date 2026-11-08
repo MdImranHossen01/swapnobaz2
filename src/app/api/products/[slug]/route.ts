@@ -244,8 +244,9 @@ export async function PUT(
           // Trigger sync to reseller storefronts
           await triggerResellerSyncBestEffort(updatedProduct._id.toString());
 
-          revalidateTag(CACHE_TAGS.products, 'max');
+          revalidateTag(CACHE_TAGS.products, { expire: 0 });
           revalidatePath('/');
+          revalidatePath('/shop');
           return NextResponse.json(updatedProduct);
         } catch (error: any) {
           lastError = error;
@@ -301,7 +302,9 @@ export async function PUT(
       }
     }
 
-    revalidateTag('products', 'max');
+    revalidateTag('products', { expire: 0 });
+    revalidatePath('/');
+    revalidatePath('/shop');
 
     return NextResponse.json(updatedProduct);
   } catch (error) {
@@ -400,7 +403,9 @@ export async function DELETE(
     }
 
     try {
-      await revalidateTag(CACHE_TAGS.products, 'max');
+      revalidateTag(CACHE_TAGS.products, { expire: 0 });
+      revalidatePath('/');
+      revalidatePath('/shop');
     } catch (revalidateError) {
       console.error('Failed to revalidate product tags:', revalidateError);
     }

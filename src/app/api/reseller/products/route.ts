@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag, revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import dbConnect from '@/lib/db';
 import Reseller from '@/models/Reseller';
@@ -380,6 +381,10 @@ export async function PATCH(request: NextRequest) {
       { upsert: true, new: true }
     );
 
+    revalidateTag('products', { expire: 0 });
+    revalidatePath('/');
+    revalidatePath('/shop');
+
     return NextResponse.json({ product });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -492,6 +497,10 @@ export async function DELETE(request: NextRequest) {
     } catch (r2CleanErr) {
       console.error('Failed to clean up reseller product images from Cloudflare R2:', r2CleanErr);
     }
+
+    revalidateTag('products', { expire: 0 });
+    revalidatePath('/');
+    revalidatePath('/shop');
 
     return NextResponse.json({
       success: true,

@@ -326,8 +326,9 @@ export async function POST(req: NextRequest) {
           videoUrl: videoUrl ? String(videoUrl).trim() : undefined,
         });
 
-        revalidateTag('products', 'max');
+        revalidateTag('products', { expire: 0 });
         revalidatePath('/');
+        revalidatePath('/shop');
         return NextResponse.json(newProduct, { status: 201 });
       } catch (error: any) {
         lastError = error;
@@ -479,7 +480,7 @@ export async function DELETE(req: NextRequest) {
       }
     }
 
-    revalidateTag('products', 'max');
+    revalidateTag('products', { expire: 0 });
     revalidatePath('/');
     revalidatePath('/shop');
 
