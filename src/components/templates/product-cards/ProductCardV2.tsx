@@ -83,8 +83,7 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
   const [isHovered, setIsHovered] = useState(false);
   const quickAddRef = useRef<HTMLButtonElement>(null);
 
-  const hasDiscount = Boolean(product.salePrice && product.price && product.salePrice > 0 && product.salePrice < product.price);
-  const discount = hasDiscount
+  const discount = hasDiscount && product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
@@ -290,7 +289,7 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
 
         <div className="flex items-center gap-3">
           <span className="text-xl font-black text-[#00a870]">
-            ৳{Math.round(hasDiscount ? product.salePrice : (product.price || 0))}
+            ৳{Math.round(hasDiscount && product.salePrice ? product.salePrice : (product.price || 0))}
           </span>
           {hasDiscount && (
             <span className="text-sm text-muted-foreground line-through decoration-primary/20">

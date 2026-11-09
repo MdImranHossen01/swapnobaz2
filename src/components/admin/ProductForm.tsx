@@ -271,9 +271,9 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     description: initialData?.description || '',
     tags: initialData?.tags || [],
     brand: initialData?.brand?._id || initialData?.brand || '',
-    batchNumber: initialHasVariants ? '' : (initialData?.batches?.[0]?.batchNumber || ''),
+    batchNumber: initialData?.batches?.[0]?.batchNumber || '',
     expiryDate: (() => {
-      if (initialHasVariants || !initialData?.batches?.[0]?.expiryDate) return '';
+      if (!initialData?.batches?.[0]?.expiryDate) return '';
       try {
         return new Date(initialData.batches[0].expiryDate).toISOString().split('T')[0];
       } catch (e) {

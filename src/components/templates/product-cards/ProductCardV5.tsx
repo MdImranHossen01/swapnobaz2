@@ -81,8 +81,7 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const hasDiscount = Boolean(product.salePrice && product.price && product.salePrice > 0 && product.salePrice < product.price);
-  const discount = hasDiscount
+  const discount = hasDiscount && product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
@@ -299,7 +298,7 @@ export default function ProductCardV5({ product: initialProduct, isFlashSale }: 
 
         <div className="flex items-center gap-4">
           <span className="text-2xl font-black text-primary">
-            ৳{Math.round(hasDiscount ? product.salePrice : (product.price || 0))}
+            ৳{Math.round(hasDiscount && product.salePrice ? product.salePrice : (product.price || 0))}
           </span>
           {hasDiscount && (
             <span className="text-sm text-muted-foreground line-through opacity-40 font-bold">

@@ -149,7 +149,7 @@ export default function ProductCardV7({ product: initialProduct, isFlashSale, pr
         <div className="flex items-center gap-2">
           {hasDiscount ? (
             <>
-              <span className="text-xs sm:text-sm font-black text-foreground">Tk {Math.round(product.salePrice).toLocaleString()}</span>
+              <span className="text-xs sm:text-sm font-black text-foreground">Tk {Math.round(product.salePrice ?? product.price).toLocaleString()}</span>
               <span className="text-[10px] sm:text-xs text-muted-foreground line-through font-normal">Tk {Math.round(product.price).toLocaleString()}</span>
             </>
           ) : (
