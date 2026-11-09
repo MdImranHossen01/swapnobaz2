@@ -18,18 +18,15 @@ import Reseller from '@/models/Reseller';
 const serialize = (data: any) => JSON.parse(JSON.stringify(data));
 
 /**
- * Strict Rule: If discounted price is <= 0 or >= price, treat as NO DISCOUNT at all
+ * Strict Rule: If product has variants, root pricing and discount MUST strictly follow firstVariant.
+ * If firstVariant has no discount, root salePrice & discountRate MUST be completely removed!
+ * If discounted price is <= 0 or >= price, treat as NO DISCOUNT at all.
  */
 export const sanitizeProductPrices = (product: any) => {
   if (!product) return product;
   const p = { ...product };
-  const price = Number(p.price || 0);
-  const rawSale = p.salePrice !== undefined && p.salePrice !== null ? Number(p.salePrice) : undefined;
-  if (rawSale !== undefined && (rawSale <= 0 || (price > 0 && rawSale >= price))) {
-    delete p.salePrice;
-    delete p.discountRate;
-  }
-  if (Array.isArray(p.variants)) {
+
+  if (Array.isArray(p.variants) && p.variants.length > 0) {
     p.variants = p.variants.map((v: any) => {
       const vObj = { ...v };
       const vPrice = Number(vObj.price || 0);
@@ -40,6 +37,26 @@ export const sanitizeProductPrices = (product: any) => {
       }
       return vObj;
     });
+
+    const firstV = p.variants[0];
+    const firstPrice = Number(firstV?.price || 0);
+    p.price = firstPrice > 0 ? firstPrice : Number(p.price || 0);
+
+    const firstSale = firstV?.salePrice !== undefined && firstV?.salePrice !== null ? Number(firstV.salePrice) : undefined;
+    if (firstSale !== undefined && firstSale > 0 && firstSale < p.price) {
+      p.salePrice = firstSale;
+      p.discountRate = firstV.discountRate;
+    } else {
+      delete p.salePrice;
+      delete p.discountRate;
+    }
+  } else {
+    const price = Number(p.price || 0);
+    const rawSale = p.salePrice !== undefined && p.salePrice !== null ? Number(p.salePrice) : undefined;
+    if (rawSale !== undefined && (rawSale <= 0 || (price > 0 && rawSale >= price))) {
+      delete p.salePrice;
+      delete p.discountRate;
+    }
   }
   return p;
 };

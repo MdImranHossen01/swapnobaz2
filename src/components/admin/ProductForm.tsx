@@ -260,6 +260,8 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     return Math.round((1 - salePrice / price) * 100);
   };
 
+  const initialHasVariants = Boolean(initialData?.variants && initialData.variants.length > 0);
+
   const defaultValues: ProductFormValues = {
     name: initialData?.name || '',
     slug: initialData?.slug || '',
@@ -269,41 +271,25 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     description: initialData?.description || '',
     tags: initialData?.tags || [],
     brand: initialData?.brand?._id || initialData?.brand || '',
-    batchNumber: initialData?.batches?.[0]?.batchNumber || '',
+    batchNumber: initialHasVariants ? '' : (initialData?.batches?.[0]?.batchNumber || ''),
     expiryDate: (() => {
-      if (!initialData?.batches?.[0]?.expiryDate) return '';
+      if (initialHasVariants || !initialData?.batches?.[0]?.expiryDate) return '';
       try {
         return new Date(initialData.batches[0].expiryDate).toISOString().split('T')[0];
       } catch (e) {
         return '';
       }
     })(),
-    price: initialData?.price ?? '',
-    purchasePrice: initialData?.purchasePrice ?? '',
-    resellerPrice: initialData?.resellerPrice ?? '',
-    discountRate: calculateDiscount(initialData?.price, initialData?.salePrice) || '',
-    salePrice: initialData?.salePrice ?? '',
+    price: initialHasVariants ? '' : (initialData?.price ?? ''),
+    purchasePrice: initialHasVariants ? '' : (initialData?.purchasePrice ?? ''),
+    resellerPrice: initialHasVariants ? '' : (initialData?.resellerPrice ?? ''),
+    discountRate: initialHasVariants ? '' : (calculateDiscount(initialData?.price, initialData?.salePrice) || ''),
+    salePrice: initialHasVariants ? '' : (initialData?.salePrice ?? ''),
     sku: initialData?.sku || generateBaseSku(),
     barcode: initialData?.barcode || '',
-    stock: initialData?.stock ?? '',
+    stock: initialHasVariants ? '' : (initialData?.stock ?? ''),
     categories: initialData?.categories?.map((c: any) => typeof c === 'object' ? c._id : c) || [],
-    images: (() => {
-      const mainImages = initialData?.images || [];
-      if (mainImages.length === 1 && initialData?.variants && initialData.variants.length > 0) {
-        const variantImages: string[] = [];
-        initialData.variants.forEach((v: any) => {
-          if (v.images && Array.isArray(v.images) && v.images.length > 0) {
-            variantImages.push(v.images[0]);
-          } else if (v.image) {
-            variantImages.push(v.image);
-          }
-        });
-        if (variantImages.length > 0 && variantImages[0] === mainImages[0]) {
-          return [];
-        }
-      }
-      return mainImages;
-    })(),
+    images: initialHasVariants ? [] : (initialData?.images || []),
     isPublished: initialData?.isPublished ?? true,
     isFeatured: initialData?.isFeatured ?? false,
     isNewArrival: initialData?.isNewArrival ?? false,
@@ -372,6 +358,17 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
   const hasVariants = variantFields.length > 0;
 
   const handleAddColorVariant = () => {
+    // Immediately clean main gallery images and main pricing section when a variant is added
+    form.setValue('images', []);
+    form.setValue('price', '' as any);
+    form.setValue('purchasePrice', '' as any);
+    form.setValue('resellerPrice', '' as any);
+    form.setValue('discountRate', 0);
+    form.setValue('salePrice', '' as any);
+    form.setValue('stock', '' as any);
+    form.setValue('batchNumber', '');
+    form.setValue('expiryDate', '');
+
     const currentVariants = form.getValues('variants') || [];
     const nextColorIndex = currentVariants.length;
     const baseSku = form.getValues('sku') || generateBaseSku();
@@ -381,7 +378,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     appendVariant({
       color: '',
       images: [],
-      sizes: [{ size: '', price: form.getValues('price') || '', stock: '', sku: initialSku, barcode: '' }]
+      sizes: [{ size: '', price: '', stock: '', sku: initialSku, barcode: '' }]
     });
   };
 
@@ -395,7 +392,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
 
     form.setValue(`variants.${colorIndex}.sizes`, [
       ...currentSizes,
-      { size: '', price: form.getValues('price') || '', stock: '', sku: autoSku, barcode: '' }
+      { size: '', price: '', stock: '', sku: autoSku, barcode: '' }
     ]);
   };
 
@@ -1012,17 +1009,26 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
               </div>
 
               {hasVariants ? (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-900 dark:text-amber-200 space-y-1">
-                  <div className="flex items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-300">
-                    <Info className="h-4 w-4 shrink-0" />
-                    <span>গ্যালারি ইমেজ সেকশন নিষ্ক্রিয় (Gallery Images Disabled)</span>
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/15 p-4 text-xs text-amber-900 dark:text-amber-200 space-y-1.5">
+                  <div className="flex items-center gap-2 font-bold text-sm text-amber-800 dark:text-amber-300">
+                    <Info className="h-5 w-5 shrink-0 text-amber-600" />
+                    <span>গ্যালারি ইমেজ আপলোড বন্ধ (Variants Active — Upload Disabled)</span>
                   </div>
                   <p className="leading-relaxed">
-                    যেহেতু প্রোডাক্টটিতে কালার/সাইজ ভেরিয়েন্ট যুক্ত করা হয়েছে, তাই মূল গ্যালারি ইমেজ সেকশনটি বন্ধ রাখা হয়েছে। প্রতিটি <strong>Color Variant</strong>-এর নিজস্ব ইমেজ সেকশনে সংশ্লিষ্ট কালারের ছবি আপলোড করুন।
+                    <strong>নির্দেশনা:</strong> প্রোডাক্টে ভ্যারিয়েন্ট যোগ করা হয়েছে। নিয়ম অনুযায়ী ভ্যারিয়েন্ট থাকলে মূল গ্যালারি ইমেজ আপলোড করা যাবে না। ভ্যারিয়েন্ট যুক্ত করার সাথে সাথে মূল গ্যালারি ইমেজ এবং মূল প্রাইসিং সেকশন স্বয়ংক্রিয়ভাবে সম্পূর্ণ মুছে (Clean) নিষ্ক্রিয় (Disable) করা হয়েছে। প্রোডাক্টের ছবিগুলো অনুগ্রহ করে নিচের প্রতিটি <strong>Color Variant</strong>-এর নিজস্ব ইমেজ সেকশনে আপলোড করুন।
                   </p>
                 </div>
               ) : (
                 <>
+                  {/* Variant Rule Instruction Banner */}
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                    <Info className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <span className="font-bold block">জরুরি নির্দেশনা:</span>
+                      <span>প্রোডাক্টে কালার/সাইজ ভ্যারিয়েন্ট থাকলে মূল গ্যালারি ইমেজ আপলোড করা যাবে না। নিচে <strong>ভ্যারিয়েন্ট যোগ করার সাথে সাথে মূল গ্যালারি ইমেজ এবং মূল প্রাইসিং সেকশন তাৎক্ষণিকভাবে মুছে (Clean) নিষ্ক্রিয় (Disable)</strong> হয়ে যাবে এবং ছবিগুলো প্রতিটি Color Variant-এর ভেতরে আপলোড করতে হবে।</span>
+                    </div>
+                  </div>
+
                   {/* Image Upload Best Practice Guideline */}
                   <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs space-y-1.5 text-muted-foreground">
                     <div className="flex items-center gap-1.5 font-semibold text-primary">
@@ -1444,13 +1450,13 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
           <Card className={hasVariants ? "border-dashed bg-muted/20" : ""}>
             <CardContent className="pt-6">
               {hasVariants && (
-                <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-900 dark:text-amber-200 space-y-1">
-                  <div className="flex items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-300">
-                    <Info className="h-4 w-4 shrink-0" />
-                    <span>প্রাইসিং ও স্টক সেকশন নিষ্ক্রিয় (Pricing & Stock Disabled)</span>
+                <div className="mb-5 rounded-lg border border-amber-500/40 bg-amber-500/15 p-4 text-xs text-amber-900 dark:text-amber-200 space-y-1.5">
+                  <div className="flex items-center gap-2 font-bold text-sm text-amber-800 dark:text-amber-300">
+                    <Info className="h-5 w-5 shrink-0 text-amber-600" />
+                    <span>মূল প্রাইসিং ও স্টক সেকশন বন্ধ (Variants Active — Cleaned & Disabled)</span>
                   </div>
                   <p className="leading-relaxed">
-                    যেহেতু প্রোডাক্টটিতে কালার/সাইজ ভেরিয়েন্ট যুক্ত করা হয়েছে, তাই মূল প্রাইসিং ও স্টক সেকশনটি লক করা হয়েছে। প্রতিটি সাইজ/ভেরিয়েন্টের মূল্য, ডিসকাউন্ট এবং স্টক উপরের <strong>Product Variants</strong> সেকশনে নির্ধারণ করুন। প্রথম ভেরিয়েন্টের মূল্য স্বয়ংক্রিয়ভাবে প্রোডাক্ট কার্ড ও কুইক ভিউতে নির্ধারিত হবে।
+                    <strong>নির্দেশনা:</strong> প্রোডাক্টে ভ্যারিয়েন্ট যোগ করা হয়েছে। নিয়ম অনুযায়ী ভ্যারিয়েন্ট থাকলে মূল প্রাইসিং সেকশন সম্পূর্ণ মুছে (Clean) নিষ্ক্রিয় রাখা হয়েছে। মূল্য, ডিসকাউন্ট ও স্টক উপরের <strong>Product Variants</strong> সেকশনে প্রতিটি ভ্যারিয়েন্টের জন্য নির্ধারণ করুন। ১ম ভ্যারিয়েন্টের মূল্যই মূল প্রোডাক্ট কার্ড ও কুইক ভিউতে ব্যবহার হবে।
                   </p>
                 </div>
               )}
@@ -1471,10 +1477,10 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="0.00"
+                            placeholder={hasVariants ? 'Disabled' : '0.00'}
                             disabled={hasVariants}
                             {...field}
-                            value={field.value ?? ''}
+                            value={hasVariants ? '' : (field.value ?? '')}
                             onChange={(e) => {
                               const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
                               field.onChange(value);
@@ -1509,10 +1515,10 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="0.00"
+                            placeholder={hasVariants ? 'Disabled' : '0.00'}
                             disabled={hasVariants}
                             {...field}
-                            value={field.value ?? ''}
+                            value={hasVariants ? '' : (field.value ?? '')}
                             onChange={(e) => {
                               const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
                               field.onChange(value);
@@ -1539,10 +1545,10 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="0.00"
+                            placeholder={hasVariants ? 'Disabled' : '0.00'}
                             disabled={hasVariants}
                             {...field}
-                            value={field.value ?? ''}
+                            value={hasVariants ? '' : (field.value ?? '')}
                             onChange={(e) => {
                               const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
                               field.onChange(value);
@@ -1567,11 +1573,11 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder={hasVariants || !(Number(form.watch('price')) > 0) ? '-' : '0'}
+                            placeholder={hasVariants ? 'Disabled' : (!(Number(form.watch('price')) > 0) ? '-' : '0')}
                             disabled={hasVariants || !(Number(form.watch('price')) > 0)}
                             className="disabled:opacity-50 disabled:cursor-not-allowed"
                             {...field}
-                            value={field.value || ''}
+                            value={hasVariants ? '' : (field.value || '')}
                             onChange={(e) => {
                               const discount = e.target.value === '' ? undefined : (parseFloat(e.target.value) || 0);
                               field.onChange(discount);
@@ -1598,11 +1604,11 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder={hasVariants || !(Number(form.watch('price')) > 0) ? '-' : '0.00'}
+                            placeholder={hasVariants ? 'Disabled' : (!(Number(form.watch('price')) > 0) ? '-' : '0.00')}
                             disabled={hasVariants || !(Number(form.watch('price')) > 0)}
                             className="disabled:opacity-50 disabled:cursor-not-allowed"
                             {...field}
-                            value={field.value || ''}
+                            value={hasVariants ? '' : (field.value || '')}
                             onChange={(e) => {
                               const rawVal = e.target.value;
                               const price = form.getValues('price') || 0;
@@ -1640,10 +1646,10 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                         <FormControl>
                           <Input
                             type="number"
-                            placeholder="0"
+                            placeholder={hasVariants ? 'Disabled' : '0'}
                             disabled={hasVariants}
                             {...field}
-                            value={field.value ?? ''}
+                            value={hasVariants ? '' : (field.value ?? '')}
                             onChange={(e) => field.onChange(e.target.value === '' ? '' : (parseInt(e.target.value) || 0))}
                           />
                         </FormControl>
@@ -1659,7 +1665,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                       <FormItem>
                         <FormLabel>Batch Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. BATCH-001" disabled={hasVariants} {...field} value={field.value || ''} />
+                          <Input placeholder={hasVariants ? 'Disabled' : 'e.g. BATCH-001'} disabled={hasVariants} {...field} value={hasVariants ? '' : (field.value || '')} />
                         </FormControl>
                         <FormDescription>Identify inventory batch (Optional)</FormDescription>
                         <FormMessage />
@@ -1673,7 +1679,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                       <FormItem>
                         <FormLabel>Expiry Date</FormLabel>
                         <FormControl>
-                          <Input type="date" disabled={hasVariants} {...field} value={field.value || ''} />
+                          <Input type="date" disabled={hasVariants} {...field} value={hasVariants ? '' : (field.value || '')} />
                         </FormControl>
                         <FormDescription>Product batch expiration date (Optional)</FormDescription>
                         <FormMessage />

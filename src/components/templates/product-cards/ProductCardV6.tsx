@@ -56,38 +56,33 @@ export default function ProductCardV6({ product: initialProduct, isFlashSale, pr
   const wishlist = useAppSelector((state) => state.wishlist.items);
   const isInWishlist = wishlist.includes(initialProduct._id);
 
-  const firstVariant = initialProduct.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null;
-  const initialBasePrice = Number(initialProduct.price ?? (initialProduct as any).retailPrice ?? 0);
-  const rawInitSale = initialProduct.salePrice !== undefined && initialProduct.salePrice !== null ? Number(initialProduct.salePrice) : undefined;
-  const initialSalePrice = (rawInitSale !== undefined && rawInitSale > 0 && rawInitSale < initialBasePrice)
-    ? rawInitSale
-    : initialBasePrice;
+  const hasVariants = Boolean(initialProduct.variants && initialProduct.variants.length > 0);
+  const firstVariant = hasVariants ? initialProduct.variants![0] : null;
 
-  const variantPrice = firstVariant && (firstVariant.price !== undefined && firstVariant.price !== null)
+  const displayPrice = firstVariant && (firstVariant.price !== undefined && firstVariant.price !== null)
     ? Number(firstVariant.price)
-    : initialBasePrice;
-  const rawVarSale = firstVariant && (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null)
-    ? Number(firstVariant.salePrice)
-    : undefined;
-  const variantSalePrice = (rawVarSale !== undefined && rawVarSale > 0 && rawVarSale < variantPrice)
-    ? rawVarSale
-    : (rawInitSale !== undefined && rawInitSale > 0 && rawInitSale < variantPrice ? rawInitSale : variantPrice);
+    : Number(initialProduct.price ?? (initialProduct as any).retailPrice ?? 0);
+
+  // If product has variants, discount MUST come strictly from firstVariant. Never fall back to main product salePrice!
+  const rawSale = firstVariant
+    ? (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null ? Number(firstVariant.salePrice) : undefined)
+    : (initialProduct.salePrice !== undefined && initialProduct.salePrice !== null ? Number(initialProduct.salePrice) : undefined);
+
+  const hasDiscount = Boolean(rawSale !== undefined && rawSale > 0 && rawSale < displayPrice);
+  const displaySalePrice = hasDiscount ? rawSale : undefined;
 
   const product = {
     ...initialProduct,
-    price: isNaN(variantPrice) ? 0 : variantPrice,
-    salePrice: isNaN(variantSalePrice) ? variantPrice : variantSalePrice,
+    price: isNaN(displayPrice) ? 0 : displayPrice,
+    salePrice: displaySalePrice,
     stock: firstVariant?.stock ?? initialProduct.stock ?? 0,
     sku: firstVariant?.sku ?? initialProduct.sku,
     images: firstVariant?.image ? [firstVariant.image, ...((initialProduct.images || []).filter((img: string) => img !== firstVariant.image))] : (initialProduct.images || [])
   };
 
-  const hasDiscount = Boolean(product.salePrice && product.price && product.salePrice > 0 && product.salePrice < product.price);
-  const discount = hasDiscount
+  const discount = hasDiscount && product.salePrice
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
-
-  const hasVariants = product.variants && product.variants.length > 0;
 
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
 

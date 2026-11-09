@@ -72,9 +72,9 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
 
   const displayPrice = hasVariants && currentVariant?.price !== undefined ? Number(currentVariant.price) : fallbackBase;
   const rawVarSale = hasVariants && currentVariant?.salePrice !== undefined && currentVariant?.salePrice !== null ? Number(currentVariant.salePrice) : undefined;
-  const displaySalePrice = (rawVarSale !== undefined && rawVarSale > 0 && rawVarSale < displayPrice)
-    ? rawVarSale
-    : (effectiveProductSale !== undefined && effectiveProductSale < displayPrice ? effectiveProductSale : undefined);
+  const displaySalePrice = hasVariants
+    ? (rawVarSale !== undefined && rawVarSale > 0 && rawVarSale < displayPrice ? rawVarSale : undefined)
+    : (effectiveProductSale !== undefined && effectiveProductSale > 0 && effectiveProductSale < displayPrice ? effectiveProductSale : undefined);
 
   const hasDiscount = Boolean(displaySalePrice !== undefined && displaySalePrice > 0 && displaySalePrice < displayPrice);
   const finalPrice = hasDiscount ? displaySalePrice! : displayPrice;
@@ -303,9 +303,9 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
             </div>
 
             {/* Attributes Section (Vertical) */}
-            <div className="mb-8 space-y-4 border-t border-gray-100 pt-6">
-              {product.attributes?.length > 0 ? (
-                product.attributes.map((attr: any, idx: number) => {
+            {product.attributes && product.attributes.length > 0 && (
+              <div className="mb-8 space-y-4 border-t border-gray-100 pt-6">
+                {product.attributes.map((attr: any, idx: number) => {
                   const label = attr.key || attr.name || 'Feature';
 
                   return (
@@ -314,20 +314,9 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                       <span className="text-sm font-bold text-neutral-800">{attr.value}</span>
                     </div>
                   );
-                })
-              ) : (
-                <>
-                  <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-black text-neutral-400 uppercase w-24 tracking-widest">Technology:</span>
-                    <span className="text-sm font-bold text-neutral-800">Carbon Plate</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-black text-neutral-400 uppercase w-24 tracking-widest">Material:</span>
-                    <span className="text-sm font-bold text-neutral-800">PrimeKnit</span>
-                  </div>
-                </>
-              )}
-            </div>
+                })}
+              </div>
+            )}
 
             {/* Variations Selection */}
             <div className="space-y-6 flex-grow">

@@ -104,11 +104,13 @@ export default function ProductDetailsV4Client({ product }: ProductDetailsV4Clie
     return product.images || [];
   }, [product.images, activeVariant]);
 
-  const hasVariants = (uniqueColors.length > 0 || uniqueSizes.length > 0);
+  const hasVariants = Boolean(product?.variants && product.variants.length > 0);
   const currentVariant = activeVariant || defaultVariant;
 
   const displayPrice = hasVariants ? (currentVariant?.price ?? 0) : (product.price ?? 0);
-  const rawSale = hasVariants ? currentVariant?.salePrice : product.salePrice;
+  const rawSale = hasVariants
+    ? (currentVariant?.salePrice !== undefined && currentVariant?.salePrice !== null ? Number(currentVariant.salePrice) : undefined)
+    : (product.salePrice !== undefined && product.salePrice !== null ? Number(product.salePrice) : undefined);
   const hasDiscount = Boolean(rawSale && displayPrice && Number(rawSale) > 0 && Number(rawSale) < Number(displayPrice));
   const displaySalePrice = hasDiscount ? Number(rawSale) : undefined;
   const finalPrice = hasDiscount ? displaySalePrice! : displayPrice;

@@ -76,11 +76,12 @@ export function QuickAddModal({ product, isOpen, onClose }: QuickAddModalProps) 
     }
   }, [selectedColor, selectedSize, availableSizes]);
 
+  const hasVariants = Boolean(product.variants && product.variants.length > 0);
   const displayPrice = Number(activeVariant?.price || product.price || 0);
   const rawActiveSale = activeVariant?.salePrice !== undefined && activeVariant?.salePrice !== null ? Number(activeVariant.salePrice) : undefined;
   const rawProdSale = product.salePrice !== undefined && product.salePrice !== null ? Number(product.salePrice) : undefined;
-  const effectiveSale = (rawActiveSale !== undefined && rawActiveSale > 0 && rawActiveSale < displayPrice)
-    ? rawActiveSale
+  const effectiveSale = hasVariants
+    ? (rawActiveSale !== undefined && rawActiveSale > 0 && rawActiveSale < displayPrice ? rawActiveSale : undefined)
     : (rawProdSale !== undefined && rawProdSale > 0 && rawProdSale < displayPrice ? rawProdSale : undefined);
   const hasDiscount = effectiveSale !== undefined;
   const finalPrice = hasDiscount ? effectiveSale! : displayPrice;
