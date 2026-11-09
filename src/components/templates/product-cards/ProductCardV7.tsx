@@ -46,14 +46,30 @@ export default function ProductCardV7({ product: initialProduct, isFlashSale, pr
   const isInWishlist = wishlist.includes(initialProduct._id);
 
   const firstVariant = initialProduct.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null;
-  const product = firstVariant ? {
+  const initialBasePrice = Number(initialProduct.price ?? (initialProduct as any).retailPrice ?? 0);
+  const rawInitSale = initialProduct.salePrice !== undefined && initialProduct.salePrice !== null ? Number(initialProduct.salePrice) : undefined;
+  const initialSalePrice = (rawInitSale !== undefined && rawInitSale > 0 && rawInitSale < initialBasePrice) ? rawInitSale : initialBasePrice;
+
+  const variantPrice = firstVariant && (firstVariant.price !== undefined && firstVariant.price !== null)
+    ? Number(firstVariant.price)
+    : initialBasePrice;
+  const rawVarSale = firstVariant && (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null)
+    ? Number(firstVariant.salePrice)
+    : undefined;
+  const variantSalePrice = (rawVarSale !== undefined && rawVarSale > 0 && rawVarSale < variantPrice)
+    ? rawVarSale
+    : (rawInitSale !== undefined && rawInitSale > 0 && rawInitSale < variantPrice ? rawInitSale : variantPrice);
+
+  const product = {
     ...initialProduct,
-    price: firstVariant.price ?? initialProduct.price,
-    salePrice: firstVariant.salePrice ?? initialProduct.salePrice,
-    stock: firstVariant.stock ?? initialProduct.stock,
-    sku: firstVariant.sku ?? initialProduct.sku,
-    images: firstVariant.image ? [firstVariant.image, ...initialProduct.images.filter((img: string) => img !== firstVariant.image)] : initialProduct.images
-  } : initialProduct;
+    price: isNaN(variantPrice) ? 0 : variantPrice,
+    salePrice: isNaN(variantSalePrice) ? variantPrice : variantSalePrice,
+    stock: firstVariant?.stock ?? initialProduct.stock ?? 0,
+    sku: firstVariant?.sku ?? initialProduct.sku,
+    images: firstVariant?.image ? [firstVariant.image, ...((initialProduct.images || []).filter((img: string) => img !== firstVariant.image))] : (initialProduct.images || [])
+  };
+
+  const hasDiscount = Boolean(product.salePrice && product.price && product.salePrice > 0 && product.salePrice < product.price);
 
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
 
@@ -133,7 +149,7 @@ export default function ProductCardV7({ product: initialProduct, isFlashSale, pr
         </Link>
 
         <div className="flex items-center gap-2">
-          {product.salePrice && product.price && product.price > product.salePrice ? (
+          {hasDiscount ? (
             <>
               <span className="text-xs sm:text-sm font-black text-foreground">Tk {Math.round(product.salePrice).toLocaleString()}</span>
               <span className="text-[10px] sm:text-xs text-muted-foreground line-through font-normal">Tk {Math.round(product.price).toLocaleString()}</span>

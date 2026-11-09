@@ -111,30 +111,45 @@ export async function PUT(
             const parsed = key === 'stock' ? parseInt(value, 10) : parseFloat(value);
             value = Number.isFinite(parsed) ? parsed : ((key === 'salePrice' || key === 'purchasePrice' || key === 'resellerPrice' || key === 'discountRate') ? undefined : 0);
           }
+          // Strict Rule: If salePrice <= 0, treat as NO DISCOUNT
+          if (key === 'salePrice' && typeof value === 'number' && value <= 0) {
+            value = undefined;
+          }
+          if (key === 'discountRate' && typeof value === 'number' && value <= 0) {
+            value = undefined;
+          }
         }
 
         // Deep coercion for variants
         if (key === 'variants' && Array.isArray(value)) {
-          value = value.map((v: any) => ({
-            _id: v._id || v.id,
-            color: v.color,
-            size: v.size,
-            sku: v.sku,
-            barcode: v.barcode?.trim() || undefined,
-            image: v.image,
-            images: Array.isArray(v.images) ? v.images : (v.image ? [v.image] : []),
-            price: Number.isFinite(parseFloat(v.price)) ? parseFloat(v.price) : 0,
-            purchasePrice: Number.isFinite(parseFloat(v.purchasePrice)) ? parseFloat(v.purchasePrice) : undefined,
-            resellerPrice: Number.isFinite(parseFloat(v.resellerPrice)) ? parseFloat(v.resellerPrice) : undefined,
-            salePrice: Number.isFinite(parseFloat(v.salePrice)) ? parseFloat(v.salePrice) : undefined,
-            stock: Number.isFinite(parseInt(v.stock, 10)) ? parseInt(v.stock, 10) : 0,
-            discountRate: Number.isFinite(parseFloat(v.discountRate)) ? parseFloat(v.discountRate) : undefined,
-            batches: Array.isArray(v.batches) ? v.batches.map((b: any) => ({
-              batchNumber: b.batchNumber,
-              expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
-              stock: Number.isFinite(parseInt(b.stock, 10)) ? parseInt(b.stock, 10) : 0,
-            })) : [],
-          }));
+          value = value.map((v: any) => {
+            const vPrice = Number.isFinite(parseFloat(v.price)) ? parseFloat(v.price) : 0;
+            const rawVSale = parseFloat(v.salePrice);
+            const vSalePrice = (Number.isFinite(rawVSale) && rawVSale > 0 && (vPrice === 0 || rawVSale < vPrice)) ? rawVSale : undefined;
+            const rawVDisc = parseFloat(v.discountRate);
+            const vDiscountRate = (vSalePrice !== undefined && Number.isFinite(rawVDisc) && rawVDisc > 0 && rawVDisc < 100) ? rawVDisc : undefined;
+
+            return {
+              _id: v._id || v.id,
+              color: v.color,
+              size: v.size,
+              sku: v.sku,
+              barcode: v.barcode?.trim() || undefined,
+              image: v.image,
+              images: Array.isArray(v.images) ? v.images : (v.image ? [v.image] : []),
+              price: vPrice,
+              purchasePrice: Number.isFinite(parseFloat(v.purchasePrice)) ? parseFloat(v.purchasePrice) : undefined,
+              resellerPrice: Number.isFinite(parseFloat(v.resellerPrice)) ? parseFloat(v.resellerPrice) : undefined,
+              salePrice: vSalePrice,
+              stock: Number.isFinite(parseInt(v.stock, 10)) ? parseInt(v.stock, 10) : 0,
+              discountRate: vDiscountRate,
+              batches: Array.isArray(v.batches) ? v.batches.map((b: any) => ({
+                batchNumber: b.batchNumber,
+                expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
+                stock: Number.isFinite(parseInt(b.stock, 10)) ? parseInt(b.stock, 10) : 0,
+              })) : [],
+            };
+          });
         }
 
         // Deep coercion for batches

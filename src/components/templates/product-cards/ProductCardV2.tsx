@@ -57,16 +57,20 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
 
   const firstVariant = initialProduct.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null;
   const initialBasePrice = Number(initialProduct.price ?? (initialProduct as any).retailPrice ?? 0);
-  const initialSalePrice = initialProduct.salePrice !== undefined && initialProduct.salePrice !== null
-    ? Number(initialProduct.salePrice)
-    : (initialProduct.price !== undefined ? Number(initialProduct.price) : Number((initialProduct as any).retailPrice ?? 0));
+  const rawInitSale = initialProduct.salePrice !== undefined && initialProduct.salePrice !== null ? Number(initialProduct.salePrice) : undefined;
+  const initialSalePrice = (rawInitSale !== undefined && rawInitSale > 0 && rawInitSale < initialBasePrice)
+    ? rawInitSale
+    : initialBasePrice;
 
   const variantPrice = firstVariant && (firstVariant.price !== undefined && firstVariant.price !== null)
     ? Number(firstVariant.price)
     : initialBasePrice;
-  const variantSalePrice = firstVariant && (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null)
+  const rawVarSale = firstVariant && (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null)
     ? Number(firstVariant.salePrice)
-    : (firstVariant && firstVariant.price !== undefined ? Number(firstVariant.price) : initialSalePrice);
+    : undefined;
+  const variantSalePrice = (rawVarSale !== undefined && rawVarSale > 0 && rawVarSale < variantPrice)
+    ? rawVarSale
+    : (rawInitSale !== undefined && rawInitSale > 0 && rawInitSale < variantPrice ? rawInitSale : variantPrice);
 
   const product = {
     ...initialProduct,
@@ -83,7 +87,8 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
   const [isHovered, setIsHovered] = useState(false);
   const quickAddRef = useRef<HTMLButtonElement>(null);
 
-  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price)
+  const hasDiscount = Boolean(product.salePrice && product.price && product.salePrice > 0 && product.salePrice < product.price);
+  const discount = hasDiscount
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
@@ -289,9 +294,9 @@ export default function ProductCardV2({ product: initialProduct, isFlashSale }: 
 
         <div className="flex items-center gap-3">
           <span className="text-xl font-black text-[#00a870]">
-            ৳{Math.round(product.salePrice ?? product.price ?? 0)}
+            ৳{Math.round(hasDiscount ? product.salePrice : (product.price || 0))}
           </span>
-          {product.salePrice != null && product.price != null && product.price > product.salePrice && (
+          {hasDiscount && (
             <span className="text-sm text-muted-foreground line-through decoration-primary/20">
               ৳{Math.round(product.price ?? 0)}
             </span>

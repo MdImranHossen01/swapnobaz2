@@ -67,10 +67,17 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
   const currentVariant = activeVariant || (hasVariants ? product.variants[0] : null);
 
   const fallbackBase = Number(product.price ?? (product as any).retailPrice ?? 0);
-  const fallbackSale = product.salePrice !== undefined && product.salePrice !== null ? Number(product.salePrice) : fallbackBase;
+  const rawProductSale = product.salePrice !== undefined && product.salePrice !== null ? Number(product.salePrice) : undefined;
+  const effectiveProductSale = (rawProductSale !== undefined && rawProductSale > 0 && rawProductSale < fallbackBase) ? rawProductSale : undefined;
 
   const displayPrice = hasVariants && currentVariant?.price !== undefined ? Number(currentVariant.price) : fallbackBase;
-  const displaySalePrice = hasVariants && currentVariant?.salePrice !== undefined ? Number(currentVariant.salePrice) : fallbackSale;
+  const rawVarSale = hasVariants && currentVariant?.salePrice !== undefined && currentVariant?.salePrice !== null ? Number(currentVariant.salePrice) : undefined;
+  const displaySalePrice = (rawVarSale !== undefined && rawVarSale > 0 && rawVarSale < displayPrice)
+    ? rawVarSale
+    : (effectiveProductSale !== undefined && effectiveProductSale < displayPrice ? effectiveProductSale : undefined);
+
+  const hasDiscount = Boolean(displaySalePrice !== undefined && displaySalePrice > 0 && displaySalePrice < displayPrice);
+  const finalPrice = hasDiscount ? displaySalePrice! : displayPrice;
   const displayStock = hasVariants ? (currentVariant?.stock ?? 0) : (product.stock ?? 0);
   const displaySku = hasVariants ? (currentVariant?.sku ?? '') : product.sku;
 
@@ -166,7 +173,7 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
       productId: (product as any).productId || product._id,
       resellerProductId: (product as any).productId ? product._id : undefined,
       name: product.name,
-      price: (displaySalePrice !== undefined && displaySalePrice !== null) ? displaySalePrice : displayPrice,
+      price: finalPrice,
       basePrice: displayPrice,
       quantity: quantity,
       image: activeImage,
@@ -186,7 +193,7 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
           content_category: product.categories?.[0]?.name || 'Uncategorized',
           content_ids: [product._id],
           content_type: 'product',
-          value: (displaySalePrice ?? displayPrice) * quantity,
+          value: finalPrice * quantity,
           currency: 'BDT',
           quantity: quantity
         };
@@ -271,9 +278,9 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
 
             <div className="flex items-baseline gap-3 mb-4 pb-4 border-b border-gray-100">
               <span className="text-3xl font-bold text-primary">
-                ৳{Math.round(displaySalePrice || displayPrice)}
+                ৳{Math.round(finalPrice)}
               </span>
-              {displaySalePrice != null && displayPrice > displaySalePrice && (
+              {hasDiscount && (
                 <span className="text-lg line-through text-gray-400">
                   ৳{Math.round(displayPrice)}
                 </span>

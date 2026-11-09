@@ -470,16 +470,22 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     const flatVariants: any[] = [];
     (values.variants || []).forEach((cGroup: any) => {
       (cGroup.sizes || []).forEach((sizeInfo: any) => {
+        const vPrice = sizeInfo.price === '' ? 0 : Number(sizeInfo.price);
+        const parsedVSale = sizeInfo.salePrice === '' || sizeInfo.salePrice === undefined || sizeInfo.salePrice === null ? undefined : Number(sizeInfo.salePrice);
+        const effectiveVSale = (parsedVSale !== undefined && parsedVSale > 0 && (vPrice === 0 || parsedVSale < vPrice)) ? parsedVSale : undefined;
+        const parsedVDisc = sizeInfo.discountRate === '' || isNaN(Number(sizeInfo.discountRate)) ? undefined : Number(sizeInfo.discountRate);
+        const effectiveVDisc = (effectiveVSale !== undefined && parsedVDisc !== undefined && parsedVDisc > 0 && parsedVDisc < 100) ? parsedVDisc : undefined;
+
         flatVariants.push({
           color: cGroup.color || '',
           images: cGroup.images || [],
           image: cGroup.images?.[0] || '',
           size: sizeInfo.size || '',
-          price: sizeInfo.price === '' ? 0 : Number(sizeInfo.price),
+          price: vPrice,
           purchasePrice: sizeInfo.purchasePrice === '' ? undefined : Number(sizeInfo.purchasePrice),
           resellerPrice: sizeInfo.resellerPrice === '' ? undefined : Number(sizeInfo.resellerPrice),
-          salePrice: sizeInfo.salePrice === '' ? undefined : Number(sizeInfo.salePrice),
-          discountRate: sizeInfo.discountRate === '' || isNaN(Number(sizeInfo.discountRate)) ? undefined : Number(sizeInfo.discountRate),
+          salePrice: effectiveVSale,
+          discountRate: effectiveVDisc,
           stock: sizeInfo.stock === '' ? 0 : Number(sizeInfo.stock),
           sku: sizeInfo.sku || '',
           barcode: sizeInfo.barcode || '',
@@ -495,12 +501,9 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
       derivedPrice = Number(firstVariant.price);
     }
 
-    let derivedSalePrice = values.salePrice === '' ? undefined : Number(values.salePrice);
-    // Ensure salePrice does not exceed price; if equal or missing, treat as no discount
-    if (derivedSalePrice !== undefined && derivedSalePrice >= derivedPrice) {
-      derivedSalePrice = undefined;
-    }
-    if (derivedSalePrice === undefined && firstVariant?.salePrice && Number(firstVariant.salePrice) < Number(firstVariant.price)) {
+    const parsedMainSale = values.salePrice === '' || values.salePrice === undefined || values.salePrice === null ? undefined : Number(values.salePrice);
+    let derivedSalePrice = (parsedMainSale !== undefined && parsedMainSale > 0 && (derivedPrice === 0 || parsedMainSale < derivedPrice)) ? parsedMainSale : undefined;
+    if (derivedSalePrice === undefined && firstVariant?.salePrice && Number(firstVariant.salePrice) > 0 && Number(firstVariant.salePrice) < Number(firstVariant.price)) {
       derivedSalePrice = Number(firstVariant.salePrice);
     }
 
@@ -584,7 +587,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
       purchasePrice: derivedPurchasePrice,
       resellerPrice: derivedResellerPrice,
       salePrice: derivedSalePrice,
-      discountRate: values.discountRate === '' || isNaN(Number(values.discountRate)) ? undefined : Number(values.discountRate),
+      discountRate: (derivedSalePrice !== undefined && values.discountRate !== '' && Number(values.discountRate) > 0) ? Number(values.discountRate) : undefined,
       stock: derivedStock,
       variants: flatVariants,
     };

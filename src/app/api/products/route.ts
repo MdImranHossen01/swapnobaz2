@@ -224,7 +224,10 @@ export async function POST(req: NextRequest) {
     const parsedPrice = Number.isFinite(rawPrice) ? rawPrice : 0;
 
     const rawSalePrice = parseFloat(salePrice);
-    const parsedSalePrice = Number.isFinite(rawSalePrice) ? rawSalePrice : undefined;
+    // Strict Rule: If salePrice <= 0 or >= parsedPrice, treat as NO DISCOUNT (undefined)
+    const parsedSalePrice = (Number.isFinite(rawSalePrice) && rawSalePrice > 0 && (parsedPrice === 0 || rawSalePrice < parsedPrice))
+      ? rawSalePrice
+      : undefined;
 
     const rawPurchasePrice = parseFloat(purchasePrice);
     const parsedPurchasePrice = Number.isFinite(rawPurchasePrice) ? rawPurchasePrice : undefined;
@@ -236,7 +239,9 @@ export async function POST(req: NextRequest) {
     const parsedStock = Number.isFinite(rawStock) ? rawStock : 0;
 
     const rawDiscountRate = parseFloat(discountRate);
-    const parsedDiscountRate = Number.isFinite(rawDiscountRate) ? rawDiscountRate : undefined;
+    const parsedDiscountRate = (parsedSalePrice !== undefined && Number.isFinite(rawDiscountRate) && rawDiscountRate > 0 && rawDiscountRate < 100)
+      ? rawDiscountRate
+      : undefined;
 
     // Validate required fields and price
     const hasVariants = variants && variants.length > 0;
@@ -247,36 +252,35 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate salePrice logic
-    if (parsedSalePrice !== undefined) {
-      if (isNaN(parsedSalePrice) || parsedSalePrice < 0 || parsedSalePrice > parsedPrice) {
-        return NextResponse.json({
-          message: 'Sale price must be a non-negative number and less than or equal to the regular price.'
-        }, { status: 400 });
-      }
-    }
-
     // Coerce variant numeric fields and whitelist properties
-    const coercedVariants = (variants || []).map((v: any) => ({
-      _id: v._id || v.id,
-      color: v.color,
-      size: v.size,
-      sku: v.sku,
-      barcode: v.barcode?.trim() || undefined,
-      image: v.image,
-      images: Array.isArray(v.images) ? v.images : (v.image ? [v.image] : []),
-      price: Number.isFinite(parseFloat(v.price)) ? parseFloat(v.price) : 0,
-      salePrice: Number.isFinite(parseFloat(v.salePrice)) ? parseFloat(v.salePrice) : undefined,
-      purchasePrice: Number.isFinite(parseFloat(v.purchasePrice)) ? parseFloat(v.purchasePrice) : undefined,
-      resellerPrice: Number.isFinite(parseFloat(v.resellerPrice)) ? parseFloat(v.resellerPrice) : undefined,
-      stock: Number.isFinite(parseInt(v.stock, 10)) ? parseInt(v.stock, 10) : 0,
-      discountRate: Number.isFinite(parseFloat(v.discountRate)) ? parseFloat(v.discountRate) : undefined,
-      batches: Array.isArray(v.batches) ? v.batches.map((b: any) => ({
-        batchNumber: b.batchNumber,
-        expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
-        stock: Number.isFinite(parseInt(b.stock, 10)) ? parseInt(b.stock, 10) : 0,
-      })) : [],
-    }));
+    const coercedVariants = (variants || []).map((v: any) => {
+      const vPrice = Number.isFinite(parseFloat(v.price)) ? parseFloat(v.price) : 0;
+      const rawVSale = parseFloat(v.salePrice);
+      const vSalePrice = (Number.isFinite(rawVSale) && rawVSale > 0 && (vPrice === 0 || rawVSale < vPrice)) ? rawVSale : undefined;
+      const rawVDisc = parseFloat(v.discountRate);
+      const vDiscountRate = (vSalePrice !== undefined && Number.isFinite(rawVDisc) && rawVDisc > 0 && rawVDisc < 100) ? rawVDisc : undefined;
+
+      return {
+        _id: v._id || v.id,
+        color: v.color,
+        size: v.size,
+        sku: v.sku,
+        barcode: v.barcode?.trim() || undefined,
+        image: v.image,
+        images: Array.isArray(v.images) ? v.images : (v.image ? [v.image] : []),
+        price: vPrice,
+        salePrice: vSalePrice,
+        purchasePrice: Number.isFinite(parseFloat(v.purchasePrice)) ? parseFloat(v.purchasePrice) : undefined,
+        resellerPrice: Number.isFinite(parseFloat(v.resellerPrice)) ? parseFloat(v.resellerPrice) : undefined,
+        stock: Number.isFinite(parseInt(v.stock, 10)) ? parseInt(v.stock, 10) : 0,
+        discountRate: vDiscountRate,
+        batches: Array.isArray(v.batches) ? v.batches.map((b: any) => ({
+          batchNumber: b.batchNumber,
+          expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
+          stock: Number.isFinite(parseInt(b.stock, 10)) ? parseInt(b.stock, 10) : 0,
+        })) : [],
+      };
+    });
 
     const sanitizedBatches = Array.isArray(batches) ? batches.map((b: any) => ({
       batchNumber: b.batchNumber,

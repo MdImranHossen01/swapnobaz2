@@ -100,12 +100,15 @@ export default function ProductDetailsV3Client({ product }: ProductDetailsV3Clie
   const hasVariants = (uniqueColors.length > 0 || uniqueSizes.length > 0);
   const currentVariant = activeVariant || defaultVariant;
 
-  const displayPrice = hasVariants ? (currentVariant?.price ?? 0) : product.price;
-  const displaySalePrice = hasVariants ? currentVariant?.salePrice : product.salePrice;
+  const displayPrice = hasVariants ? (currentVariant?.price ?? 0) : (product.price ?? 0);
+  const rawSale = hasVariants ? currentVariant?.salePrice : product.salePrice;
+  const hasDiscount = Boolean(rawSale && displayPrice && Number(rawSale) > 0 && Number(rawSale) < Number(displayPrice));
+  const displaySalePrice = hasDiscount ? Number(rawSale) : undefined;
+  const finalPrice = hasDiscount ? displaySalePrice! : displayPrice;
   const displayStock = hasVariants ? (currentVariant?.stock ?? 0) : (product.stock ?? 0);
 
-  const discount = (displayPrice && displayPrice > 0 && displaySalePrice && displaySalePrice < displayPrice)
-    ? Math.max(0, Math.round(((displayPrice - displaySalePrice) / displayPrice) * 100))
+  const discount = hasDiscount
+    ? Math.max(0, Math.round(((displayPrice - displaySalePrice!) / displayPrice) * 100))
     : 0;
 
   const handleAddToCart = async () => {
@@ -113,7 +116,7 @@ export default function ProductDetailsV3Client({ product }: ProductDetailsV3Clie
     const itemToAdd = {
       productId: product._id,
       name: product.name,
-      price: displaySalePrice || displayPrice,
+      price: finalPrice,
       basePrice: displayPrice,
       quantity: quantity,
       image: activeVariant?.image || (product.variants && product.variants.length > 0 ? product.variants[0]?.image : product.images?.[0]),
@@ -254,9 +257,9 @@ export default function ProductDetailsV3Client({ product }: ProductDetailsV3Clie
               <div className="flex items-center gap-6 pt-4">
                 <div className="flex flex-col">
                   <span className="text-[8px] font-mono text-muted-foreground uppercase mb-1">Base_Val</span>
-                  <span className="text-4xl font-black">৳{Math.round(displaySalePrice || displayPrice)}</span>
+                  <span className="text-4xl font-black">৳{Math.round(finalPrice)}</span>
                 </div>
-                {displaySalePrice && displayPrice > displaySalePrice && (
+                {hasDiscount && (
                   <div className="flex flex-col">
                     <span className="text-[8px] font-mono text-muted-foreground uppercase mb-1">Prev_Val</span>
                     <span className="text-2xl font-bold text-muted-foreground line-through opacity-30">৳{Math.round(displayPrice)}</span>

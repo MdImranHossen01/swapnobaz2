@@ -60,16 +60,20 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
 
   const firstVariant = initialProduct.variants && initialProduct.variants.length > 0 ? initialProduct.variants[0] : null;
   const initialBasePrice = Number(initialProduct.price ?? (initialProduct as any).retailPrice ?? 0);
-  const initialSalePrice = initialProduct.salePrice !== undefined && initialProduct.salePrice !== null
-    ? Number(initialProduct.salePrice)
-    : (initialProduct.price !== undefined ? Number(initialProduct.price) : Number((initialProduct as any).retailPrice ?? 0));
+  const rawInitSale = initialProduct.salePrice !== undefined && initialProduct.salePrice !== null ? Number(initialProduct.salePrice) : undefined;
+  const initialSalePrice = (rawInitSale !== undefined && rawInitSale > 0 && rawInitSale < initialBasePrice)
+    ? rawInitSale
+    : initialBasePrice;
 
   const variantPrice = firstVariant && (firstVariant.price !== undefined && firstVariant.price !== null)
     ? Number(firstVariant.price)
     : initialBasePrice;
-  const variantSalePrice = firstVariant && (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null)
+  const rawVarSale = firstVariant && (firstVariant.salePrice !== undefined && firstVariant.salePrice !== null)
     ? Number(firstVariant.salePrice)
-    : (firstVariant && firstVariant.price !== undefined ? Number(firstVariant.price) : initialSalePrice);
+    : undefined;
+  const variantSalePrice = (rawVarSale !== undefined && rawVarSale > 0 && rawVarSale < variantPrice)
+    ? rawVarSale
+    : (rawInitSale !== undefined && rawInitSale > 0 && rawInitSale < variantPrice ? rawInitSale : variantPrice);
 
   const product = {
     ...initialProduct,
@@ -83,7 +87,8 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
   const hasVariants = initialProduct.variants && initialProduct.variants.length > 0;
   const [showQuickViewModal, setShowQuickViewModal] = useState(false);
 
-  const discount = (product.price > 0 && product.salePrice && product.salePrice < product.price)
+  const hasDiscount = Boolean(product.salePrice && product.price && product.salePrice > 0 && product.salePrice < product.price);
+  const discount = hasDiscount
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
 
@@ -105,7 +110,7 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
       productId: (product as any).productId || product._id,
       resellerProductId: (product as any).productId ? product._id : undefined,
       name: product.name,
-      price: (displaySalePrice !== undefined && displaySalePrice !== null) ? displaySalePrice : displayPrice,
+      price: (hasDiscount && displaySalePrice !== undefined && displaySalePrice > 0) ? displaySalePrice : displayPrice,
       basePrice: displayPrice,
       quantity: 1,
       image: product.images?.[0],
@@ -326,9 +331,9 @@ export default function ProductCardV1({ product: initialProduct, isFlashSale, pr
         <div className="flex flex-col items-center gap-2 sm:gap-3 sm:flex-row sm:items-end sm:justify-between mt-auto pt-1 w-full">
           <div className="flex flex-col items-center sm:items-start">
             <span className="text-sm sm:text-[16px] font-black text-primary">
-              Tk {Math.round(product.salePrice ?? product.price ?? 0).toLocaleString()}
+              Tk {Math.round(hasDiscount ? product.salePrice : (product.price || 0)).toLocaleString()}
             </span>
-            {product.salePrice != null && product.price != null && product.price > product.salePrice && (
+            {hasDiscount && (
               <span className="text-[10px] sm:text-xs text-muted-foreground line-through decoration-primary/20">
                 Tk {Math.round(product.price ?? 0).toLocaleString()}
               </span>

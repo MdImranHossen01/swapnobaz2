@@ -75,8 +75,10 @@ export function ProductActionMenu({ product, className }: ProductActionMenuProps
   const wholesaleCost = Math.round(
     Number(product.resellerPrice ?? product.purchasePrice ?? product.price ?? 0)
   );
+  const rawMenuSale = Number(product.salePrice);
+  const hasMenuDiscount = Boolean(rawMenuSale && Number(product.price) && rawMenuSale > 0 && rawMenuSale < Number(product.price));
   const initialRetail = Math.round(
-    Number(product.salePrice ?? product.price ?? wholesaleCost)
+    hasMenuDiscount ? rawMenuSale : Number(product.price ?? wholesaleCost)
   );
   const [retailPrice, setRetailPrice] = useState<number>(initialRetail);
 

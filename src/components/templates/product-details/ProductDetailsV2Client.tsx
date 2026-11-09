@@ -76,12 +76,15 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
   const hasVariants = (uniqueColors.length > 0 || uniqueSizes.length > 0);
   const currentVariant = activeVariant || defaultVariant;
 
-  const displayPrice = hasVariants ? (currentVariant?.price ?? 0) : product?.price;
-  const displaySalePrice = hasVariants ? currentVariant?.salePrice : product?.salePrice;
+  const displayPrice = hasVariants ? (currentVariant?.price ?? 0) : (product?.price ?? 0);
+  const rawSale = hasVariants ? currentVariant?.salePrice : product?.salePrice;
+  const hasDiscount = Boolean(rawSale && displayPrice && Number(rawSale) > 0 && Number(rawSale) < Number(displayPrice));
+  const displaySalePrice = hasDiscount ? Number(rawSale) : undefined;
+  const finalPrice = hasDiscount ? displaySalePrice! : displayPrice;
   const displayStock = hasVariants ? (currentVariant?.stock ?? 0) : (product?.stock ?? 0);
 
-  const discount = (displayPrice && displayPrice > 0 && displaySalePrice && displaySalePrice < displayPrice)
-    ? Math.max(0, Math.round(((displayPrice - displaySalePrice) / displayPrice) * 100))
+  const discount = hasDiscount
+    ? Math.max(0, Math.round(((displayPrice - displaySalePrice!) / displayPrice) * 100))
     : 0;
 
   const allImages = useMemo(() => {
@@ -170,7 +173,7 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
     const itemToAdd = {
       productId: product._id,
       name: product.name,
-      price: displaySalePrice ?? displayPrice,
+      price: finalPrice,
       basePrice: displayPrice,
       quantity,
       image: activeImage,
@@ -433,9 +436,9 @@ export default function ProductDetailsV2Client({ product }: ProductDetailsV2Clie
 
           {/* Price */}
           <div className="flex items-center gap-2 pt-2">
-            {displaySalePrice && displayPrice > displaySalePrice ? (
+            {hasDiscount ? (
               <>
-                <span className="text-base sm:text-lg font-medium text-foreground">Tk {Math.round(displaySalePrice).toLocaleString()}</span>
+                <span className="text-base sm:text-lg font-medium text-foreground">Tk {Math.round(displaySalePrice!).toLocaleString()}</span>
                 <span className="text-sm text-muted-foreground line-through font-normal">Tk {Math.round(displayPrice ?? 0).toLocaleString()}</span>
                 {discount > 0 && (
                   <span className="text-xs bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 font-semibold px-2 py-0.5 rounded">-{discount}% OFF</span>
