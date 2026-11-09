@@ -366,8 +366,6 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     form.setValue('discountRate', 0);
     form.setValue('salePrice', '' as any);
     form.setValue('stock', '' as any);
-    form.setValue('batchNumber', '');
-    form.setValue('expiryDate', '');
 
     const currentVariants = form.getValues('variants') || [];
     const nextColorIndex = currentVariants.length;
@@ -870,6 +868,44 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                       <FormControl>
                         <Input placeholder="e.g. 890123456789" {...field} value={field.value || ''} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Batch & Expiry Tracking (Independent of Variants) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="batchNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1.5">
+                        Batch Number
+                        <span className="text-[11px] font-normal text-muted-foreground">(Optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. BATCH-001" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormDescription className="text-xs">Identify inventory batch</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="expiryDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1.5">
+                        Expiry Date
+                        <span className="text-[11px] font-normal text-muted-foreground">(Optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormDescription>Product batch expiration date</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1636,7 +1672,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                     )}
                   />
                 </div>
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="mt-6 max-w-sm">
                   <FormField
                     control={form.control}
                     name="stock"
@@ -1654,34 +1690,6 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                           />
                         </FormControl>
                         <FormDescription>Physical stock available for sale</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="batchNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Batch Number</FormLabel>
-                        <FormControl>
-                          <Input placeholder={hasVariants ? 'Disabled' : 'e.g. BATCH-001'} disabled={hasVariants} {...field} value={hasVariants ? '' : (field.value || '')} />
-                        </FormControl>
-                        <FormDescription>Identify inventory batch (Optional)</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="expiryDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Expiry Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" disabled={hasVariants} {...field} value={hasVariants ? '' : (field.value || '')} />
-                        </FormControl>
-                        <FormDescription>Product batch expiration date (Optional)</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
