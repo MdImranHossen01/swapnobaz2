@@ -7,7 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Heart, X, Plus, Minus } from 'lucide-react';
 import { RatingStars } from '@/components/ui/rating-stars';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addToCart } from '@/store/slices/cartSlice';
 import { toast } from 'sonner';
@@ -46,9 +46,11 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
     [product.variants]
   );
 
+  const prevIsOpenRef = useRef(false);
+
   const availableSizes = useMemo(() =>
     (product.variants || [])
-      .filter((v: any) => !selectedColor || v.color === selectedColor)
+      .filter((v: any) => !selectedColor || String(v.color || '').trim().toLowerCase() === String(selectedColor).trim().toLowerCase())
       .map((v: any) => v.size)
       .filter(Boolean) as string[],
     [product.variants, selectedColor]
@@ -57,8 +59,8 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
   const activeVariant = useMemo(() =>
     (product.variants || []).find(
       (v: any) =>
-        (v.color || null) === (selectedColor || null) &&
-        (v.size || null) === (selectedSize || null)
+        String(v.color || '').trim().toLowerCase() === String(selectedColor || '').trim().toLowerCase() &&
+        String(v.size || '').trim().toLowerCase() === String(selectedSize || '').trim().toLowerCase()
     ),
     [product.variants, selectedColor, selectedSize]
   );
@@ -100,28 +102,33 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
   }, [product.images, product.variants, activeVariant, hasVariants]);
 
   useEffect(() => {
-    if (isOpen) {
-      const initialColor = uniqueColors[0] || null;
+    if (isOpen && !prevIsOpenRef.current) {
+      const defaultVar = product.variants && product.variants.length > 0 ? product.variants[0] : null;
+      const initialColor = defaultVar?.color || uniqueColors[0] || null;
       setSelectedColor(initialColor);
 
       const initialSizes = (product.variants || [])
-        .filter((v: any) => !initialColor || v.color === initialColor)
+        .filter((v: any) => !initialColor || String(v.color || '').trim().toLowerCase() === String(initialColor).trim().toLowerCase())
         .map((v: any) => v.size)
         .filter(Boolean);
-      const initialSize = initialSizes[0] || null;
+      const initialSize = defaultVar?.size || initialSizes[0] || null;
       setSelectedSize(initialSize);
       setQuantity(1);
 
-      const defaultVar = product.variants && product.variants.length > 0 ? product.variants[0] : null;
       setActiveImage(defaultVar?.image || product.images?.[0] || '/placeholder.jpg');
 
       // Track ViewContent for Quick View
+      const initPrice = Number(defaultVar?.price ?? product.price ?? 0);
+      const initSale = (defaultVar?.salePrice !== undefined && defaultVar?.salePrice !== null && Number(defaultVar.salePrice) > 0 && Number(defaultVar.salePrice) < initPrice)
+        ? Number(defaultVar.salePrice)
+        : undefined;
+
       const viewContentPayload = {
         content_name: product.name,
         content_category: product.categories?.[0]?.name || 'Uncategorized',
         content_ids: [product._id],
         content_type: 'product',
-        value: displaySalePrice || displayPrice,
+        value: initSale || initPrice,
         currency: 'BDT'
       };
       const trackingUser = {
@@ -132,11 +139,15 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
       fbEvent('ViewContent', viewContentPayload, trackingUser);
       ttEvent('ViewContent', viewContentPayload, trackingUser);
     }
-  }, [isOpen, uniqueColors, product.variants, product.images, session, displayPrice, displaySalePrice]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, product._id]);
 
   useEffect(() => {
-    if (selectedSize == null || !availableSizes.includes(selectedSize)) {
-      setSelectedSize(availableSizes[0] || null);
+    if (selectedSize && availableSizes.length > 0) {
+      const match = availableSizes.some(s => String(s).trim().toLowerCase() === String(selectedSize).trim().toLowerCase());
+      if (!match) {
+        setSelectedSize(availableSizes[0] || null);
+      }
     }
   }, [selectedColor, availableSizes]);
 
@@ -324,18 +335,22 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                 <div className="space-y-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Color: <span className="text-gray-900">{selectedColor}</span></span>
                   <div className="flex flex-wrap gap-2">
-                    {uniqueColors.map((colorName, i) => (
-                      <button
-                        key={i}
-                        onClick={(e) => { e.preventDefault(); setSelectedColor(colorName); }}
-                        className={`px-4 py-2 text-xs font-bold rounded-none border transition-all ${selectedColor === colorName
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-gray-200 hover:border-gray-900 text-gray-600'
-                          }`}
-                      >
-                        {colorName}
-                      </button>
-                    ))}
+                    {uniqueColors.map((colorName, i) => {
+                      const isSelected = String(selectedColor || '').trim().toLowerCase() === String(colorName || '').trim().toLowerCase();
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setSelectedColor(colorName); }}
+                          className={`px-4 py-2 text-xs font-bold rounded-none border transition-all ${isSelected
+                            ? 'border-primary bg-primary/5 text-primary'
+                            : 'border-gray-200 hover:border-gray-900 text-gray-600'
+                            }`}
+                        >
+                          {colorName}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -345,13 +360,15 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
                   <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Size: <span className="text-gray-900">{selectedSize || 'Select...'}</span></span>
                   <div className="flex flex-wrap gap-2">
                     {uniqueSizes.map((sizeName, i) => {
-                      const isAvailable = availableSizes.includes(sizeName);
+                      const isAvailable = availableSizes.some(s => String(s).trim().toLowerCase() === String(sizeName).trim().toLowerCase());
+                      const isSelected = String(selectedSize || '').trim().toLowerCase() === String(sizeName || '').trim().toLowerCase();
                       return (
                         <button
                           key={i}
+                          type="button"
                           disabled={!isAvailable}
                           onClick={(e) => { e.preventDefault(); setSelectedSize(sizeName); }}
-                          className={`min-w-[44px] px-2 py-2 text-xs font-bold rounded-none border transition-all ${selectedSize === sizeName
+                          className={`min-w-[44px] px-2 py-2 text-xs font-bold rounded-none border transition-all ${isSelected
                             ? 'border-primary bg-primary/5 text-primary'
                             : !isAvailable
                               ? 'opacity-30 grayscale cursor-not-allowed bg-gray-100'

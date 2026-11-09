@@ -1671,8 +1671,6 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
                       </FormItem>
                     )}
                   />
-                </div>
-                <div className="mt-6 max-w-sm">
                   <FormField
                     control={form.control}
                     name="stock"
