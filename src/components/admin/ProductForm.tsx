@@ -369,6 +369,8 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     name: "variants"
   });
 
+  const hasVariants = variantFields.length > 0;
+
   const handleAddColorVariant = () => {
     const currentVariants = form.getValues('variants') || [];
     const nextColorIndex = currentVariants.length;
@@ -493,33 +495,41 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
       });
     });
 
-    const hasVariants = flatVariants.length > 0;
-    const firstVariant = hasVariants ? flatVariants[0] : null;
+    const hasVariantsSubmit = flatVariants.length > 0;
+    const firstVariant = hasVariantsSubmit ? flatVariants[0] : null;
 
     let derivedPrice = values.price === '' ? 0 : Number(values.price);
-    if ((!derivedPrice || derivedPrice <= 0) && firstVariant?.price) {
-      derivedPrice = Number(firstVariant.price);
-    }
-
-    const parsedMainSale = values.salePrice === '' || values.salePrice === undefined || values.salePrice === null ? undefined : Number(values.salePrice);
-    let derivedSalePrice = (parsedMainSale !== undefined && parsedMainSale > 0 && (derivedPrice === 0 || parsedMainSale < derivedPrice)) ? parsedMainSale : undefined;
-    if (derivedSalePrice === undefined && firstVariant?.salePrice && Number(firstVariant.salePrice) > 0 && Number(firstVariant.salePrice) < Number(firstVariant.price)) {
-      derivedSalePrice = Number(firstVariant.salePrice);
-    }
-
+    let derivedSalePrice: number | undefined = undefined;
+    let derivedDiscountRate: number | undefined = undefined;
     let derivedPurchasePrice = values.purchasePrice === '' ? undefined : Number(values.purchasePrice);
-    if (derivedPurchasePrice === undefined && firstVariant?.purchasePrice) {
-      derivedPurchasePrice = Number(firstVariant.purchasePrice);
-    }
-
     let derivedResellerPrice = values.resellerPrice === '' ? undefined : Number(values.resellerPrice);
-    if (derivedResellerPrice === undefined && firstVariant?.resellerPrice) {
-      derivedResellerPrice = Number(firstVariant.resellerPrice);
-    }
-
     let derivedStock = values.stock === '' ? 0 : Number(values.stock);
-    if (derivedStock === 0 && hasVariants) {
+
+    if (hasVariantsSubmit && firstVariant) {
+      // STRICT RULE: If product has variants, ALL root pricing is strictly taken from the first variant!
+      // Main pricing inputs are completely ignored.
+      derivedPrice = Number(firstVariant.price || 0);
+      const rawVSale = firstVariant.salePrice !== undefined && firstVariant.salePrice !== null ? Number(firstVariant.salePrice) : undefined;
+      if (rawVSale !== undefined && rawVSale > 0 && rawVSale < derivedPrice) {
+        derivedSalePrice = rawVSale;
+        derivedDiscountRate = firstVariant.discountRate !== undefined ? Number(firstVariant.discountRate) : Math.round((1 - rawVSale / derivedPrice) * 100);
+      } else {
+        derivedSalePrice = undefined;
+        derivedDiscountRate = undefined;
+      }
+      derivedPurchasePrice = firstVariant.purchasePrice !== undefined ? Number(firstVariant.purchasePrice) : undefined;
+      derivedResellerPrice = firstVariant.resellerPrice !== undefined ? Number(firstVariant.resellerPrice) : undefined;
       derivedStock = flatVariants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+    } else {
+      const parsedMainSale = values.salePrice === '' || values.salePrice === undefined || values.salePrice === null ? undefined : Number(values.salePrice);
+      if (parsedMainSale !== undefined && parsedMainSale > 0 && (derivedPrice === 0 || parsedMainSale < derivedPrice)) {
+        derivedSalePrice = parsedMainSale;
+        const parsedMainDisc = values.discountRate === '' || isNaN(Number(values.discountRate)) ? undefined : Number(values.discountRate);
+        derivedDiscountRate = (parsedMainDisc !== undefined && parsedMainDisc > 0 && parsedMainDisc < 100) ? parsedMainDisc : Math.round((1 - derivedSalePrice / derivedPrice) * 100);
+      } else {
+        derivedSalePrice = undefined;
+        derivedDiscountRate = undefined;
+      }
     }
 
     let derivedSku = values.sku?.trim() || '';
@@ -530,9 +540,11 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
     }
 
     let finalImages = values.images || [];
-    if (finalImages.length === 0 && hasVariants) {
+    if (hasVariantsSubmit) {
       const allVariantImages = flatVariants.flatMap((v) => (v.images && v.images.length > 0 ? v.images : (v.image ? [v.image] : []))).filter(Boolean);
-      finalImages = Array.from(new Set(allVariantImages));
+      if (allVariantImages.length > 0) {
+        finalImages = Array.from(new Set(allVariantImages));
+      }
     }
 
     const batches = values.batchNumber
@@ -544,7 +556,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
       : [];
 
     if (isReseller) {
-      if (!hasVariants) {
+      if (!hasVariantsSubmit) {
         if (!derivedPurchasePrice || derivedPurchasePrice <= 0) {
           toast.error('Reseller / Base price is required and must be greater than zero');
           setLoading(false);
@@ -576,7 +588,7 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
       }
     }
 
-    const cleanValues = {
+    const cleanValues: any = {
       ...values,
       sku: derivedSku,
       barcode: values.barcode?.trim() || undefined,
@@ -586,8 +598,8 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
       price: derivedPrice,
       purchasePrice: derivedPurchasePrice,
       resellerPrice: derivedResellerPrice,
-      salePrice: derivedSalePrice,
-      discountRate: (derivedSalePrice !== undefined && values.discountRate !== '' && Number(values.discountRate) > 0) ? Number(values.discountRate) : undefined,
+      salePrice: derivedSalePrice !== undefined ? derivedSalePrice : null,
+      discountRate: derivedDiscountRate !== undefined ? derivedDiscountRate : null,
       stock: derivedStock,
       variants: flatVariants,
     };
@@ -986,54 +998,75 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={hasVariants ? "border-dashed bg-muted/20" : ""}>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-base font-bold">Gallery Images</Label>
+                <div className="flex items-center gap-2">
+                  <Label className="text-base font-bold">Gallery Images</Label>
+                  {hasVariants && (
+                    <span className="text-xs bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-medium">
+                      Disabled (Variants Active)
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Image Upload Best Practice Guideline */}
-              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs space-y-1.5 text-muted-foreground">
-                <div className="flex items-center gap-1.5 font-semibold text-primary">
-                  <Info className="h-4 w-4 shrink-0" />
-                  <span>Image Upload Guidelines (For Best Quality & Zoom)</span>
-                </div>
-                <ul className="grid grid-cols-1 md:grid-cols-3 gap-x-3 gap-y-1 list-disc list-inside text-[11px] leading-relaxed">
-                  <li><strong>Max Size:</strong> Maximum file size is <strong>1 MB</strong> per image.</li>
-                  <li><strong>Ratio:</strong> 1:1 square or 3:4 portrait ratio is recommended.</li>
-                  <li><strong>Clean Background:</strong> Use bright lighting with neutral/light background for true colors.</li>
-                </ul>
-                <div className="flex items-center gap-1.5 text-destructive font-semibold text-[11px] bg-destructive/10 border border-destructive/20 rounded-md px-2.5 py-1.5 mt-1">
-                  <span className="font-bold uppercase tracking-wider text-[10px] bg-destructive text-white px-1.5 py-0.5 rounded">Max 1 MB • WebP</span>
-                  <span>Upload in <strong>.webp</strong> format (Max 1 MB) to ensure 100% original sharpness, zero quality loss, and instant loading!</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-4">
-                {form.watch('images').map((url, index) => (
-                  <div key={`${url}-${index}`} className="relative aspect-square rounded-md overflow-hidden border bg-muted">
-                    <Image
-                      src={url}
-                      alt={`Product image ${index + 1}`}
-                      fill
-                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                      className="object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(url)}
-                      className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 z-10"
-                      aria-label={`Remove product image ${index + 1}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+              {hasVariants ? (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-300">
+                    <Info className="h-4 w-4 shrink-0" />
+                    <span>গ্যালারি ইমেজ সেকশন নিষ্ক্রিয় (Gallery Images Disabled)</span>
                   </div>
-                ))}
-                <ImageUpload onUpload={addImage} compact />
-              </div>
-              {form.formState.errors.images?.message && (
-                <p className="text-[0.8rem] font-medium text-destructive">
-                  {form.formState.errors.images.message}
-                </p>
+                  <p className="leading-relaxed">
+                    যেহেতু প্রোডাক্টটিতে কালার/সাইজ ভেরিয়েন্ট যুক্ত করা হয়েছে, তাই মূল গ্যালারি ইমেজ সেকশনটি বন্ধ রাখা হয়েছে। প্রতিটি <strong>Color Variant</strong>-এর নিজস্ব ইমেজ সেকশনে সংশ্লিষ্ট কালারের ছবি আপলোড করুন।
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Image Upload Best Practice Guideline */}
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs space-y-1.5 text-muted-foreground">
+                    <div className="flex items-center gap-1.5 font-semibold text-primary">
+                      <Info className="h-4 w-4 shrink-0" />
+                      <span>Image Upload Guidelines (For Best Quality & Zoom)</span>
+                    </div>
+                    <ul className="grid grid-cols-1 md:grid-cols-3 gap-x-3 gap-y-1 list-disc list-inside text-[11px] leading-relaxed">
+                      <li><strong>Max Size:</strong> Maximum file size is <strong>1 MB</strong> per image.</li>
+                      <li><strong>Ratio:</strong> 1:1 square or 3:4 portrait ratio is recommended.</li>
+                      <li><strong>Clean Background:</strong> Use bright lighting with neutral/light background for true colors.</li>
+                    </ul>
+                    <div className="flex items-center gap-1.5 text-destructive font-semibold text-[11px] bg-destructive/10 border border-destructive/20 rounded-md px-2.5 py-1.5 mt-1">
+                      <span className="font-bold uppercase tracking-wider text-[10px] bg-destructive text-white px-1.5 py-0.5 rounded">Max 1 MB • WebP</span>
+                      <span>Upload in <strong>.webp</strong> format (Max 1 MB) to ensure 100% original sharpness, zero quality loss, and instant loading!</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4">
+                    {form.watch('images').map((url, index) => (
+                      <div key={`${url}-${index}`} className="relative aspect-square rounded-md overflow-hidden border bg-muted">
+                        <Image
+                          src={url}
+                          alt={`Product image ${index + 1}`}
+                          fill
+                          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                          className="object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(url)}
+                          className="absolute top-1 right-1 bg-destructive text-white rounded-full p-1 z-10"
+                          aria-label={`Remove product image ${index + 1}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <ImageUpload onUpload={addImage} compact />
+                  </div>
+                  {form.formState.errors.images?.message && (
+                    <p className="text-[0.8rem] font-medium text-destructive">
+                      {form.formState.errors.images.message}
+                    </p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -1408,235 +1441,246 @@ export function ProductForm({ initialData, isReseller = false }: ProductFormProp
               )}
             </CardContent>
           </Card>
-          <Card>
+          <Card className={hasVariants ? "border-dashed bg-muted/20" : ""}>
             <CardContent className="pt-6">
-              {variantFields.length > 0 && (
-                <div className="mb-4 flex items-center gap-2 rounded-md bg-muted/60 border border-muted px-4 py-2 text-xs text-muted-foreground">
-                  <span className="font-semibold text-primary">ℹ️ Variants detected:</span>
-                  The prices below are <strong>optional</strong> — variant prices will be used instead.
+              {hasVariants && (
+                <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-amber-800 dark:text-amber-300">
+                    <Info className="h-4 w-4 shrink-0" />
+                    <span>প্রাইসিং ও স্টক সেকশন নিষ্ক্রিয় (Pricing & Stock Disabled)</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    যেহেতু প্রোডাক্টটিতে কালার/সাইজ ভেরিয়েন্ট যুক্ত করা হয়েছে, তাই মূল প্রাইসিং ও স্টক সেকশনটি লক করা হয়েছে। প্রতিটি সাইজ/ভেরিয়েন্টের মূল্য, ডিসকাউন্ট এবং স্টক উপরের <strong>Product Variants</strong> সেকশনে নির্ধারণ করুন। প্রথম ভেরিয়েন্টের মূল্য স্বয়ংক্রিয়ভাবে প্রোডাক্ট কার্ড ও কুইক ভিউতে নির্ধারিত হবে।
+                  </p>
                 </div>
               )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Price (Tk)
-                        {variantFields.length > 0
-                          ? <span className="ml-1 text-xs font-normal text-muted-foreground">(Optional)</span>
-                          : <span className="ml-1 text-xs font-normal text-destructive">*</span>
-                        }
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => {
-                            const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
-                            field.onChange(value);
-                            const prc = value === '' ? 0 : Number(value);
-                            const discount = form.getValues('discountRate') || 0;
-                            const currentSale = form.getValues('salePrice');
-                            const currentSaleNum = currentSale === '' || currentSale === undefined ? undefined : Number(currentSale);
-                            if (prc <= 0) {
-                              form.setValue('salePrice', undefined);
-                              form.setValue('discountRate', 0);
-                            } else if (discount > 0) {
-                              // Recalculate sale price based on discount
-                              form.setValue('salePrice', Math.round(prc * (1 - discount / 100)));
-                            } else if (currentSaleNum !== undefined && currentSaleNum > prc) {
-                              // Clamp sale price if it now exceeds the new price
-                              form.setValue('salePrice', prc);
-                              form.setValue('discountRate', 0);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="purchasePrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{isReseller ? 'Reseller Price (Tk)' : 'Purchase Price (Tk)'}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => {
-                            const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
-                            field.onChange(value);
-                            // Auto calculate reseller price with platform commission rate
-                            if (value !== '' && typeof value === 'number' && value > 0) {
-                              const computed = Math.round(value * (1 + platformCommissionRate / 100));
-                              form.setValue('resellerPrice', computed);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="resellerPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        {isReseller ? `Shared Catalog Price (+${platformCommissionRate}% System Fee)` : 'Reseller Price (Tk)'}
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => {
-                            const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
-                            field.onChange(value);
-                          }}
-                        />
-                      </FormControl>
-                      {isReseller && (
-                        <FormDescription className="text-xs">
-                          Reseller price (৳{form.watch('purchasePrice') || 0}) + {platformCommissionRate}% system platform fee = ৳{field.value || 0}
-                        </FormDescription>
-                      )}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="discountRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder={!(Number(form.watch('price')) > 0) ? '-' : '0'}
-                          disabled={!(Number(form.watch('price')) > 0)}
-                          className="disabled:opacity-50 disabled:cursor-not-allowed"
-                          {...field}
-                          value={field.value || ''}
-                          onChange={(e) => {
-                            const discount = e.target.value === '' ? undefined : (parseFloat(e.target.value) || 0);
-                            field.onChange(discount);
-                            const price = form.getValues('price') || 0;
-                            if (price > 0 && discount !== undefined) {
-                              const newSale = price * (1 - discount / 100);
-                              form.setValue('salePrice', Math.round(newSale));
-                            } else {
-                              form.setValue('salePrice', undefined);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="salePrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discounted Price (Tk)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder={!(Number(form.watch('price')) > 0) ? 'Enter price first' : '0.00'}
-                          disabled={!(Number(form.watch('price')) > 0)}
-                          className="disabled:opacity-50 disabled:cursor-not-allowed"
-                          {...field}
-                          value={field.value || ''}
-                          onChange={(e) => {
-                            const rawVal = e.target.value;
-                            const price = form.getValues('price') || 0;
-                            if (rawVal === '') {
-                              field.onChange('');
-                              form.setValue('discountRate', 0);
-                              return;
-                            }
-                            let sale = parseFloat(rawVal) || 0;
-                            if (price > 0 && sale > price) {
-                              // Clamp: discounted price cannot exceed price
-                              sale = price;
-                            }
-                            field.onChange(sale);
-                            if (price > 0 && sale > 0 && sale < price) {
-                              form.setValue('discountRate', Math.round((1 - sale / price) * 100));
-                            } else {
-                              form.setValue('discountRate', 0);
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField
-                  control={form.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Total Stock Quantity</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          value={field.value ?? ''}
-                          onChange={(e) => field.onChange(e.target.value === '' ? '' : (parseInt(e.target.value) || 0))}
-                        />
-                      </FormControl>
-                      <FormDescription>Physical stock available for sale</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="batchNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Batch Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. BATCH-001" {...field} value={field.value || ''} />
-                      </FormControl>
-                      <FormDescription>Identify inventory batch (Optional)</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="expiryDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expiry Date</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} value={field.value || ''} />
-                      </FormControl>
-                      <FormDescription>Product batch expiration date (Optional)</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className={hasVariants ? "opacity-50 pointer-events-none select-none" : ""}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Price (Tk)
+                          {hasVariants
+                            ? <span className="ml-1 text-xs font-normal text-muted-foreground">(Locked - Driven by variants)</span>
+                            : <span className="ml-1 text-xs font-normal text-destructive">*</span>
+                          }
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            disabled={hasVariants}
+                            {...field}
+                            value={field.value ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
+                              field.onChange(value);
+                              const prc = value === '' ? 0 : Number(value);
+                              const discount = form.getValues('discountRate') || 0;
+                              const currentSale = form.getValues('salePrice');
+                              const currentSaleNum = currentSale === '' || currentSale === undefined ? undefined : Number(currentSale);
+                              if (prc <= 0) {
+                                form.setValue('salePrice', undefined);
+                                form.setValue('discountRate', 0);
+                              } else if (discount > 0) {
+                                // Recalculate sale price based on discount
+                                form.setValue('salePrice', Math.round(prc * (1 - discount / 100)));
+                              } else if (currentSaleNum !== undefined && currentSaleNum > prc) {
+                                // Clamp sale price if it now exceeds the new price
+                                form.setValue('salePrice', prc);
+                                form.setValue('discountRate', 0);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="purchasePrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{isReseller ? 'Reseller Price (Tk)' : 'Purchase Price (Tk)'}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            disabled={hasVariants}
+                            {...field}
+                            value={field.value ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
+                              field.onChange(value);
+                              // Auto calculate reseller price with platform commission rate
+                              if (value !== '' && typeof value === 'number' && value > 0) {
+                                const computed = Math.round(value * (1 + platformCommissionRate / 100));
+                                form.setValue('resellerPrice', computed);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="resellerPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          {isReseller ? `Shared Catalog Price (+${platformCommissionRate}% System Fee)` : 'Reseller Price (Tk)'}
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0.00"
+                            disabled={hasVariants}
+                            {...field}
+                            value={field.value ?? ''}
+                            onChange={(e) => {
+                              const value = e.target.value === '' ? '' : (parseFloat(e.target.value) || 0);
+                              field.onChange(value);
+                            }}
+                          />
+                        </FormControl>
+                        {isReseller && (
+                          <FormDescription className="text-xs">
+                            Reseller price (৳{form.watch('purchasePrice') || 0}) + {platformCommissionRate}% system platform fee = ৳{field.value || 0}
+                          </FormDescription>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="discountRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discount (%)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder={hasVariants || !(Number(form.watch('price')) > 0) ? '-' : '0'}
+                            disabled={hasVariants || !(Number(form.watch('price')) > 0)}
+                            className="disabled:opacity-50 disabled:cursor-not-allowed"
+                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => {
+                              const discount = e.target.value === '' ? undefined : (parseFloat(e.target.value) || 0);
+                              field.onChange(discount);
+                              const price = form.getValues('price') || 0;
+                              if (price > 0 && discount !== undefined) {
+                                const newSale = price * (1 - discount / 100);
+                                form.setValue('salePrice', Math.round(newSale));
+                              } else {
+                                form.setValue('salePrice', undefined);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="salePrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Discounted Price (Tk)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder={hasVariants || !(Number(form.watch('price')) > 0) ? '-' : '0.00'}
+                            disabled={hasVariants || !(Number(form.watch('price')) > 0)}
+                            className="disabled:opacity-50 disabled:cursor-not-allowed"
+                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => {
+                              const rawVal = e.target.value;
+                              const price = form.getValues('price') || 0;
+                              if (rawVal === '') {
+                                field.onChange('');
+                                form.setValue('discountRate', 0);
+                                return;
+                              }
+                              let sale = parseFloat(rawVal) || 0;
+                              if (price > 0 && sale > price) {
+                                // Clamp: discounted price cannot exceed price
+                                sale = price;
+                              }
+                              field.onChange(sale);
+                              if (price > 0 && sale > 0 && sale < price) {
+                                form.setValue('discountRate', Math.round((1 - sale / price) * 100));
+                              } else {
+                                form.setValue('discountRate', 0);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <FormField
+                    control={form.control}
+                    name="stock"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total Stock Quantity</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            disabled={hasVariants}
+                            {...field}
+                            value={field.value ?? ''}
+                            onChange={(e) => field.onChange(e.target.value === '' ? '' : (parseInt(e.target.value) || 0))}
+                          />
+                        </FormControl>
+                        <FormDescription>Physical stock available for sale</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="batchNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Batch Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. BATCH-001" disabled={hasVariants} {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormDescription>Identify inventory batch (Optional)</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="expiryDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expiry Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" disabled={hasVariants} {...field} value={field.value || ''} />
+                        </FormControl>
+                        <FormDescription>Product batch expiration date (Optional)</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

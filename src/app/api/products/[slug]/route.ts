@@ -206,20 +206,42 @@ export async function PUT(
     }
 
     const unsetFields: Record<string, 1> = {};
-    if (
-      body.salePrice === null || 
-      body.salePrice === '' || 
-      (existingProduct.uploadedBy && (body.salePrice === null || body.salePrice === undefined || (safeUpdate.price && existingProduct.salePrice && existingProduct.salePrice >= safeUpdate.price)))
-    ) {
-      if (!body.salePrice || Number(body.salePrice) <= 0 || (safeUpdate.price && Number(body.salePrice) >= safeUpdate.price)) {
-        unsetFields.salePrice = 1;
-        delete safeUpdate.salePrice;
+
+    // Strict Rule: If product has variants, root pricing MUST be derived strictly from the first variant (ignore main pricing)
+    const activeVariants = safeUpdate.variants !== undefined ? safeUpdate.variants : existingProduct.variants;
+    if (activeVariants && Array.isArray(activeVariants) && activeVariants.length > 0) {
+      const firstV = activeVariants[0];
+      if (firstV) {
+        safeUpdate.price = Number(firstV.price || 0);
+        const rawVSale = firstV.salePrice !== undefined && firstV.salePrice !== null ? Number(firstV.salePrice) : undefined;
+        if (rawVSale !== undefined && rawVSale > 0 && rawVSale < safeUpdate.price) {
+          safeUpdate.salePrice = rawVSale;
+          safeUpdate.discountRate = firstV.discountRate;
+          delete unsetFields.salePrice;
+          delete unsetFields.discountRate;
+        } else {
+          delete safeUpdate.salePrice;
+          delete safeUpdate.discountRate;
+          unsetFields.salePrice = 1;
+          unsetFields.discountRate = 1;
+        }
       }
-    }
-    if (body.discountRate === null || body.discountRate === '' || unsetFields.salePrice) {
-      if (!body.discountRate || unsetFields.salePrice) {
-        unsetFields.discountRate = 1;
-        delete safeUpdate.discountRate;
+    } else {
+      if (
+        body.salePrice === null || 
+        body.salePrice === '' || 
+        (existingProduct.uploadedBy && (body.salePrice === null || body.salePrice === undefined || (safeUpdate.price && existingProduct.salePrice && existingProduct.salePrice >= safeUpdate.price)))
+      ) {
+        if (!body.salePrice || Number(body.salePrice) <= 0 || (safeUpdate.price && Number(body.salePrice) >= safeUpdate.price)) {
+          unsetFields.salePrice = 1;
+          delete safeUpdate.salePrice;
+        }
+      }
+      if (body.discountRate === null || body.discountRate === '' || unsetFields.salePrice) {
+        if (!body.discountRate || unsetFields.salePrice) {
+          unsetFields.discountRate = 1;
+          delete safeUpdate.discountRate;
+        }
       }
     }
 

@@ -282,6 +282,24 @@ export async function POST(req: NextRequest) {
       };
     });
 
+    let finalPrice = parsedPrice;
+    let finalSalePrice = parsedSalePrice;
+    let finalDiscountRate = parsedDiscountRate;
+    let finalPurchasePrice = parsedPurchasePrice;
+    let finalResellerPrice = parsedResellerPrice;
+    let finalStock = parsedStock;
+
+    // Strict Rule: If product has variants, root pricing MUST be derived strictly from the first variant (ignore main pricing)
+    if (coercedVariants.length > 0) {
+      const firstV = coercedVariants[0];
+      finalPrice = firstV.price || 0;
+      finalSalePrice = (firstV.salePrice !== undefined && firstV.salePrice > 0 && firstV.salePrice < finalPrice) ? firstV.salePrice : undefined;
+      finalDiscountRate = finalSalePrice ? (firstV.discountRate || Math.round((1 - finalSalePrice / finalPrice) * 100)) : undefined;
+      finalPurchasePrice = firstV.purchasePrice;
+      finalResellerPrice = firstV.resellerPrice;
+      finalStock = coercedVariants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
+    }
+
     const sanitizedBatches = Array.isArray(batches) ? batches.map((b: any) => ({
       batchNumber: b.batchNumber,
       expiryDate: b.expiryDate ? new Date(b.expiryDate) : undefined,
@@ -304,14 +322,14 @@ export async function POST(req: NextRequest) {
           name,
           slug: uniqueSlug,
           description,
-          price: parsedPrice,
-          salePrice: parsedSalePrice,
-          purchasePrice: parsedPurchasePrice,
-          resellerPrice: parsedResellerPrice,
-          discountRate: parsedDiscountRate,
+          price: finalPrice,
+          salePrice: finalSalePrice,
+          purchasePrice: finalPurchasePrice,
+          resellerPrice: finalResellerPrice,
+          discountRate: finalDiscountRate,
           sku,
           barcode: barcode?.trim() || undefined,
-          stock: parsedStock,
+          stock: finalStock,
           categories: categories || [],
           brand: brand || undefined,
           tags: tags || [],

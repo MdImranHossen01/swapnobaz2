@@ -172,11 +172,29 @@ ProductSchema.pre('validate', function(this: any) {
     this.isApprovedByAdmin = true;
   }
 
-  // Strict Rule: If salePrice is 0 or >= price, treat as NO DISCOUNT
-  if (this.salePrice !== undefined && this.salePrice !== null) {
-    if (this.salePrice <= 0 || (this.price !== undefined && this.salePrice >= this.price)) {
-      this.salePrice = undefined;
-      this.discountRate = undefined;
+  // Strict Rule: If product has variants, root pricing MUST be derived strictly from the first variant (ignore main pricing)
+  if (this.variants && Array.isArray(this.variants) && this.variants.length > 0) {
+    const firstV = this.variants[0];
+    if (firstV) {
+      this.price = Number(firstV.price || 0);
+      const rawVSale = firstV.salePrice !== undefined && firstV.salePrice !== null ? Number(firstV.salePrice) : undefined;
+      if (rawVSale !== undefined && rawVSale > 0 && rawVSale < this.price) {
+        this.salePrice = rawVSale;
+        this.discountRate = firstV.discountRate;
+      } else {
+        this.salePrice = undefined;
+        this.discountRate = undefined;
+        firstV.salePrice = undefined;
+        firstV.discountRate = undefined;
+      }
+    }
+  } else {
+    // If no variants, validate main salePrice: if <= 0 or >= price, treat as NO DISCOUNT
+    if (this.salePrice !== undefined && this.salePrice !== null) {
+      if (this.salePrice <= 0 || (this.price !== undefined && this.salePrice >= this.price)) {
+        this.salePrice = undefined;
+        this.discountRate = undefined;
+      }
     }
   }
 
