@@ -89,6 +89,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdnnew.selfeb.com',
+        port: '',
+        pathname: '/**',
+      },
 
     ],
     qualities: [75, 80, 100],
