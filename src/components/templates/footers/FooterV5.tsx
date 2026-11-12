@@ -6,6 +6,7 @@ import { Instagram, Youtube, Twitter } from '@/components/ui/social-icons';
 import { Sparkles, MoveUpRight } from 'lucide-react';
 import DeveloperLogo from '@/components/ui/developerlogo';
 import { useSettings } from '@/components/SettingsProvider';
+import { formatBrandText } from '@/components/ui/logo';
 import * as SocialIcons from '@/components/ui/social-icons';
 import { Circle } from 'lucide-react';
 
@@ -89,7 +90,7 @@ export default function FooterV5() {
 
           <div className="text-center space-y-4">
             <div className="text-[10px] font-black uppercase tracking-[0.4em] text-neutral-400">Architecture by</div>
-            <span className="text-2xl font-black uppercase tracking-tighter">{settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || "Store"} Atelier</span>
+            <span className="text-2xl font-black uppercase tracking-tighter">{formatBrandText(settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || "Store")} Atelier</span>
           </div>
 
           <div className="flex flex-col items-end gap-6">

@@ -6,6 +6,7 @@ import { Instagram, Facebook, Twitter } from '@/components/ui/social-icons';
 import { Star, Mail, MapPin, Phone } from 'lucide-react';
 import DeveloperLogo from '@/components/ui/developerlogo';
 import { useSettings } from '@/components/SettingsProvider';
+import { formatBrandText } from '@/components/ui/logo';
 import * as SocialIcons from '@/components/ui/social-icons';
 import { Circle } from 'lucide-react';
 
@@ -33,7 +34,7 @@ export default function FooterV4() {
                {/* Boutique Brand */}
                <div className="md:col-span-4 space-y-10">
                   <div className="space-y-4">
-                     <Link href="/" className="text-5xl font-serif italic tracking-tighter hover:opacity-70 transition-opacity">{settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || 'Store'}</Link>
+                     <Link href="/" className="text-5xl font-serif italic tracking-tighter hover:opacity-70 transition-opacity">{formatBrandText(settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || 'Store')}</Link>
                      <div className="flex items-center gap-2 text-primary font-black uppercase tracking-[0.4em] text-[9px]">
                         <Star className="h-3 w-3 fill-current" /> The Boutique Atelier
                      </div>

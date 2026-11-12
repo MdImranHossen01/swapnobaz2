@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import DeveloperLogo from '@/components/ui/developerlogo';
 import { useSettings } from '@/components/SettingsProvider';
+import { formatBrandText } from '@/components/ui/logo';
 import * as SocialIcons from '@/components/ui/social-icons';
 import { Circle } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -128,7 +129,7 @@ export default function FooterV2() {
           <div className="lg:col-span-4 space-y-6 flex flex-col items-center lg:items-start">
             <Link href="/" className="text-2xl md:text-3xl font-black tracking-tighter hover:scale-105 transition-all flex items-center gap-2 group text-foreground">
               <Image src="/logo.webp" width={40} height={40} alt="Logo" className="object-contain" />
-              {settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || 'Store'}
+              {formatBrandText(settings?.brandName || process.env.NEXT_PUBLIC_STORE_NAME || 'Store')}
             </Link>
             <p className="text-muted-foreground text-sm max-w-sm leading-relaxed font-medium">
               {settings?.siteDescription || 'Your premier destination for premium fashion, quality lifestyle products, and authentic shopping delivered right to your doorstep.'}

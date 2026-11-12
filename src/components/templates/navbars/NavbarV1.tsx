@@ -33,7 +33,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAppSelector } from '@/store/hooks';
 import { CartDrawer } from '@/components/layout/CartDrawer';
-import { Logo } from '@/components/ui/logo';
+import { Logo, formatBrandText } from '@/components/ui/logo';
 import { useSettings } from '@/components/SettingsProvider';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { ImpersonationDropdownCard } from '@/components/admin/ImpersonationDropdownCard';
@@ -992,8 +992,8 @@ export default function NavbarV1({ initialCategories = [], initialBrands = [] }:
                 {/* Row 1: Logo Brand Name, Sub-Brands, Utilities */}
                 <div className="flex items-center justify-between w-full border-b border-border/10 pb-1 gap-4">
                   {/* Logo Brand Name Text Only */}
-                  <Link href="/" className="text-lg xl:text-xl uppercase text-foreground transition-colors hover:text-primary font-black tracking-tighter font-logo shrink-0">
-                    {settings.brandName || process.env.NEXT_PUBLIC_STORE_NAME || "STORE"}
+                  <Link href="/" className="text-lg xl:text-xl uppercase text-foreground transition-colors font-black tracking-tighter font-logo shrink-0">
+                    {formatBrandText(settings.brandName || process.env.NEXT_PUBLIC_STORE_NAME || "SWAPNOBAZ")}
                   </Link>
 
                   {/* Right-side Utilities */}
