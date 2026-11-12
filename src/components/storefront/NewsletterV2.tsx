@@ -72,18 +72,18 @@ export function NewsletterV2({ layout }: { layout?: string }) {
                     {/* Left Side: Content */}
                     <div className="flex-1 text-center md:text-left space-y-4">
                         <div className="space-y-1">
-                            <p className="text-[11px] font-black tracking-[0.2em] uppercase opacity-70">
-                                Our Newsletter
-                            </p>
-                            <h2 className={`text-4xl ${layout === 'v3' ? 'lg:text-2xl' : 'md:text-5xl'} font-black tracking-tighter italic leading-none`}>
+                            <p className="text-[11px] font-black tracking-[0.2em] uppercase opacity-75">
                                 BE THE FIRST TO KNOW!
+                            </p>
+                            <h2 className={`text-3xl ${layout === 'v3' ? 'lg:text-2xl' : 'md:text-4xl lg:text-5xl'} font-black tracking-tight leading-tight`}>
+                                Get exclusive deals, new arrivals, and special offers from Swapnobaz.
                             </h2>
                         </div>
-                        <p className={`text-lg ${layout === 'v3' ? 'lg:text-sm' : 'md:text-xl'} font-medium text-white/90`}>
-                            Subscribe for the latest updates, new arrivals, and stories from our community
+                        <p className={`text-sm ${layout === 'v3' ? 'lg:text-xs' : 'md:text-base'} font-medium text-white/90 max-w-2xl leading-relaxed`}>
+                            Be part of our community and receive handpicked products, exciting offers, and the latest updates directly in your inbox.
                         </p>
-                        <p className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-white/40">
-                            UNSUBSCRIBE ANYTIME • NO SPAM • PRIVACY PROTECTED
+                        <p className="hidden md:block text-[10px] font-bold uppercase tracking-widest text-white/60">
+                            No spam • Unsubscribe anytime • Privacy protected
                         </p>
                     </div>
 
@@ -95,16 +95,17 @@ export function NewsletterV2({ layout }: { layout?: string }) {
                                     <CheckCircle2 className="size-6" />
                                 </div>
                                 <div className="text-left">
-                                    <p className="font-bold">You&apos;re on the list!</p>
-                                    <p className="text-xs text-white/70">You will now receive our latest news and updates directly.</p>
+                                    <p className="font-bold">Thank you for subscribing!</p>
+                                    <p className="text-xs text-white/80">Welcome to the Swapnobaz community.</p>
                                 </div>
                             </div>
                         ) : (
                             <form onSubmit={handleSubscribe} className="w-full relative group">
                                 <Input
                                     type="email"
-                                    placeholder="Enter your email"
-                                    className={`h-14 ${layout === 'v3' ? 'lg:h-11 lg:text-sm lg:pl-4' : 'pl-6 pr-36'} w-full rounded-xl bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/40 focus-visible:ring-white/30 transition-all text-base`}
+                                    placeholder="Enter your email address"
+                                    aria-label="Your Email Address"
+                                    className={`h-14 ${layout === 'v3' ? 'lg:h-11 lg:text-sm lg:pl-4' : 'pl-6 pr-44'} w-full rounded-xl bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder:text-white/60 focus-visible:ring-white/30 transition-all text-sm md:text-base`}
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
@@ -112,20 +113,20 @@ export function NewsletterV2({ layout }: { layout?: string }) {
                                 <div className={`absolute right-1.5 top-1.5 ${layout === 'v3' ? 'lg:right-1 lg:top-1' : ''}`}>
                                     <Button
                                         type="submit"
-                                        className={`h-11 px-6 rounded-lg bg-white text-black hover:bg-white/90 font-black text-xs uppercase tracking-widest gap-2 shadow-lg ${layout === 'v3' ? 'lg:h-9 lg:px-4 lg:text-[10px]' : ''}`}
+                                        className={`h-11 px-5 rounded-lg bg-white text-black hover:bg-white/90 font-black text-xs uppercase tracking-wider gap-2 shadow-lg ${layout === 'v3' ? 'lg:h-9 lg:px-4 lg:text-[10px]' : ''}`}
                                         disabled={loading}
                                     >
                                         {loading ? (
                                             <Loader2 className="size-4 animate-spin" />
                                         ) : (
-                                            <>Subscribe <Send className="size-3" /></>
+                                            <>SUBSCRIBE NOW <Send className="size-3" /></>
                                         )}
                                     </Button>
                                 </div>
                             </form>
                         )}
-                        <p className="md:hidden mt-4 text-[10px] font-bold uppercase tracking-widest text-white/40 text-center">
-                            UNSUBSCRIBE ANYTIME • NO SPAM
+                        <p className="md:hidden mt-4 text-[10px] font-bold uppercase tracking-widest text-white/60 text-center">
+                            No spam • Unsubscribe anytime • Privacy protected
                         </p>
                     </div>
 
